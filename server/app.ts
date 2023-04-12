@@ -98,7 +98,7 @@ app.use(function (err, req, res, next) {
   res.json({ error: res.locals.error, message: err.message })
 })
 
-export {
+export default {
   httpServer,
   httpsServer
 }

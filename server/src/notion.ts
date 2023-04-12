@@ -1,6 +1,8 @@
-import config from '../config'
+import { NotionAPI } from 'notion-client'
+import { type ExtendedRecordMap } from 'notion-types/build/maps'
 
-export async function getPage (id: string): Promise<any> {
-  await new Promise(resolve => {})
-// TODO
+const notion = new NotionAPI()
+
+export async function getPage (id: string): Promise<ExtendedRecordMap> {
+  return await notion.getPage(id)
 }

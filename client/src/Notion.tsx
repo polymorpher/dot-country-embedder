@@ -18,6 +18,7 @@ import { Collection } from 'react-notion-x/build/third-party/collection'
 import { Equation } from 'react-notion-x/build/third-party/equation'
 import { Modal } from 'react-notion-x/build/third-party/modal'
 import { Pdf } from 'react-notion-x/build/third-party/pdf'
+import { type ExtendedRecordMap } from 'notion-types'
 
 const Container = styled(Main)`
   margin: 0 auto;
@@ -77,6 +78,8 @@ const Notion: React.FC = () => {
   const { connect } = useConnect({ connector: new InjectedConnector() })
   const [pending, setPending] = useState(true)
   const [initializing, setInitializing] = useState(true)
+  const [page, setPage] = useState<ExtendedRecordMap>()
+  const [pageId, setPageId] = useState<string>('')
 
   const sld = getSld()
 
@@ -104,6 +107,16 @@ const Notion: React.FC = () => {
       }
     }
   }
+
+  useEffect(() => {
+    if (!pageId) {
+      return
+    }
+    void tryCatch(async function f () {
+      const records = await apis.getNotionPage(pageId)
+      setPage(records)
+    })
+  }, [pageId])
 
   useEffect(() => {
     if (!provider || !signer) {
