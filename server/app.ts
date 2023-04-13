@@ -2,15 +2,14 @@ import dotenv from 'dotenv'
 import Fingerprint from 'express-fingerprint'
 import createError from 'http-errors'
 import express from 'express'
-import path from 'path'
 import cookieParser from 'cookie-parser'
 import logger from 'morgan'
-import config from './config'
-import _index from './routes'
-import * as bodyParser from 'body-parser'
-import * as https from 'https'
-import * as http from 'http'
-import * as fs from 'fs'
+import config from './config.ts'
+import _index from './routes/index.ts'
+import bodyParser from 'body-parser'
+import https from 'https'
+import http from 'http'
+import fs from 'fs'
 
 dotenv.config()
 
@@ -76,7 +75,6 @@ if (config.corsOrigins !== '') {
   })
 }
 
-app.use(express.static(path.join(__dirname, 'public')))
 app.options('*', async (_req, res) => {
   res.end()
 })
@@ -98,7 +96,7 @@ app.use(function (err, req, res, next) {
   res.json({ error: res.locals.error, message: err.message })
 })
 
-export default {
+export {
   httpServer,
   httpsServer
 }
