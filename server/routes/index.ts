@@ -29,7 +29,7 @@ router.get('/notion',
     console.log('[/notion]', { id })
     try {
       const ret = await getPage(id)
-      res.json({ ret })
+      res.json(ret || {})
     } catch (ex: any) {
       console.error(ex)
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })

@@ -6,8 +6,7 @@ const Routes: React.FC = () => {
   return (
     <BrowserRouter>
       <Switch>
-        <Route exact path='/' render={() => <Notion />} />
-        <Redirect to='/' />
+        <Route render={() => <Notion />} />
       </Switch>
     </BrowserRouter>
   )

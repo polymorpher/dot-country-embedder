@@ -7,7 +7,7 @@ const config = {
     return (process.env.EXPLORER_URL ?? 'https://explorer.harmony.one/#/tx/{{txId}}').replace('{{txId}}', txHash)
   },
   defaultRpc: process.env.DEFAULT_RPC ?? 'https://api.harmony.one',
-  server: process.env.EAS_SERVER ?? 'https://1ns-embedder-server.hiddenstate.xyz',
+  server: process.env.SERVER ?? 'https://1ns-embedder-server.hiddenstate.xyz',
   tld: process.env.TLD ?? 'country',
   message (sld: string, alias: string, forwardAddress: string): string {
     return `You are about to authorize forwarding all emails sent to [${alias}@${sld}.${config.tld}] to [${forwardAddress}] instead`
