@@ -1,7 +1,7 @@
 import './app.scss'
 import React from 'react'
 import { createRoot } from 'react-dom/client'
-import Routes from './Routes'
+import AppRoutes from './AppRoutes'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { WagmiConfig, createClient, configureChains } from 'wagmi'
@@ -28,7 +28,7 @@ if (container != null) {
   root.render(
     <>
       <WagmiConfig client={client}>
-        <Routes/>
+        <AppRoutes/>
       </WagmiConfig>
       <ToastContainer position='top-left'/>
     </>)

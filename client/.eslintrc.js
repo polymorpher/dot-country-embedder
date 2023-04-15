@@ -38,6 +38,7 @@ module.exports = {
     'react/function-component-definition': [2, { namedComponents: 'arrow-function' }],
     'react-hooks/rules-of-hooks': 'error', // Checks rules of Hooks
     'react-hooks/exhaustive-deps': 'error', // Checks effect dependencies
+    '@typescript-eslint/no-explicit-any': 0,
   },
   parserOptions: {
     ecmaVersion: 2020,
