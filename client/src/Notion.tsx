@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { renderToString } from 'react-dom/server'
-import { useAccount, useConnect, useProvider, useSigner } from 'wagmi'
-import { InjectedConnector } from 'wagmi/connectors/injected'
-import { ethers } from 'ethers'
-import config from '../config'
-import { Button, Input, LinkWrarpper } from './components/Controls'
-import { BaseText, Desc, FloatingText, SmallText, Title } from './components/Text'
-import { FlexColumn, FlexRow, Main } from './components/Layout'
 
-import { toast } from 'react-toastify'
+import { BaseText } from './components/Text'
 import { buildClient, apis } from './api'
 
 import { NotionRenderer } from 'react-notion-x'
@@ -24,7 +17,7 @@ import htmlReactParser, { Element as ParserElement } from 'html-react-parser'
 import { getPath, getSld } from './utils'
 import { useTryCatch } from './hooks/useTryCatch'
 import { Navigate } from 'react-router-dom'
-import { Loading, LoadingScreen } from './components/Misc'
+import { LoadingScreen } from './components/Misc'
 
 interface LinkReplacerConfig {
   children: JSX.Element

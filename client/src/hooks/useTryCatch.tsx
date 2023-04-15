@@ -10,7 +10,7 @@ interface TryCatchState {
   tryCatch: (f: () => Promise<any>, isInit?: boolean) => Promise<void>
 }
 export const useTryCatch = (): TryCatchState => {
-  const [pending, setPending] = useState(true)
+  const [pending, setPending] = useState(false)
   const [initializing, setInitializing] = useState(true)
 
   const tryCatch = useCallback(async (f: () => Promise<any>, isInit?: boolean): Promise<void> => {
