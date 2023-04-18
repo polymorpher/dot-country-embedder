@@ -68,6 +68,8 @@ contract EWS is Ownable {
     }
 
     function update(string memory name, string memory landingPage, string[] memory allowedPages, bool landingPageOnly) public payable onlyNameOwner(name) {
+        uint256 fees = landingPageFee + (landingPageOnly ? 0 : allowedPages.length * perAdditionalPageFee);
+        require(msg.value >= fees, "EWS:update: insufficient payment");
         bytes32 node = keccak256(bytes(name));
         EWSConfig storage ec = configs[node];
         ec.landingPage = landingPage;
@@ -77,6 +79,8 @@ contract EWS is Ownable {
     }
 
     function appendAllowedPages(string memory name, string[] memory moreAllowedPages) public payable onlyNameOwner(name) {
+        uint256 fees = moreAllowedPages.length * perAdditionalPageFee;
+        require(msg.value >= fees, "EWS:append: insufficient payment");
         bytes32 node = keccak256(bytes(name));
         EWSConfig storage ec = configs[node];
         for (uint256 i = 0; i < moreAllowedPages.length; i++) {

@@ -14,11 +14,19 @@ export const Loading = ({ size = 16 }: { size?: number }): JSX.Element => {
   return <TailSpin stroke='grey' width={size} height={size} />
 }
 
-export const LoadingScreen = ({ children }: { children?: JSX.Element }): JSX.Element => {
+export const LoadingScreen = ({ children }: { children?: JSX.Element | JSX.Element[] }): JSX.Element => {
   return <Main style={{ justifyContent: 'center' }}>
     <FlexRow>
       <Loading size={64}/>
     </FlexRow>
     {children}
+  </Main>
+}
+
+export const BlankPage = ({ children }: { children?: JSX.Element | JSX.Element[] }): JSX.Element => {
+  return <Main style={{ justifyContent: 'center' }}>
+    <FlexRow>
+      {children}
+    </FlexRow>
   </Main>
 }

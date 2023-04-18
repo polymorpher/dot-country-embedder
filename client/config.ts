@@ -9,6 +9,7 @@ const config = {
   defaultRpc: process.env.DEFAULT_RPC ?? 'https://api.harmony.one',
   server: process.env.SERVER ?? 'https://1ns-embedder-server.hiddenstate.xyz',
   tld: process.env.TLD ?? 'country',
+  chainId: Number(process.env.CHAIN_ID ?? '1666600000'),
   message (sld: string, alias: string, forwardAddress: string): string {
     return `You are about to authorize forwarding all emails sent to [${alias}@${sld}.${config.tld}] to [${forwardAddress}] instead`
   }

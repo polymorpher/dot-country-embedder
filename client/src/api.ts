@@ -1,8 +1,10 @@
 import config from '../config'
-// import { type ContractTransaction, ethers } from 'ethers'
+import EWSAbi from '../../contract/abi/EWS.json'
+import IDCAbi from '../../contract/abi/IDC.json'
+import { type BigNumber, type ContractTransaction, ethers } from 'ethers'
 import axios from 'axios'
 import { type ExtendedRecordMap } from 'notion-types'
-
+import { type EWS, type IDC } from '../../contract/typechain-types'
 const base = axios.create({ baseURL: config.server, timeout: 10000 })
 
 // interface APIResponse {
@@ -18,10 +20,69 @@ export const apis = {
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface Client {
-  // TODO
+  ews: EWS
+  dc: () => Promise<IDC>
+  getOwner: (sld: string) => Promise<string>
+  getExpirationTime: (sld: string) => Promise<number>
+  getBaseFees: () => Promise<BigNumber>
+  getPerPageFees: () => Promise<BigNumber>
+  getLandingPage: (sld: string) => Promise<string>
+  getAllowedPages: (sld: string) => Promise<string[]>
+  update: (sld: string, page: string, pages: string[], landingPageOnly: boolean) => Promise<ContractTransaction>
+  appendAllowedPages: (sld: string, pages: string[]) => Promise<ContractTransaction>
+  remove: (sld: string) => Promise<ContractTransaction>
 }
 export const buildClient = (provider?, signer?): Client => {
-  // const etherProvider = provider ?? new ethers.providers.StaticJsonRpcProvider(config.defaultRpc)
-
-  return {}
+  const etherProvider = provider ?? new ethers.providers.StaticJsonRpcProvider(config.defaultRpc)
+  const ews = new ethers.Contract(config.embedderContract, EWSAbi, etherProvider) as EWS
+  let _dc: IDC
+  const dc = async (): Promise<IDC> => {
+    if (_dc) {
+      return _dc
+    }
+    const dcAddress = await ews.dc()
+    _dc = new ethers.Contract(dcAddress, IDCAbi, etherProvider) as IDC
+    if (signer) {
+      _dc = _dc.connect(signer)
+    }
+    return _dc
+  }
+  dc().catch(e => { console.error(e) })
+  return {
+    ews,
+    dc,
+    getOwner: async (sld: string) => {
+      const c = await dc()
+      return await c.ownerOf(sld)
+    },
+    getExpirationTime: async (sld: string) => {
+      const c = await dc()
+      const r = await c.nameExpires(sld)
+      return r.toNumber() * 1000
+    },
+    getBaseFees: async (): Promise<BigNumber> => {
+      return await ews.landingPageFee()
+    },
+    getPerPageFees: async (): Promise<BigNumber> => {
+      return await ews.perAdditionalPageFee()
+    },
+    getLandingPage: async (sld: string): Promise<string> => {
+      return await ews.getLandingPage(ethers.utils.id(sld))
+    },
+    getAllowedPages: async (sld: string): Promise<string[]> => {
+      return await ews.getAllowedPages(ethers.utils.id(sld))
+    },
+    update: async (sld: string, page: string, pages: string[], landingPageOnly: boolean): Promise<ContractTransaction> => {
+      const baseFees = await ews.landingPageFee()
+      const additionalFees = await ews.perAdditionalPageFee()
+      return await ews.update(sld, page, pages, landingPageOnly, { value: landingPageOnly ? baseFees : (baseFees.add(additionalFees.mul(pages.length))) })
+    },
+    appendAllowedPages: async (sld: string, pages: string[]): Promise<ContractTransaction> => {
+      const additionalFees = await ews.perAdditionalPageFee()
+      return await ews.appendAllowedPages(sld, pages, { value: additionalFees.mul(pages.length) })
+    },
+    remove: async (sld: string): Promise<ContractTransaction> => {
+      return await ews.remove(sld)
+    }
+  }
 }

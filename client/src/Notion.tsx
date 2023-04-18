@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { renderToString } from 'react-dom/server'
 
-import { BaseText } from './components/Text'
+import { BaseText, LinkText } from './components/Text'
 import { buildClient, apis } from './api'
 
 import { NotionRenderer } from 'react-notion-x'
@@ -17,7 +17,10 @@ import htmlReactParser, { Element as ParserElement } from 'html-react-parser'
 import { getPath, getSld } from './utils'
 import { useTryCatch } from './hooks/useTryCatch'
 import { Navigate } from 'react-router-dom'
-import { LoadingScreen } from './components/Misc'
+import { BlankPage, LoadingScreen } from './components/Misc'
+import { LinkWrarpper } from './components/Controls'
+import { FlexColumn } from './components/Layout'
+import {useNetwork, useSwitchNetwork} from "wagmi";
 
 interface LinkReplacerConfig {
   children: JSX.Element
@@ -72,7 +75,7 @@ const Notion: React.FC = () => {
   const sld = getSld()
   const pageIdOverride = getPath().slice(1)
 
-  const { pending, setPending, initializing, setInitializing, tryCatch } = useTryCatch()
+  const { pending, initializing, tryCatch } = useTryCatch()
 
   useEffect(() => {
     if (!pageId) {
@@ -101,8 +104,8 @@ const Notion: React.FC = () => {
 
     tryCatch(async () => {
       return await Promise.all([
-        new Promise((resolve) => { resolve(1) })
-        // TODO - get allowed page ids, get page id
+        client.getLandingPage(sld).then(e => { setPageId(e) }),
+        client.getAllowedPages(sld).then(e => { setAllowedPageIds(e) })
       ])
     }, true).catch(e => { console.error(e) })
   }, [client, sld, tryCatch])
@@ -111,12 +114,28 @@ const Notion: React.FC = () => {
     return <LoadingScreen/>
   }
 
+  if (!pageId) {
+    return <BlankPage>
+      <FlexColumn style={{ textAlign: 'center' }}>
+        <BaseText>
+          This site has not connected with any notion page          <br/><br/>
+          If you are the owner, please visit <LinkWrarpper href={'/manage'}>here</LinkWrarpper> to configure the site
+
+        </BaseText>
+      </FlexColumn>
+    </BlankPage>
+  }
+
   if (pageIdOverride && !allowedPageIds.includes(pageIdOverride)) {
     return <Navigate to={'/manage'}/>
   }
 
-  if (!page) {
+  if (pending) {
     return <LoadingScreen><BaseText>Loading Content...</BaseText></LoadingScreen>
+  }
+
+  if (!page) {
+    return <LoadingScreen><BaseText>Rendering Page...</BaseText></LoadingScreen>
   }
 
   return <LinkReplacer pageId={pageId} allowedPageIds={allowedPageIds}>
