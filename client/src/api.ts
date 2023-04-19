@@ -54,7 +54,7 @@ export interface Client {
 }
 export const buildClient = (provider?, signer?): Client => {
   const etherProvider = provider ?? new ethers.providers.StaticJsonRpcProvider(config.defaultRpc)
-  const ews = new ethers.Contract(config.embedderContract, EWSAbi, etherProvider) as EWS
+  let ews = new ethers.Contract(config.embedderContract, EWSAbi, etherProvider) as EWS
   let _dc: IDC
   const dc = async (): Promise<IDC> => {
     if (_dc) {
@@ -68,6 +68,9 @@ export const buildClient = (provider?, signer?): Client => {
     return _dc
   }
   dc().catch(e => { console.error(e) })
+  if (signer) {
+    ews = ews.connect(signer)
+  }
   return {
     ews,
     dc,

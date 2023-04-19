@@ -127,7 +127,7 @@ const Manage = (): JSX.Element => {
   }, [debouncedEditingPageId])
 
   const save = async (): Promise<void> => {
-    if (!isValidateNotionPageId(pageId)) {
+    if (!isValidateNotionPageId(pageId) && pageId !== '') {
       toast.error(`Invalid landing page id: ${pageId}`)
       return
     }
@@ -138,7 +138,11 @@ const Manage = (): JSX.Element => {
       }
     }
     tryCatch(async () => {
-      await client.update(sld, pageId, allowedPageIds, false)
+      const tx = await client.update(sld, pageId, allowedPageIds, false)
+      toast.success(SuccessWithExplorerLink({
+        txHash: tx.hash,
+        message: 'Update complete!'
+      }))
     }).catch(e => { console.error(e) })
   }
 
@@ -178,7 +182,7 @@ const Manage = (): JSX.Element => {
         {!isConnected && <Button onClick={connect} style={{ width: 'auto' }}>CONNECT WALLET</Button> }
         {isConnected && <SmallTextGrey style={{ wordBreak: 'break-word', userSelect: 'all' }}>connected: {address}</SmallTextGrey>}
       </Desc>
-      {isConnected &&
+      {isConnected && (owner?.toLowerCase() === address?.toLowerCase()) &&
         <DescLeft>
           <Row>
             <LabelText>Main page id</LabelText>
