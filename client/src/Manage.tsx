@@ -3,10 +3,10 @@ import { FlexColumn, FlexRow, Main, Row } from './components/Layout'
 import { Address, BaseText, Desc, DescLeft, SmallText, Title } from './components/Text'
 import config from '../config'
 import { Button, Input, LinkWrarpper } from './components/Controls'
-import {useAccount, useConnect, useNetwork, useProvider, useSigner, useSwitchNetwork} from 'wagmi'
-import { buildClient } from './api'
+import { useAccount, useConnect, useNetwork, useProvider, useSigner, useSwitchNetwork } from 'wagmi'
+import { apis, buildClient } from './api'
 import { InjectedConnector } from 'wagmi/connectors/injected'
-import { getSld } from './utils'
+import { getSld, isValidateNotionPageId } from './utils'
 import { TailSpin } from 'react-loading-icons'
 import { Feedback, Loading } from './components/Misc'
 import useDebounce from './hooks/useDebounce'
@@ -14,6 +14,7 @@ import styled from 'styled-components'
 import { toast } from 'react-toastify'
 import { useTryCatch } from './hooks/useTryCatch'
 import { ethers } from 'ethers'
+import { instanceOf } from 'prop-types'
 
 const Container = styled(Main)`
   margin: 0 auto;
@@ -53,6 +54,19 @@ const LabelText = styled(BaseText)`
   white-space: nowrap;
 `
 
+const SuggestedPageId = ({ id }: { id: string | undefined | null | Error }): JSX.Element => {
+  if (id === undefined) {
+    return <></>
+  }
+  if (id === null) {
+    return <SmallTextGrey>Failed to extract notion page id. Please check the url.</SmallTextGrey>
+  }
+  if (Object.prototype.toString.call(id) === '[object Error]') {
+    return <SmallTextGrey>Unable to parse the url to extract notion page id. Error: {id.toString()} </SmallTextGrey>
+  }
+  return <SmallTextGrey>Extracted notion page id from url: {id}</SmallTextGrey>
+}
+
 const Manage = (): JSX.Element => {
   const { chain } = useNetwork()
   const { switchNetwork } = useSwitchNetwork()
@@ -63,8 +77,12 @@ const Manage = (): JSX.Element => {
   const { data: signer } = useSigner()
   const { connect } = useConnect({ connector: new InjectedConnector() })
   const [pageId, setPageId] = useState<string>('')
+  const [editingPageId, setEditingPageId] = useState<string>('')
+  const [editingPageIdPosition, setEditingPagePosition] = useState<number>(0)
+  const debouncedEditingPageId = useDebounce(editingPageId, 250)
   const [owner, setOwner] = useState<string>('')
   const [allowedPageIds, setAllowedPageIds] = useState<string[]>([])
+  const [suggestedPageId, setSuggestedPageId] = useState<string | undefined | null | Error>()
   const [baseFees, setBaseFees] = useState(ethers.BigNumber.from(0))
   const [perPageFees, setPerPageFees] = useState(ethers.BigNumber.from(0))
   const { pending, setPending, initializing, tryCatch } = useTryCatch()
@@ -79,8 +97,33 @@ const Manage = (): JSX.Element => {
     // @ts-expect-error debugging
     window.client = c
   }, [provider, signer])
+  useEffect(() => {
+    if (!debouncedEditingPageId) {
+      return
+    }
+    if (isValidateNotionPageId(debouncedEditingPageId)) {
+      setSuggestedPageId(undefined)
+      return
+    }
+    apis.parseNotionPageIdFromRawUrl(debouncedEditingPageId)
+      .then((id) => { setSuggestedPageId(id) })
+      .catch(ex => {
+        setSuggestedPageId(ex)
+        console.error(ex)
+      })
+  }, [debouncedEditingPageId])
 
   const save = async (): Promise<void> => {
+    if (!isValidateNotionPageId(pageId)) {
+      toast.error(`Invalid landing page id: ${pageId}`)
+      return
+    }
+    for (const id of allowedPageIds) {
+      if (!isValidateNotionPageId(id)) {
+        toast.error(`Invalid additional page id: ${id}`)
+        return
+      }
+    }
     tryCatch(async () => {
       await client.update(sld, pageId, allowedPageIds, false)
     }).catch(e => { console.error(e) })
@@ -118,25 +161,30 @@ const Manage = (): JSX.Element => {
         <SmallTextGrey>Connect your .country with notion pages</SmallTextGrey>
         {owner && <SmallTextGrey>Owner: {owner}</SmallTextGrey>}
       </FlexColumn>
-      <DescLeft>
-        {!isConnected && <Row style={{ justifyContent: 'center' }}><Button onClick={connect} style={{ width: 'auto' }}>CONNECT WALLET</Button></Row> }
-      </DescLeft>
+      <Desc>
+        {!isConnected && <Button onClick={connect} style={{ width: 'auto' }}>CONNECT WALLET</Button> }
+        {isConnected && <SmallTextGrey style={{ wordBreak: 'break-word', userSelect: 'all' }}>connected: {address}</SmallTextGrey>}
+      </Desc>
       {isConnected &&
         <DescLeft>
           <Row>
-            <LabelText>Main page</LabelText>
-            <InputBox $width={'100%'} value={pageId} placeholder={'ae42787a7d...'} onChange={({ target: { value } }) => { setPageId(value) }}/>
+            <LabelText>Main page id</LabelText>
+            <InputBox $width={'100%'} value={pageId} placeholder={'ae42787a7d...'} onChange={({ target: { value } }) => { setPageId(value); setEditingPageId(value); setEditingPagePosition(0) }}/>
           </Row>
+          {(editingPageIdPosition === 0) && <SuggestedPageId id={suggestedPageId}/>}
           <SmallTextGrey>This is the landing page when people visit web.{sld}.{config.tld} </SmallTextGrey>
           <LabelText style={{ marginTop: 32 }}>Additional pages</LabelText>
-          <SmallTextGrey>Add additional pages potentially to be shown on web.{sld}.{config.tld}, so when visitors click a link that goes to the page, they will stay on your site. Otherwise, they will be directed to an external site (on notion.so)</SmallTextGrey>
+          <SmallTextGrey>Add additional page ids potentially to be shown on web.{sld}.{config.tld}, so when visitors click a link that goes to the page, they will stay on your site. Otherwise, they will be directed to an external site (on notion.so)</SmallTextGrey>
           {allowedPageIds.map((pid, i) => {
-            return <Row key={pid}>
-              <InputBox $width={'100%'} value={pid} onChange={({ target: { value } }) => { setAllowedPageIds(e => [...e.slice(0, i), value, ...e.slice(i + 1)]) }}/>
-              <Button disabled={initializing || pending} $width={'auto'} onClick={ () => { setAllowedPageIds(e => [...e.slice(0, i), ...e.slice(i + 1)]) }}>
-                {pending ? <Loading/> : 'REMOVE' }
-              </Button>
-            </Row>
+            return <>
+              <Row key={pid}>
+                <InputBox $width={'100%'} value={pid} onChange={({ target: { value } }) => { setAllowedPageIds(e => [...e.slice(0, i), value, ...e.slice(i + 1)]); setEditingPageId(value); setEditingPagePosition(i + 1) }}/>
+                <Button disabled={initializing || pending} $width={'auto'} onClick={ () => { setAllowedPageIds(e => [...e.slice(0, i), ...e.slice(i + 1)]) }}>
+                  {pending ? <Loading/> : 'REMOVE' }
+                </Button>
+              </Row>
+              {(i === editingPageIdPosition - 1) && <SuggestedPageId id={suggestedPageId}/>}
+            </>
           })}
           <Row style={{ marginTop: 32, justifyContent: 'space-between' }}>
             <Button disabled={initializing || pending} $width={'auto'} onClick={ () => { setAllowedPageIds(e => [...e, '']) }}>{'ADD MORE'}</Button>

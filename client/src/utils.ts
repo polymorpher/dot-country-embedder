@@ -17,3 +17,14 @@ export const getPath = (): string => {
   }
   return window.location.pathname
 }
+
+const HexRegex = /[0-9a-f]+/
+export const isValidateNotionPageId = (id: string): boolean => {
+  if (id.length !== 32) {
+    return false
+  }
+  if (!id.match(HexRegex)) {
+    return false
+  }
+  return true
+}

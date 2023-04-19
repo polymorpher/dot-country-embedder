@@ -2,7 +2,7 @@ import express from 'express'
 import { StatusCodes } from 'http-status-codes'
 // import { body } from 'express-validator'
 import rateLimit from 'express-rate-limit'
-import { getPage } from '../src/notion.ts'
+import { getNotionPageId, getPage } from '../src/notion.ts'
 // import appConfig from '../config.ts'
 
 const router = express.Router()
@@ -35,5 +35,21 @@ router.get('/notion',
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
     }
   })
-
+router.post('/parse',
+  limiter(),
+  async (req, res) => {
+    const url = req.body?.url as (string | undefined)
+    if (!url) {
+      return res.status(StatusCodes.BAD_REQUEST).json({ error: 'need url', url })
+    }
+    console.log('[/parse]', { url })
+    try {
+      const id = await getNotionPageId(url)
+      res.json({ id })
+    } catch (ex: any) {
+      console.error(ex)
+      const error = ex?.response?.data || ex.toString()
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error })
+    }
+  })
 export default router

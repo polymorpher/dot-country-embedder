@@ -5,6 +5,7 @@ import { type BigNumber, type ContractTransaction, ethers } from 'ethers'
 import axios from 'axios'
 import { type ExtendedRecordMap } from 'notion-types'
 import { type EWS, type IDC } from '../../contract/typechain-types'
+import { isValidateNotionPageId } from './utils'
 const base = axios.create({ baseURL: config.server, timeout: 10000 })
 
 // interface APIResponse {
@@ -15,6 +16,25 @@ export const apis = {
   getNotionPage: async (id: string): Promise<ExtendedRecordMap> => {
     const { data } = await base.get('/notion', { params: { id } })
     return data
+  },
+  parseNotionPageIdFromRawUrl: async (url: string): Promise<string | null> => {
+    const urlObject = new URL(url)
+    const path = urlObject.pathname
+    const parts = path.split('-')
+    const tentativePageId = parts[parts.length - 1]
+    if (isValidateNotionPageId(tentativePageId)) {
+      return tentativePageId
+    }
+    console.log(`Cannot extract page id from ${url}. Downloading content...`)
+    const { data } = await base.post('/parse', { url })
+    const { id, error }: { id: string, error: string } = data
+    if (error) {
+      throw new Error(error)
+    }
+    if (!id) {
+      return null
+    }
+    return id
   }
 }
 
