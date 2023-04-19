@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { FlexColumn, FlexRow, Main, Row } from './components/Layout'
-import { Address, BaseText, Desc, DescLeft, SmallText, Title } from './components/Text'
+import { Address, BaseText, Desc, DescLeft, LinkText, SmallText, Title } from './components/Text'
 import config from '../config'
 import { Button, Input, LinkWrarpper } from './components/Controls'
 import { useAccount, useConnect, useNetwork, useProvider, useSigner, useSwitchNetwork } from 'wagmi'
@@ -40,6 +40,15 @@ const SuccessWithExplorerLink = ({ message, txHash }: SuccessWithExplorerLinkPar
 const SmallTextGrey = styled(SmallText)`
   color: grey;
 `
+
+const SmallTextRed = styled(SmallText)`
+  color: indianred;
+`
+
+const SmallTextGreen = styled(SmallText)`
+  color: limegreen;
+`
+
 const InputBox = styled(Input)`
   border-bottom: none;
   font-size: 16px;
@@ -54,17 +63,21 @@ const LabelText = styled(BaseText)`
   white-space: nowrap;
 `
 
-const SuggestedPageId = ({ id }: { id: string | undefined | null | Error }): JSX.Element => {
+interface SuggestedPageIdConfig {
+  id: string | undefined | null | Error
+  applyId?: (string) => void
+}
+const SuggestedPageId = ({ id, applyId }: SuggestedPageIdConfig): JSX.Element => {
   if (id === undefined) {
     return <></>
   }
   if (id === null) {
-    return <SmallTextGrey>Failed to extract notion page id. Please check the url.</SmallTextGrey>
+    return <SmallTextRed>Failed to extract notion page id. Please check the url.</SmallTextRed>
   }
   if (Object.prototype.toString.call(id) === '[object Error]') {
-    return <SmallTextGrey>Unable to parse the url to extract notion page id. Error: {id.toString()} </SmallTextGrey>
+    return <SmallTextRed>Unable to parse the url to extract notion page id. Error: {id.toString()} </SmallTextRed>
   }
-  return <SmallTextGrey>Extracted notion page id from url: {id}</SmallTextGrey>
+  return <SmallTextGrey>Extracted notion page id from url: <span style={{ color: 'black', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => { applyId?.(id) }}>{id.toString()}</span></SmallTextGrey>
 }
 
 const Manage = (): JSX.Element => {
@@ -171,7 +184,7 @@ const Manage = (): JSX.Element => {
             <LabelText>Main page id</LabelText>
             <InputBox $width={'100%'} value={pageId} placeholder={'ae42787a7d...'} onChange={({ target: { value } }) => { setPageId(value); setEditingPageId(value); setEditingPagePosition(0) }}/>
           </Row>
-          {(editingPageIdPosition === 0) && <SuggestedPageId id={suggestedPageId}/>}
+          {(editingPageIdPosition === 0) && <SuggestedPageId id={suggestedPageId} applyId={setPageId}/>}
           <SmallTextGrey>This is the landing page when people visit web.{sld}.{config.tld} </SmallTextGrey>
           <LabelText style={{ marginTop: 32 }}>Additional pages</LabelText>
           <SmallTextGrey>Add additional page ids potentially to be shown on web.{sld}.{config.tld}, so when visitors click a link that goes to the page, they will stay on your site. Otherwise, they will be directed to an external site (on notion.so)</SmallTextGrey>
@@ -179,11 +192,11 @@ const Manage = (): JSX.Element => {
             return <>
               <Row key={pid}>
                 <InputBox $width={'100%'} value={pid} onChange={({ target: { value } }) => { setAllowedPageIds(e => [...e.slice(0, i), value, ...e.slice(i + 1)]); setEditingPageId(value); setEditingPagePosition(i + 1) }}/>
-                <Button disabled={initializing || pending} $width={'auto'} onClick={ () => { setAllowedPageIds(e => [...e.slice(0, i), ...e.slice(i + 1)]) }}>
+                <Button disabled={initializing || pending} $width={'auto'} onClick={ () => { setAllowedPageIds(e => [...e.slice(0, i), ...e.slice(i + 1)]); setEditingPageId(''); setEditingPagePosition(0) }}>
                   {pending ? <Loading/> : 'REMOVE' }
                 </Button>
               </Row>
-              {(i === editingPageIdPosition - 1) && <SuggestedPageId id={suggestedPageId}/>}
+              {(i === editingPageIdPosition - 1) && <SuggestedPageId id={suggestedPageId} applyId={id => { setAllowedPageIds(e => [...e.slice(0, i), id, ...e.slice(i + 1)]) }} />}
             </>
           })}
           <Row style={{ marginTop: 32, justifyContent: 'space-between' }}>
