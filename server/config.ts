@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const DEBUG = process.env.SERVER_DEBUG === 'true' || process.env.SERVER_DEBUG === '1'
+const DEBUG = process.env.DEBUG === 'true' || process.env.DEBUG === '1'
 const config = {
   TLD: process.env.TLD ?? 'country',
   debug: DEBUG,
