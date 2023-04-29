@@ -24,8 +24,8 @@ app.set('trust proxy', true)
 let httpServer
 
 const httpsOptions = {
-  key: fs.readFileSync(config.https.key),
-  cert: fs.readFileSync(config.https.cert)
+  key: fs.readFileSync(config.https.key, { encoding: 'utf-8' }),
+  cert: fs.readFileSync(config.https.cert, { encoding: 'utf-8' })
 }
 
 if (config.https.only) {
