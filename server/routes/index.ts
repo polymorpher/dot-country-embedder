@@ -2,7 +2,7 @@ import express from 'express'
 import { StatusCodes } from 'http-status-codes'
 // import { body } from 'express-validator'
 import rateLimit from 'express-rate-limit'
-import { getNotionPageId, getPage } from '../src/notion.ts'
+import { getAllPageIds, getNotionPageId, getPage } from '../src/notion.ts'
 // import appConfig from '../config.ts'
 
 const router = express.Router()
@@ -50,6 +50,24 @@ router.post('/parse',
       console.error(ex)
       const error = ex?.response?.data || ex.toString()
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error })
+    }
+  })
+
+router.get('/links',
+  limiter(),
+  async (req, res) => {
+    const id = req.query?.id as (string | undefined)
+    const depth = Number(req.query?.depth ?? '0')
+    if (!id) {
+      return res.status(StatusCodes.BAD_REQUEST).json({ error: 'need id', id })
+    }
+    console.log('[/links]', { id, depth })
+    try {
+      const ret = await getAllPageIds(id, depth)
+      res.json(ret || {})
+    } catch (ex: any) {
+      console.error(ex)
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
     }
   })
 export default router

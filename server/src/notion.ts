@@ -82,15 +82,15 @@ export async function getAllPageIds (id: string, depth: number = 0): Promise<str
     if (filteredUniqueLinks.length === 0) {
       continue
     }
-    console.log(id, filteredUniqueLinks)
+    // console.log(id, filteredUniqueLinks)
     ret.push(...filteredUniqueLinks)
     ret = uniq(ret)
   }
   if (depth === 0) {
-    return ret
+    return ret.map(e => e.slice(1))
   }
 
   const promises = ret.map(async pageId => await getAllPageIds(pageId.slice(1), depth - 1))
   const linkGroups = await Promise.all(promises)
-  return [...ret, ...linkGroups.flat()]
+  return [...ret, ...linkGroups.flat()].map(e => e.slice(1))
 }
