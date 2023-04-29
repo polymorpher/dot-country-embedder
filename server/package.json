@@ -25,7 +25,7 @@
     "http-status-codes": "^2.1.4",
     "jsdom": "^21.1.1",
     "keccak": "^3.0.2",
-    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "moment": "^2.29.1",
     "morgan": "^1.10.0",
     "notion-client": "^6.16.0",
