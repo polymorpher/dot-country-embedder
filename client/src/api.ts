@@ -17,6 +17,10 @@ export const apis = {
     const { data } = await base.get('/notion', { params: { id } })
     return data
   },
+  getSameSitePageIds: async (id: string, depth = 0): Promise<string[]> => {
+    const { data } = await base.get('/links', { params: { id, depth } })
+    return data
+  },
   parseNotionPageIdFromRawUrl: async (url: string): Promise<string | null> => {
     const urlObject = new URL(url)
     const path = urlObject.pathname

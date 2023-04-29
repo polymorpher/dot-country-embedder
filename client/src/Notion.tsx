@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { renderToString } from 'react-dom/server'
 
-import { BaseText, LinkText } from './components/Text'
+import { BaseText } from './components/Text'
 import { buildClient, apis } from './api'
 
 import { NotionRenderer } from 'react-notion-x'
@@ -20,7 +20,7 @@ import { Navigate } from 'react-router-dom'
 import { BlankPage, LoadingScreen } from './components/Misc'
 import { LinkWrarpper } from './components/Controls'
 import { FlexColumn } from './components/Layout'
-import {useNetwork, useSwitchNetwork} from "wagmi";
+import { useNetwork, useSwitchNetwork } from 'wagmi'
 
 interface LinkReplacerConfig {
   children: JSX.Element
@@ -53,7 +53,7 @@ const LinkReplacer = ({ children, pageId, allowedPageIds = [] }: LinkReplacerCon
             } else {
               const matchedPageIds = allowedPageIds.filter(e => attr.value.startsWith(`/${e}`))
               if (attr.value.startsWith('/') && matchedPageIds.length === 0) {
-                node.attribs[attr.name] = 'https://notion.so/' + attr.value.slice(1)
+                node.attribs[attr.name] = `https://notion.so/${attr.value.slice(1)}`
                 replaced = true
               }
             }
@@ -70,8 +70,10 @@ const LinkReplacer = ({ children, pageId, allowedPageIds = [] }: LinkReplacerCon
 const Notion: React.FC = () => {
   const [client] = useState(buildClient())
   const [page, setPage] = useState<ExtendedRecordMap>()
-  const [pageId, setPageId] = useState<string>('ae42787a7d774e3bb86dcd897f720a0b')
-  const [allowedPageIds, setAllowedPageIds] = useState<string[]>(['7bebb4bb632c4fd985a0f816518b853f', '82036c958834437786427b83ca55bfbe'])
+  // const [pageId, setPageId] = useState<string>('ae42787a7d774e3bb86dcd897f720a0b')
+  const [pageId, setPageId] = useState<string>('')
+  // const [allowedPageIds, setAllowedPageIds] = useState<string[]>(['7bebb4bb632c4fd985a0f816518b853f', '82036c958834437786427b83ca55bfbe'])
+  const [allowedPageIds, setAllowedPageIds] = useState<string[]>([])
   const sld = getSld()
   const pageIdOverride = getPath().slice(1)
 

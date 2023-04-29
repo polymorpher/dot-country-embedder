@@ -90,6 +90,7 @@ const Manage = (): JSX.Element => {
   const { data: signer } = useSigner()
   const { connect } = useConnect({ connector: new InjectedConnector() })
   const [pageId, setPageId] = useState<string>('')
+  const [depth, setDepth] = useState<number>(0)
   const [editingPageId, setEditingPageId] = useState<string>('')
   const [editingPageIdPosition, setEditingPagePosition] = useState<number>(0)
   const debouncedEditingPageId = useDebounce(editingPageId, 250)
@@ -146,6 +147,13 @@ const Manage = (): JSX.Element => {
     }).catch(e => { console.error(e) })
   }
 
+  const collect = async (): Promise<void> => {
+    tryCatch(async () => {
+      const ids = await apis.getSameSitePageIds(pageId, depth)
+      setAllowedPageIds(ids)
+    }).catch(e => { console.error(e) })
+  }
+
   useEffect(() => {
     if (!client || !sld) {
       return
@@ -191,7 +199,18 @@ const Manage = (): JSX.Element => {
           {(editingPageIdPosition === 0) && <SuggestedPageId id={suggestedPageId} applyId={setPageId}/>}
           <SmallTextGrey>This is the landing page when people visit web.{sld}.{config.tld} </SmallTextGrey>
           <LabelText style={{ marginTop: 32 }}>Additional pages</LabelText>
-          <SmallTextGrey>Add additional page ids potentially to be shown on web.{sld}.{config.tld}, so when visitors click a link that goes to the page, they will stay on your site. Otherwise, they will be directed to an external site (on notion.so)</SmallTextGrey>
+          <SmallTextGrey>You allow the following subpages on web.{sld}.{config.tld}. Links to these pages will be rewritten under web.{sld}.{config.tld}, instead of to external sites (e.g. https://notion.so/....)</SmallTextGrey>
+          <Row>
+            <Button onClick={collect} disabled={initializing || pending} style={{ whiteSpace: 'nowrap', width: 'fit-content' }}>COLLECT AUTOMATICALLY</Button>
+            <BaseText>DEPTH</BaseText>
+            <Button
+                style={{ whiteSpace: 'nowrap', width: 'fit-content' }}
+                onClick={() => { setDepth(d => Math.max(0, d - 1)) } } disabled={initializing || pending}>-</Button>
+            <BaseText>{depth}</BaseText>
+            <Button
+                style={{ whiteSpace: 'nowrap', width: 'fit-content' }}
+                onClick={() => { setDepth(d => Math.min(2, d + 1)) } } disabled={initializing || pending}>+</Button>
+          </Row>
           {allowedPageIds.map((pid, i) => {
             return <>
               <Row key={pid}>
