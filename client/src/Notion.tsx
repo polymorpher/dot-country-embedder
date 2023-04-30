@@ -21,6 +21,7 @@ import { Navigate } from 'react-router-dom'
 import { BlankPage, LoadingScreen } from './components/Misc'
 import { LinkWrarpper } from './components/Controls'
 import { FlexColumn } from './components/Layout'
+import { Helmet } from 'react-helmet'
 
 interface LinkReplacerConfig {
   children: JSX.Element
@@ -72,6 +73,12 @@ const LinkReplacer = ({ children, pageId, allowedPageIds = [] }: LinkReplacerCon
 
 const Tweet = ({ id }: { id: string }) => {
   return <TweetEmbed tweetId={id} />
+}
+
+const extractTitle = (page: ExtendedRecordMap): string => {
+  const blocks = Object.entries(page.block)
+  const title = blocks[0][1].value.properties?.title?.flat()[0]
+  return title
 }
 
 const Notion: React.FC = () => {
@@ -151,7 +158,11 @@ const Notion: React.FC = () => {
   //   <Tweet id={'1324595039742222337'} />
   //   <Tweet id={'1466447129178783744'} />
   // </div>
-  return <NotionRenderer
+  return <>
+    <Helmet>
+      <title>{extractTitle(page)}</title>
+    </Helmet>
+    <NotionRenderer
       recordMap={page}
       fullPage={true}
       darkMode={false}
@@ -163,6 +174,7 @@ const Notion: React.FC = () => {
         Pdf,
         Tweet
       }}/>
+  </>
   // return <LinkReplacer pageId={pageId} allowedPageIds={allowedPageIds}>
   //   <NotionRenderer
   //     recordMap={page}
