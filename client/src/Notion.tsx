@@ -8,6 +8,7 @@ import { NotionRenderer } from 'react-notion-x'
 import 'react-notion-x/src/styles.css'
 
 import { Code } from 'react-notion-x/build/third-party/code'
+import TweetEmbed from 'react-tweet-embed'
 import { Collection } from 'react-notion-x/build/third-party/collection'
 import { Equation } from 'react-notion-x/build/third-party/equation'
 import { Modal } from 'react-notion-x/build/third-party/modal'
@@ -20,7 +21,6 @@ import { Navigate } from 'react-router-dom'
 import { BlankPage, LoadingScreen } from './components/Misc'
 import { LinkWrarpper } from './components/Controls'
 import { FlexColumn } from './components/Layout'
-import { useNetwork, useSwitchNetwork } from 'wagmi'
 
 interface LinkReplacerConfig {
   children: JSX.Element
@@ -28,6 +28,7 @@ interface LinkReplacerConfig {
   allowedPageIds: string[]
 }
 
+// DEPRECATED: TODO: this doesn't work with pages that have iframe, which is needed by tweets. We probably don't need this anymore, since we now have recursive crawler which can set allowed-pages correctly in the first place.
 const LinkReplacer = ({ children, pageId, allowedPageIds = [] }: LinkReplacerConfig): JSX.Element => {
   const [element, setElement] = useState<JSX.Element>(<></>)
   useEffect(() => {
@@ -37,6 +38,7 @@ const LinkReplacer = ({ children, pageId, allowedPageIds = [] }: LinkReplacerCon
         if (node.type !== 'tag' || !(node instanceof ParserElement)) {
           return
         }
+
         if (node.name === 'a') {
           if (node.attribs.href.startsWith('http://') || node.attribs.href.startsWith('https://')) {
             return
@@ -67,6 +69,11 @@ const LinkReplacer = ({ children, pageId, allowedPageIds = [] }: LinkReplacerCon
   }, [children, pageId, allowedPageIds])
   return element
 }
+
+const Tweet = ({ id }: { id: string }) => {
+  return <TweetEmbed tweetId={id} />
+}
+
 const Notion: React.FC = () => {
   const [client] = useState(buildClient())
   const [page, setPage] = useState<ExtendedRecordMap>()
@@ -83,7 +90,8 @@ const Notion: React.FC = () => {
     if (!pageId) {
       return
     }
-    if (pageIdOverride && !allowedPageIds.includes(pageIdOverride)) {
+    console.log(pageIdOverride, pageId, allowedPageIds)
+    if (pageIdOverride && !allowedPageIds.includes(pageIdOverride) && pageIdOverride !== pageId) {
       return
     }
     const renderedPageId = pageIdOverride || pageId
@@ -128,7 +136,7 @@ const Notion: React.FC = () => {
     </BlankPage>
   }
 
-  if (pageIdOverride && !allowedPageIds.includes(pageIdOverride)) {
+  if (pageIdOverride && !allowedPageIds.includes(pageIdOverride) && pageIdOverride !== pageId) {
     return <Navigate to={'/manage'}/>
   }
 
@@ -139,9 +147,11 @@ const Notion: React.FC = () => {
   if (!page) {
     return <LoadingScreen><BaseText>Rendering Page...</BaseText></LoadingScreen>
   }
-
-  return <LinkReplacer pageId={pageId} allowedPageIds={allowedPageIds}>
-    <NotionRenderer
+  // return <div>
+  //   <Tweet id={'1324595039742222337'} />
+  //   <Tweet id={'1466447129178783744'} />
+  // </div>
+  return <NotionRenderer
       recordMap={page}
       fullPage={true}
       darkMode={false}
@@ -150,9 +160,23 @@ const Notion: React.FC = () => {
         Collection,
         Equation,
         Modal,
-        Pdf
+        Pdf,
+        Tweet
       }}/>
-  </LinkReplacer>
+  // return <LinkReplacer pageId={pageId} allowedPageIds={allowedPageIds}>
+  //   <NotionRenderer
+  //     recordMap={page}
+  //     fullPage={true}
+  //     darkMode={false}
+  //     components={{
+  //       Code,
+  //       Collection,
+  //       Equation,
+  //       Modal,
+  //       Pdf,
+  //       Tweet
+  //     }}/>
+  // </LinkReplacer>
 }
 
 export default Notion
