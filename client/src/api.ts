@@ -46,7 +46,9 @@ export const apis = {
 export interface Client {
   ews: EWS
   dc: () => Promise<IDC>
+  hasMaintainerRole: (address: string) => Promise<boolean>
   getOwner: (sld: string) => Promise<string>
+  getAllowMaintainerAccess: (sld: string) => Promise<boolean>
   getExpirationTime: (sld: string) => Promise<number>
   getBaseFees: () => Promise<BigNumber>
   getPerPageFees: () => Promise<BigNumber>
@@ -99,6 +101,9 @@ export const buildClient = (provider?, signer?): Client => {
     getAllowedPages: async (sld: string): Promise<string[]> => {
       return await ews.getAllowedPages(ethers.utils.id(sld))
     },
+    getAllowMaintainerAccess: async (sld: string): Promise<boolean> => {
+      return ews.getAllowMaintainerAccess(ethers.utils.id(sld))
+    },
     update: async (sld: string, page: string, pages: string[], landingPageOnly: boolean): Promise<ContractTransaction> => {
       const baseFees = await ews.landingPageFee()
       const additionalFees = await ews.perAdditionalPageFee()
@@ -110,6 +115,9 @@ export const buildClient = (provider?, signer?): Client => {
     },
     remove: async (sld: string): Promise<ContractTransaction> => {
       return await ews.remove(sld)
+    },
+    hasMaintainerRole: async (address: string): Promise<boolean> => {
+      return ews.hasRole(await ews.MAINTAINER_ROLE(), address)
     }
   }
 }

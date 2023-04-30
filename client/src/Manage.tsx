@@ -1,20 +1,19 @@
 import React, { useEffect, useState } from 'react'
-import { FlexColumn, FlexRow, Main, Row } from './components/Layout'
-import { Address, BaseText, Desc, DescLeft, LinkText, SmallText, Title } from './components/Text'
+import { FlexColumn, Main, Row } from './components/Layout'
+import { BaseText, Desc, DescLeft, SmallText, Title } from './components/Text'
 import config from '../config'
 import { Button, Input, LinkWrarpper } from './components/Controls'
 import { useAccount, useConnect, useNetwork, useProvider, useSigner, useSwitchNetwork } from 'wagmi'
 import { apis, buildClient } from './api'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { getSld, isValidateNotionPageId } from './utils'
-import { TailSpin } from 'react-loading-icons'
 import { Feedback, Loading } from './components/Misc'
 import useDebounce from './hooks/useDebounce'
 import styled from 'styled-components'
 import { toast } from 'react-toastify'
 import { useTryCatch } from './hooks/useTryCatch'
 import { ethers } from 'ethers'
-import { instanceOf } from 'prop-types'
+
 
 const Container = styled(Main)`
   margin: 0 auto;
@@ -96,10 +95,12 @@ const Manage = (): JSX.Element => {
   const debouncedEditingPageId = useDebounce(editingPageId, 250)
   const [owner, setOwner] = useState<string>('')
   const [allowedPageIds, setAllowedPageIds] = useState<string[]>([])
+  const [allowMaintainerAccess, setAllowMaintainerAccess] = useState<boolean>(true)
+  const [isMaintainer, setIsMaintainer] = useState<boolean>(true)
   const [suggestedPageId, setSuggestedPageId] = useState<string | undefined | null | Error>()
   const [baseFees, setBaseFees] = useState(ethers.BigNumber.from(0))
   const [perPageFees, setPerPageFees] = useState(ethers.BigNumber.from(0))
-  const { pending, setPending, initializing, tryCatch } = useTryCatch()
+  const { pending, initializing, tryCatch } = useTryCatch()
   const sld = getSld()
   const totalFees = baseFees.add(perPageFees.mul(allowedPageIds.length))
   useEffect(() => {
@@ -111,6 +112,14 @@ const Manage = (): JSX.Element => {
     // @ts-expect-error debugging
     window.client = c
   }, [provider, signer])
+
+  useEffect(() => {
+    if (!client) {
+      return
+    }
+    client.hasMaintainerRole(address as string).then(e => { setIsMaintainer(e) }).catch(console.error)
+  }, [address, client])
+
   useEffect(() => {
     if (!debouncedEditingPageId) {
       return
@@ -162,6 +171,7 @@ const Manage = (): JSX.Element => {
       return await Promise.all([
         client.getLandingPage(sld).then(e => { setPageId(e) }),
         client.getAllowedPages(sld).then(e => { setAllowedPageIds(e) }),
+        client.getAllowMaintainerAccess(sld).then(e => { setAllowMaintainerAccess(e) }),
         client.getBaseFees().then(e => { setBaseFees(e) }),
         client.getPerPageFees().then(e => { setPerPageFees(e) }),
         client.getOwner(sld).then(e => { setOwner(e) })
@@ -179,6 +189,16 @@ const Manage = (): JSX.Element => {
     }
   }, [isConnected, chain, switchNetwork])
 
+  const allowAccess = () => {
+    if (owner?.toLowerCase() === address?.toLowerCase()) {
+      return true
+    }
+    if (allowMaintainerAccess && isMaintainer) {
+      return true
+    }
+    return false
+  }
+
   return (
     <Container>
       <FlexColumn style={{ alignItems: 'center', marginTop: 120, gap: 16 }}>
@@ -190,7 +210,7 @@ const Manage = (): JSX.Element => {
         {!isConnected && <Button onClick={connect} style={{ width: 'auto' }}>CONNECT WALLET</Button> }
         {isConnected && <SmallTextGrey style={{ wordBreak: 'break-word', userSelect: 'all' }}>connected: {address}</SmallTextGrey>}
       </Desc>
-      {isConnected && (owner?.toLowerCase() === address?.toLowerCase()) &&
+      {isConnected && (allowAccess()) &&
         <DescLeft>
           <Row>
             <LabelText>Main page id</LabelText>
