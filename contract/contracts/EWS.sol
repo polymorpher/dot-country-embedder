@@ -13,8 +13,10 @@ interface IDC {
 // Embedded Website Service
 
 contract EWS is AccessControl {
-    bytes32 public constant MAINTAINER_ROLE = keccak256("MAINTAINER_ROLE");
+    event RevenueAccountChanged(address from, address to);
 
+    bytes32 public constant MAINTAINER_ROLE = keccak256("MAINTAINER_ROLE");
+    address public revenueAccount;
     struct EWSConfig {
         string landingPage;
         string[] allowedPages;
@@ -123,5 +125,16 @@ contract EWS is AccessControl {
         ec.landingPage = "";
         delete ec.allowedPages;
         delete configs[node];
+    }
+
+    function setRevenueAccount(address _revenueAccount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        emit RevenueAccountChanged(revenueAccount, _revenueAccount);
+        revenueAccount = _revenueAccount;
+    }
+
+    function withdraw() external {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender) || msg.sender == revenueAccount, "EWS: must be admin or revenue account");
+        (bool success,) = revenueAccount.call{value : address(this).balance}("");
+        require(success, "EWS: failed to withdraw");
     }
 }

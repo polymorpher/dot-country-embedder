@@ -47,13 +47,16 @@ export interface EWSInterface extends utils.Interface {
     "perAdditionalPageFee()": FunctionFragment;
     "remove(string)": FunctionFragment;
     "renounceRole(bytes32,address)": FunctionFragment;
+    "revenueAccount()": FunctionFragment;
     "revokeRole(bytes32,address)": FunctionFragment;
     "setDc(address)": FunctionFragment;
     "setLandingPageFee(uint256)": FunctionFragment;
     "setPerAdditionalPageFee(uint256)": FunctionFragment;
+    "setRevenueAccount(address)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "toggleMaintainerAccess(string)": FunctionFragment;
     "update(string,string,string[],bool)": FunctionFragment;
+    "withdraw()": FunctionFragment;
   };
 
   getFunction(
@@ -75,13 +78,16 @@ export interface EWSInterface extends utils.Interface {
       | "perAdditionalPageFee"
       | "remove"
       | "renounceRole"
+      | "revenueAccount"
       | "revokeRole"
       | "setDc"
       | "setLandingPageFee"
       | "setPerAdditionalPageFee"
+      | "setRevenueAccount"
       | "supportsInterface"
       | "toggleMaintainerAccess"
       | "update"
+      | "withdraw"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -154,6 +160,10 @@ export interface EWSInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
+    functionFragment: "revenueAccount",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "revokeRole",
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
   ): string;
@@ -168,6 +178,10 @@ export interface EWSInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "setPerAdditionalPageFee",
     values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setRevenueAccount",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "supportsInterface",
@@ -186,6 +200,7 @@ export interface EWSInterface extends utils.Interface {
       PromiseOrValue<boolean>
     ]
   ): string;
+  encodeFunctionData(functionFragment: "withdraw", values?: undefined): string;
 
   decodeFunctionResult(
     functionFragment: "DEFAULT_ADMIN_ROLE",
@@ -240,6 +255,10 @@ export interface EWSInterface extends utils.Interface {
     functionFragment: "renounceRole",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "revenueAccount",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "revokeRole", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "setDc", data: BytesLike): Result;
   decodeFunctionResult(
@@ -251,6 +270,10 @@ export interface EWSInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "setRevenueAccount",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "supportsInterface",
     data: BytesLike
   ): Result;
@@ -259,17 +282,32 @@ export interface EWSInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "update", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {
+    "RevenueAccountChanged(address,address)": EventFragment;
     "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
     "RoleGranted(bytes32,address,address)": EventFragment;
     "RoleRevoked(bytes32,address,address)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "RevenueAccountChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleAdminChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleGranted"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleRevoked"): EventFragment;
 }
+
+export interface RevenueAccountChangedEventObject {
+  from: string;
+  to: string;
+}
+export type RevenueAccountChangedEvent = TypedEvent<
+  [string, string],
+  RevenueAccountChangedEventObject
+>;
+
+export type RevenueAccountChangedEventFilter =
+  TypedEventFilter<RevenueAccountChangedEvent>;
 
 export interface RoleAdminChangedEventObject {
   role: string;
@@ -413,6 +451,8 @@ export interface EWS extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    revenueAccount(overrides?: CallOverrides): Promise<[string]>;
+
     revokeRole(
       role: PromiseOrValue<BytesLike>,
       account: PromiseOrValue<string>,
@@ -434,6 +474,11 @@ export interface EWS extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    setRevenueAccount(
+      _revenueAccount: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -450,6 +495,10 @@ export interface EWS extends BaseContract {
       allowedPages: PromiseOrValue<string>[],
       landingPageOnly: PromiseOrValue<boolean>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    withdraw(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
 
@@ -531,6 +580,8 @@ export interface EWS extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  revenueAccount(overrides?: CallOverrides): Promise<string>;
+
   revokeRole(
     role: PromiseOrValue<BytesLike>,
     account: PromiseOrValue<string>,
@@ -552,6 +603,11 @@ export interface EWS extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  setRevenueAccount(
+    _revenueAccount: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   supportsInterface(
     interfaceId: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
@@ -568,6 +624,10 @@ export interface EWS extends BaseContract {
     allowedPages: PromiseOrValue<string>[],
     landingPageOnly: PromiseOrValue<boolean>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  withdraw(
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
@@ -649,6 +709,8 @@ export interface EWS extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    revenueAccount(overrides?: CallOverrides): Promise<string>;
+
     revokeRole(
       role: PromiseOrValue<BytesLike>,
       account: PromiseOrValue<string>,
@@ -670,6 +732,11 @@ export interface EWS extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    setRevenueAccount(
+      _revenueAccount: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -687,9 +754,20 @@ export interface EWS extends BaseContract {
       landingPageOnly: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    withdraw(overrides?: CallOverrides): Promise<void>;
   };
 
   filters: {
+    "RevenueAccountChanged(address,address)"(
+      from?: null,
+      to?: null
+    ): RevenueAccountChangedEventFilter;
+    RevenueAccountChanged(
+      from?: null,
+      to?: null
+    ): RevenueAccountChangedEventFilter;
+
     "RoleAdminChanged(bytes32,bytes32,bytes32)"(
       role?: PromiseOrValue<BytesLike> | null,
       previousAdminRole?: PromiseOrValue<BytesLike> | null,
@@ -801,6 +879,8 @@ export interface EWS extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    revenueAccount(overrides?: CallOverrides): Promise<BigNumber>;
+
     revokeRole(
       role: PromiseOrValue<BytesLike>,
       account: PromiseOrValue<string>,
@@ -822,6 +902,11 @@ export interface EWS extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    setRevenueAccount(
+      _revenueAccount: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -838,6 +923,10 @@ export interface EWS extends BaseContract {
       allowedPages: PromiseOrValue<string>[],
       landingPageOnly: PromiseOrValue<boolean>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    withdraw(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
 
@@ -922,6 +1011,8 @@ export interface EWS extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    revenueAccount(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     revokeRole(
       role: PromiseOrValue<BytesLike>,
       account: PromiseOrValue<string>,
@@ -943,6 +1034,11 @@ export interface EWS extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    setRevenueAccount(
+      _revenueAccount: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -959,6 +1055,10 @@ export interface EWS extends BaseContract {
       allowedPages: PromiseOrValue<string>[],
       landingPageOnly: PromiseOrValue<boolean>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    withdraw(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };
 }
