@@ -81,6 +81,11 @@ const extractTitle = (page: ExtendedRecordMap): string => {
   return blocks[0][1].value.properties?.title?.flat().join(' ')
 }
 
+const extractPageEmoji = (page: ExtendedRecordMap): string | undefined => {
+  const blocks = Object.entries(page.block)
+  return blocks[0][1].value?.format?.page_icon
+}
+
 const extractPageCover = (page: ExtendedRecordMap): string | undefined => {
   const blocks = Object.entries(page.block)
   return blocks[0][1].value?.format?.page_cover
@@ -213,8 +218,8 @@ const Notion: React.FC = () => {
   const title = extractTitle(page)
   const desc = extractDescription(page)
   const coverImageUrl = extractPageCover(page)
-  const emoji = extractEmoji(title) || extractEmoji(desc)
-  console.log({ title, desc, coverImageUrl, emoji })
+  const emoji = (extractPageEmoji(page) ?? extractEmoji(title)) || extractEmoji(desc)
+  // console.log({ title, desc, coverImageUrl, emoji })
   // return <div>
   //   <Tweet id={'1324595039742222337'} />
   //   <Tweet id={'1466447129178783744'} />
