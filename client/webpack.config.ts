@@ -102,6 +102,7 @@ module.exports = {
     new HtmlWebpackPlugin({
       inject: true,
       filename: 'index.html',
+      favicon: 'assets/favicon.png',
       template: 'assets/index.html',
       environment: process.env.NODE_ENV,
       hash: true
