@@ -6,7 +6,7 @@ import { Button, Input, LinkWrarpper } from './components/Controls'
 import { useAccount, useConnect, useNetwork, useProvider, useSigner, useSwitchNetwork } from 'wagmi'
 import { apis, buildClient } from './api'
 import { InjectedConnector } from 'wagmi/connectors/injected'
-import { getSld, isValidateNotionPageId } from './utils'
+import { getSld, isValidNotionPageId } from './utils'
 import { Feedback, Loading } from './components/Misc'
 import useDebounce from './hooks/useDebounce'
 import styled from 'styled-components'
@@ -124,7 +124,7 @@ const Manage = (): JSX.Element => {
     if (!debouncedEditingPageId) {
       return
     }
-    if (isValidateNotionPageId(debouncedEditingPageId)) {
+    if (isValidNotionPageId(debouncedEditingPageId)) {
       setSuggestedPageId(undefined)
       return
     }
@@ -137,12 +137,12 @@ const Manage = (): JSX.Element => {
   }, [debouncedEditingPageId])
 
   const save = async (): Promise<void> => {
-    if (!isValidateNotionPageId(pageId) && pageId !== '') {
+    if (!isValidNotionPageId(pageId) && pageId !== '') {
       toast.error(`Invalid landing page id: ${pageId}`)
       return
     }
     for (const id of allowedPageIds) {
-      if (!isValidateNotionPageId(id)) {
+      if (!isValidNotionPageId(id)) {
         toast.error(`Invalid additional page id: ${id}`)
         return
       }

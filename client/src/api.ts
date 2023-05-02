@@ -5,7 +5,7 @@ import { type BigNumber, type ContractTransaction, ethers } from 'ethers'
 import axios from 'axios'
 import { type ExtendedRecordMap } from 'notion-types'
 import { type EWS, type IDC } from '../../contract/typechain-types'
-import { isValidateNotionPageId } from './utils'
+import { isValidNotionPageId } from './utils'
 const base = axios.create({ baseURL: config.server, timeout: 10000 })
 
 // interface APIResponse {
@@ -26,7 +26,7 @@ export const apis = {
     const path = urlObject.pathname
     const parts = path.split('-')
     const tentativePageId = parts[parts.length - 1]
-    if (isValidateNotionPageId(tentativePageId)) {
+    if (isValidNotionPageId(tentativePageId)) {
       return tentativePageId
     }
     console.log(`Cannot extract page id from ${url}. Downloading content...`)

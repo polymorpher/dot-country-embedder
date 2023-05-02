@@ -15,7 +15,7 @@ import { Modal } from 'react-notion-x/build/third-party/modal'
 import { Pdf } from 'react-notion-x/build/third-party/pdf'
 import { type Block, type ExtendedRecordMap } from 'notion-types'
 import htmlReactParser, { Element as ParserElement } from 'html-react-parser'
-import { getPath, getSld } from './utils'
+import { getPath, getSld, isValidNotionPageId } from './utils'
 import { useTryCatch } from './hooks/useTryCatch'
 import { Navigate } from 'react-router-dom'
 import { BlankPage, LoadingScreen } from './components/Misc'
@@ -203,6 +203,9 @@ const Notion: React.FC = () => {
   }
 
   if (pageIdOverride && !allowedPageIds.includes(pageIdOverride) && pageIdOverride !== pageId) {
+    if (isValidNotionPageId(pageIdOverride)) {
+      return <Navigate to={`https://notion.so/${pageIdOverride}`}/>
+    }
     return <Navigate to={'/manage'}/>
   }
 

@@ -19,7 +19,7 @@ export const getPath = (): string => {
 }
 
 const HexRegex = /[0-9a-f]+/
-export const isValidateNotionPageId = (id: string): boolean => {
+export const isValidNotionPageId = (id: string): boolean => {
   if (id.length !== 32) {
     return false
   }
