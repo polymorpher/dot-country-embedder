@@ -170,7 +170,7 @@ const Notion: React.FC = () => {
       <title>{title}</title>
       <meta name="description" content={desc}/>
       {emoji && <link rel="icon" href={makeEmojiDataUrl(emoji) } />}
-      {coverImageUrl && <meta property="og:image" content="http://qokka.ai/{{{imagePath}}}"/>}
+      {coverImageUrl && <meta property="og:image" content={coverImageUrl}/>}
       <meta property="og:url" content={`https://${sld}.${config.tld}/${pageIdOverride}`}/>
       <meta property="og:title" content={title}/>
       <meta property="og:description" content={desc}/>
