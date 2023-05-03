@@ -1,9 +1,8 @@
 import express from 'express'
 import { StatusCodes } from 'http-status-codes'
-// import { body } from 'express-validator'
 import rateLimit from 'express-rate-limit'
 import { getAllPageIds, getNotionPageId, getPage } from '../src/notion.ts'
-// import appConfig from '../config.ts'
+import { getOGPage } from '../src/og.ts'
 
 const router = express.Router()
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -70,4 +69,18 @@ router.get('/links',
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
     }
   })
+
+// rendering preview data for crawler bots
+router.get(['/*'], limiter(), async (req, res) => {
+  try {
+    const parts = req.hostname.split('.')
+    console.log(parts)
+    const sld = parts.length <= 1 ? '' : parts[parts.length - 2].toLowerCase()
+    const page = await getOGPage(sld)
+    res.header('content-type', 'text/html; charset=utf-8').send(page)
+  } catch (ex: any) {
+    console.error(ex)
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
+  }
+})
 export default router

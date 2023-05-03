@@ -13,7 +13,8 @@ import { Collection } from 'react-notion-x/build/third-party/collection'
 import { Equation } from 'react-notion-x/build/third-party/equation'
 import { Modal } from 'react-notion-x/build/third-party/modal'
 import { Pdf } from 'react-notion-x/build/third-party/pdf'
-import { type Block, type ExtendedRecordMap } from 'notion-types'
+import { extractTitle, extractDescription, extractPageCover, extractPageEmoji, makeEmojiDataUrl, extractEmoji } from '../../common/notion-utils'
+import { type ExtendedRecordMap } from 'notion-types'
 import htmlReactParser, { Element as ParserElement } from 'html-react-parser'
 import { getPath, getSld, isValidNotionPageId } from './utils'
 import { useTryCatch } from './hooks/useTryCatch'
@@ -76,70 +77,6 @@ const Tweet = ({ id }: { id: string }): JSX.Element => {
   return <TweetEmbed tweetId={id} />
 }
 
-const extractTitle = (page: ExtendedRecordMap): string => {
-  const blocks = Object.entries(page.block)
-  return blocks[0][1].value.properties?.title?.flat().join(' ')
-}
-
-const extractPageEmoji = (page: ExtendedRecordMap): string | undefined => {
-  const blocks = Object.entries(page.block)
-  return blocks[0][1].value?.format?.page_icon
-}
-
-const extractPageCover = (page: ExtendedRecordMap): string | undefined => {
-  const blocks = Object.entries(page.block)
-  return blocks[0][1].value?.format?.page_cover
-}
-
-const extractTextFromBlock = (block: { role: string, value: Block }): string => {
-  if (block.value.type === 'text') {
-    return block?.value?.properties?.title?.flat().join(' ') as string
-  }
-  return ''
-}
-const extractDescription = (page: ExtendedRecordMap): string => {
-  const blocks = Object.entries(page.block)
-  let currentBlock = blocks[0][1]
-  if (!currentBlock) {
-    return ''
-  }
-  if (!currentBlock.value.content) {
-    return ''
-  }
-  const blockPaths = [...currentBlock.value.content].reverse()
-  currentBlock = page.block[blockPaths.pop() as string]
-  let desc = extractTextFromBlock(currentBlock)
-  if (desc) {
-    return desc
-  }
-  while (!desc) {
-    if (currentBlock.value?.content) {
-      blockPaths.push(...(currentBlock.value.content.reverse()))
-    }
-    if (blockPaths.length === 0) {
-      return ''
-    }
-    currentBlock = page.block[blockPaths.pop() as string]
-    desc = extractTextFromBlock(currentBlock)
-    if (desc) {
-      return desc
-    }
-  }
-  return ''
-}
-
-const makeEmojiDataUrl = (emoji: string): string => {
-  return `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>${emoji}</text></svg>`
-}
-
-const extractEmoji = (text: string): string => {
-  const m = text.match(/(\p{EPres}|\p{ExtPict})(\u200d(\p{EPres}|\p{ExtPict}))*/gu)
-  if (m) {
-    return m[0]
-  }
-  return ''
-}
-
 const Notion: React.FC = () => {
   const [client] = useState(buildClient())
   const [page, setPage] = useState<ExtendedRecordMap>()
@@ -156,7 +93,7 @@ const Notion: React.FC = () => {
     if (!pageId) {
       return
     }
-    console.log(pageIdOverride, pageId, allowedPageIds)
+    // console.log(pageIdOverride, pageId, allowedPageIds)
     if (pageIdOverride && !allowedPageIds.includes(pageIdOverride) && pageIdOverride !== pageId) {
       return
     }
@@ -218,10 +155,11 @@ const Notion: React.FC = () => {
     // return <LoadingScreen><BaseText>Rendering Page...</BaseText></LoadingScreen>
     return <LoadingScreen/>
   }
-  const title = extractTitle(page)
+  const blocks = Object.values(page.block)
+  const title = extractTitle(blocks)
   const desc = extractDescription(page)
-  const coverImageUrl = extractPageCover(page)
-  const emoji = (extractPageEmoji(page) ?? extractEmoji(title)) || extractEmoji(desc)
+  const coverImageUrl = extractPageCover(blocks)
+  const emoji = (extractPageEmoji(blocks) ?? extractEmoji(title)) || extractEmoji(desc)
   // console.log({ title, desc, coverImageUrl, emoji })
   // return <div>
   //   <Tweet id={'1324595039742222337'} />

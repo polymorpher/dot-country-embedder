@@ -1,6 +1,0 @@
-{
-  "devDependencies": {
-    "html-react-parser": "^3.0.15",
-    "react-dom": "^18.2.0"
-  }
-}
