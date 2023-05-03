@@ -20,7 +20,7 @@ export const renderOpenGraphTemplate = (data: OpenGraphData): string => {
     <title>${encode(data.title)}</title>
     <meta name="description" content="${encode(data.desc)}"/>
     <link rel="icon" href='${(data.icon)}' />
-    ${data.image ? `<meta property="og:image" content="${encode(data.image)}"/>` : ''}
+    ${data.image ? `<meta property="og:image" content="${data.image}"/>` : ''}
     <meta property="og:url" content="${data.url}"/>
     <meta property="og:title" content="${encode(data.title)}"/>
     <meta property="og:description" content="${encode(data.desc)}"/>
