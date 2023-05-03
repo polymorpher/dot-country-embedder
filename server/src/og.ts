@@ -26,6 +26,11 @@ export const renderOpenGraphTemplate = (data: OpenGraphData): string => {
     <meta property="og:url" content="${data.url}"/>
     <meta property="og:title" content="${encode(data.title)}"/>
     <meta property="og:description" content="${encode(data.desc)}"/>
+    <meta name="twitter:card" content="summary_large_image">
+    ${data.image ? `<meta name="twitter:image" content="${data.image}"/>` : ''}
+    <meta property="og:type" content="article">
+    <meta property="og:locale" content="en_US">
+    
 </head>
 <body>Hello, bot!</body>
 </html>`
