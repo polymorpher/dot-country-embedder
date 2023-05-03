@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes'
 import rateLimit from 'express-rate-limit'
 import { getAllPageIds, getNotionPageId, getPage } from '../src/notion.ts'
 import { getOGPage } from '../src/og.ts'
+import {isValidNotionPageId} from "../../common/notion-utils.ts";
 
 const router = express.Router()
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -74,7 +75,11 @@ router.get('/links',
 router.get(['/*'], limiter(), async (req, res) => {
   try {
     const parts = req.hostname.split('.')
-    console.log(parts)
+    const path = req.path.slice(1)
+    console.log(parts, path)
+      if(isValidNotionPageId(path)){
+
+      }
     const sld = parts.length <= 1 ? '' : parts[parts.length - 2].toLowerCase()
     const page = await getOGPage(sld)
     res.header('content-type', 'text/html; charset=utf-8').send(page)

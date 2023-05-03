@@ -4,7 +4,15 @@ import axios from 'axios'
 import { JSDOM } from 'jsdom'
 import { uniq } from 'lodash-es'
 import { type OpenGraphData } from './types.ts'
-import { extractTitle, extractDescription, extractPageCover, extractPageEmoji, makeEmojiDataUrl, extractEmoji } from '../../common/notion-utils.ts'
+import {
+  extractTitle,
+  extractDescription,
+  extractPageCover,
+  extractPageEmoji,
+  makeEmojiDataUrl,
+  extractEmoji,
+  extractPageImagePreview
+} from '../../common/notion-utils.ts'
 const notion = new NotionAPI()
 
 const axiosBase = axios.create({ timeout: 15000 })
@@ -130,12 +138,12 @@ export function getOGDataFromPage (page: ExtendedRecordMap): OpenGraphData {
   const blocks = Object.values(page.block)
   const title = extractTitle(blocks)
   const desc = extractDescription(page)
-  const coverImageUrl = extractPageCover(blocks)
+  const image = extractPageImagePreview(page)
   const emoji = (extractPageEmoji(blocks) ?? extractEmoji(title)) || extractEmoji(desc)
   return {
     title,
     desc,
     icon: emoji ? makeEmojiDataUrl(emoji) : defaultIcon,
-    image: coverImageUrl
+    image
   }
 }

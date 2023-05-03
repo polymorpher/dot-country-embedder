@@ -16,6 +16,12 @@ export const extractPageCover = (blocks: BlockEntry[]): string | undefined => {
     return blocks[0].value?.format?.page_cover
 }
 
+export const extractPageImagePreview = (page: ExtendedRecordMap): string | undefined => {
+    const blocks = Object.values(page.block)
+    console.log(blocks[0].value.id, page.signed_urls[blocks[0].value.id], page.signed_urls)
+    return page.signed_urls[blocks[0].value.id] || extractPageCover(blocks)
+}
+
 export  const extractTextFromBlock = (block: BlockEntry): string => {
     if (block.value.type === 'text') {
         return block?.value?.properties?.title?.flat().join(' ') as string
@@ -63,4 +69,15 @@ export const extractEmoji = (text: string): string => {
         return m[0]
     }
     return ''
+}
+
+const HexRegex = /[0-9a-f]+/
+export const isValidNotionPageId = (id: string): boolean => {
+    if (id.length !== 32) {
+        return false
+    }
+    if (!id.match(HexRegex)) {
+        return false
+    }
+    return true
 }
