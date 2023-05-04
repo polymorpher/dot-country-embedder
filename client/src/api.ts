@@ -42,6 +42,14 @@ export const apis = {
   }
 }
 
+type EWSType = 0 | 1 | 2
+
+export const EWSTypes: Record<string, EWSType> = {
+  EWS_UNKNOWN: 0,
+  EWS_NOTION: 1,
+  EWS_SUBSTACK: 2
+}
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface Client {
   ews: EWS
@@ -52,11 +60,12 @@ export interface Client {
   getExpirationTime: (sld: string) => Promise<number>
   getBaseFees: () => Promise<BigNumber>
   getPerPageFees: () => Promise<BigNumber>
-  getLandingPage: (sld: string) => Promise<string>
-  getAllowedPages: (sld: string) => Promise<string[]>
-  update: (sld: string, page: string, pages: string[], landingPageOnly: boolean) => Promise<ContractTransaction>
-  appendAllowedPages: (sld: string, pages: string[]) => Promise<ContractTransaction>
-  remove: (sld: string) => Promise<ContractTransaction>
+  getPerSubdomainFees: () => Promise<BigNumber>
+  getLandingPage: (sld: string, subdomain: string) => Promise<string>
+  getAllowedPages: (sld: string, subdomain: string) => Promise<string[]>
+  update: (sld: string, subdomain: string, ewsType: EWSType, page: string, pages: string[], landingPageOnly: boolean) => Promise<ContractTransaction>
+  appendAllowedPages: (sld: string, subdomain: string, pages: string[]) => Promise<ContractTransaction>
+  remove: (sld: string, subdomain: string) => Promise<ContractTransaction>
 }
 export const buildClient = (provider?, signer?): Client => {
   const etherProvider = provider ?? new ethers.providers.StaticJsonRpcProvider(config.defaultRpc)
@@ -95,26 +104,28 @@ export const buildClient = (provider?, signer?): Client => {
     getPerPageFees: async (): Promise<BigNumber> => {
       return await ews.perAdditionalPageFee()
     },
-    getLandingPage: async (sld: string): Promise<string> => {
-      return await ews.getLandingPage(ethers.utils.id(sld))
+    getPerSubdomainFees: async (): Promise<BigNumber> => {
+      return ews.perSubdomainFee()
     },
-    getAllowedPages: async (sld: string): Promise<string[]> => {
-      return await ews.getAllowedPages(ethers.utils.id(sld))
+    getLandingPage: async (sld: string, subdomain: string): Promise<string> => {
+      return await ews.getLandingPage(ethers.utils.id(sld), ethers.utils.id(subdomain))
+    },
+    getAllowedPages: async (sld: string, subdomain: string): Promise<string[]> => {
+      return await ews.getAllowedPages(ethers.utils.id(sld), ethers.utils.id(subdomain))
     },
     getAllowMaintainerAccess: async (sld: string): Promise<boolean> => {
       return await ews.getAllowMaintainerAccess(ethers.utils.id(sld))
     },
-    update: async (sld: string, page: string, pages: string[], landingPageOnly: boolean): Promise<ContractTransaction> => {
-      const baseFees = await ews.landingPageFee()
-      const additionalFees = await ews.perAdditionalPageFee()
-      return await ews.update(sld, page, pages, landingPageOnly, { value: landingPageOnly ? baseFees : (baseFees.add(additionalFees.mul(pages.length))) })
+    update: async (sld: string, subdomain: string, ewsType: EWSType, page: string, pages: string[], landingPageOnly: boolean): Promise<ContractTransaction> => {
+      const fees = await ews.getFees(sld, subdomain, landingPageOnly ? 0 : pages.length)
+      return await ews.update(sld, subdomain, ewsType, page, pages, landingPageOnly, { value: fees })
     },
-    appendAllowedPages: async (sld: string, pages: string[]): Promise<ContractTransaction> => {
+    appendAllowedPages: async (sld: string, subdomain: string, pages: string[]): Promise<ContractTransaction> => {
       const additionalFees = await ews.perAdditionalPageFee()
-      return await ews.appendAllowedPages(sld, pages, { value: additionalFees.mul(pages.length) })
+      return await ews.appendAllowedPages(sld, subdomain, pages, { value: additionalFees.mul(pages.length) })
     },
-    remove: async (sld: string): Promise<ContractTransaction> => {
-      return await ews.remove(sld)
+    remove: async (sld: string, subdomain: string): Promise<ContractTransaction> => {
+      return await ews.remove(sld, subdomain)
     },
     hasMaintainerRole: async (address: string): Promise<boolean> => {
       return await ews.hasRole(await ews.MAINTAINER_ROLE(), address)

@@ -16,7 +16,7 @@ import { Pdf } from 'react-notion-x/build/third-party/pdf'
 import { extractTitle, extractDescription, extractPageCover, extractPageEmoji, makeEmojiDataUrl, extractEmoji, isValidNotionPageId } from '../../common/notion-utils'
 import { type ExtendedRecordMap } from 'notion-types'
 import htmlReactParser, { Element as ParserElement } from 'html-react-parser'
-import { getPath, getSld } from './utils'
+import { getPath, getSld, getSubdomain } from './utils'
 import { useTryCatch } from './hooks/useTryCatch'
 import { Navigate } from 'react-router-dom'
 import { BlankPage, LoadingScreen } from './components/Misc'
@@ -85,6 +85,7 @@ const Notion: React.FC = () => {
   // const [allowedPageIds, setAllowedPageIds] = useState<string[]>(['7bebb4bb632c4fd985a0f816518b853f', '82036c958834437786427b83ca55bfbe'])
   const [allowedPageIds, setAllowedPageIds] = useState<string[]>([])
   const sld = getSld()
+  const subdomain = getSubdomain()
   const pageIdOverride = getPath().slice(1)
 
   const { pending, initializing, tryCatch } = useTryCatch()
@@ -117,11 +118,11 @@ const Notion: React.FC = () => {
 
     tryCatch(async () => {
       return await Promise.all([
-        client.getLandingPage(sld).then(e => { setPageId(e) }),
-        client.getAllowedPages(sld).then(e => { setAllowedPageIds(e) })
+        client.getLandingPage(sld, subdomain).then(e => { setPageId(e) }),
+        client.getAllowedPages(sld, subdomain).then(e => { setAllowedPageIds(e) })
       ])
     }, true).catch(e => { console.error(e) })
-  }, [client, sld, tryCatch])
+  }, [client, sld, subdomain, tryCatch])
 
   if (initializing) {
     return <LoadingScreen/>

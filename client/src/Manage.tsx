@@ -4,9 +4,9 @@ import { BaseText, Desc, DescLeft, SmallText, Title } from './components/Text'
 import config from '../config'
 import { Button, Input, LinkWrarpper } from './components/Controls'
 import { useAccount, useConnect, useNetwork, useProvider, useSigner, useSwitchNetwork } from 'wagmi'
-import { apis, buildClient } from './api'
+import { apis, buildClient, EWSTypes } from './api'
 import { InjectedConnector } from 'wagmi/connectors/injected'
-import { getSld } from './utils'
+import { getSld, getSubdomain } from './utils'
 import { isValidNotionPageId } from '../../common/notion-utils'
 import { Feedback, Loading } from './components/Misc'
 import useDebounce from './hooks/useDebounce'
@@ -100,9 +100,11 @@ const Manage = (): JSX.Element => {
   const [suggestedPageId, setSuggestedPageId] = useState<string | undefined | null | Error>()
   const [baseFees, setBaseFees] = useState(ethers.BigNumber.from(0))
   const [perPageFees, setPerPageFees] = useState(ethers.BigNumber.from(0))
+  const [perSubdomainFees, setPerSubdomainFees] = useState(ethers.BigNumber.from(0))
   const { pending, initializing, tryCatch } = useTryCatch()
   const sld = getSld()
-  const totalFees = baseFees.add(perPageFees.mul(allowedPageIds.length))
+  const subdomain = getSubdomain()
+  const totalFees = baseFees.add(perPageFees.mul(allowedPageIds.length)).add(perSubdomainFees)
   useEffect(() => {
     if (!provider || !signer) {
       return
@@ -148,7 +150,7 @@ const Manage = (): JSX.Element => {
       }
     }
     tryCatch(async () => {
-      const tx = await client.update(sld, pageId, allowedPageIds, false)
+      const tx = await client.update(sld, subdomain, EWSTypes.EWS_NOTION, pageId, allowedPageIds, false)
       toast.success(SuccessWithExplorerLink({
         txHash: tx.hash,
         message: 'Update complete!'
@@ -169,15 +171,16 @@ const Manage = (): JSX.Element => {
     }
     tryCatch(async () => {
       return await Promise.all([
-        client.getLandingPage(sld).then(e => { setPageId(e) }),
-        client.getAllowedPages(sld).then(e => { setAllowedPageIds(e) }),
+        client.getLandingPage(sld, subdomain).then(e => { setPageId(e) }),
+        client.getAllowedPages(sld, subdomain).then(e => { setAllowedPageIds(e) }),
         client.getAllowMaintainerAccess(sld).then(e => { setAllowMaintainerAccess(e) }),
         client.getBaseFees().then(e => { setBaseFees(e) }),
         client.getPerPageFees().then(e => { setPerPageFees(e) }),
+        client.getPerSubdomainFees().then(e => { setPerSubdomainFees(e) }),
         client.getOwner(sld).then(e => { setOwner(e) })
       ])
     }, true).catch(e => { console.error(e) })
-  }, [client, sld, tryCatch])
+  }, [client, subdomain, sld, tryCatch])
 
   useEffect(() => {
     if (!isConnected || !chain || !switchNetwork) {
@@ -189,7 +192,7 @@ const Manage = (): JSX.Element => {
     }
   }, [isConnected, chain, switchNetwork])
 
-  const allowAccess = () => {
+  const allowAccess = (): boolean => {
     if (owner?.toLowerCase() === address?.toLowerCase()) {
       return true
     }
@@ -202,7 +205,7 @@ const Manage = (): JSX.Element => {
   return (
     <Container>
       <FlexColumn style={{ alignItems: 'center', marginTop: 120, gap: 16 }}>
-        <Title style={{ margin: 0 }}>{sld}.{config.tld}</Title>
+        <Title style={{ margin: 0 }}>{subdomain}{subdomain ? '.' : ''}{sld}.{config.tld}</Title>
         <SmallTextGrey>Connect your .country with notion pages</SmallTextGrey>
         {owner && <SmallTextGrey>Owner: {owner}</SmallTextGrey>}
       </FlexColumn>
@@ -217,7 +220,7 @@ const Manage = (): JSX.Element => {
             <InputBox $width={'100%'} value={pageId} placeholder={'ae42787a7d...'} onChange={({ target: { value } }) => { setPageId(value); setEditingPageId(value); setEditingPagePosition(0) }}/>
           </Row>
           {(editingPageIdPosition === 0) && <SuggestedPageId id={suggestedPageId} applyId={setPageId}/>}
-          <SmallTextGrey>This is the landing page when people visit web.{sld}.{config.tld} </SmallTextGrey>
+          <SmallTextGrey>This is the landing page when people visit {subdomain}{subdomain ? '.' : ''}{sld}.{config.tld} </SmallTextGrey>
           <LabelText style={{ marginTop: 32 }}>Additional pages</LabelText>
           <SmallTextGrey>You allow the following subpages on web.{sld}.{config.tld}. Links to these pages will be rewritten under web.{sld}.{config.tld}, instead of to external sites (e.g. https://notion.so/....)</SmallTextGrey>
           <Row>
@@ -248,7 +251,7 @@ const Manage = (): JSX.Element => {
           </Row>
           {totalFees.gt(0)
             ? <Row style={{ marginTop: 32 }}>
-              <BaseText>Total fees: {ethers.utils.formatEther(totalFees)} ONE (base fees {ethers.utils.formatEther(baseFees)} ONE, plus per {ethers.utils.formatEther(perPageFees)} page)</BaseText>
+              <BaseText>Total fees: {ethers.utils.formatEther(totalFees)} ONE (base fees {ethers.utils.formatEther(baseFees)} ONE, plus per {ethers.utils.formatEther(perPageFees)} page, plus {ethers.utils.formatEther(perSubdomainFees)} per subdomain)</BaseText>
             </Row>
             : <></>}
         </DescLeft>
