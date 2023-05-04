@@ -77,7 +77,7 @@ router.get(['/*'], limiter(), async (req, res) => {
     const parts = req.hostname.split('.')
     const path = req.path.slice(1)
     if (path === 'robots.txt') {
-      res.send('')
+      res.send('User-agent: *\nAllow: /')
       return
     }
     console.log('[/*]', req.hostname, req.path, 'ua:', req.header('user-agent'))
