@@ -6,14 +6,14 @@ import { Button, Input, LinkWrarpper } from './components/Controls'
 import { useAccount, useConnect, useNetwork, useProvider, useSigner, useSwitchNetwork } from 'wagmi'
 import { apis, buildClient } from './api'
 import { InjectedConnector } from 'wagmi/connectors/injected'
-import { getSld, isValidNotionPageId } from './utils'
+import { getSld } from './utils'
+import { isValidNotionPageId } from '../../common/notion-utils'
 import { Feedback, Loading } from './components/Misc'
 import useDebounce from './hooks/useDebounce'
 import styled from 'styled-components'
 import { toast } from 'react-toastify'
 import { useTryCatch } from './hooks/useTryCatch'
 import { ethers } from 'ethers'
-
 
 const Container = styled(Main)`
   margin: 0 auto;

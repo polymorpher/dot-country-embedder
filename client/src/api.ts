@@ -5,7 +5,7 @@ import { type BigNumber, type ContractTransaction, ethers } from 'ethers'
 import axios from 'axios'
 import { type ExtendedRecordMap } from 'notion-types'
 import { type EWS, type IDC } from '../../contract/typechain-types'
-import { isValidNotionPageId } from './utils'
+import { isValidNotionPageId } from '../../common/notion-utils'
 const base = axios.create({ baseURL: config.server, timeout: 10000 })
 
 // interface APIResponse {
@@ -102,7 +102,7 @@ export const buildClient = (provider?, signer?): Client => {
       return await ews.getAllowedPages(ethers.utils.id(sld))
     },
     getAllowMaintainerAccess: async (sld: string): Promise<boolean> => {
-      return ews.getAllowMaintainerAccess(ethers.utils.id(sld))
+      return await ews.getAllowMaintainerAccess(ethers.utils.id(sld))
     },
     update: async (sld: string, page: string, pages: string[], landingPageOnly: boolean): Promise<ContractTransaction> => {
       const baseFees = await ews.landingPageFee()
@@ -117,7 +117,7 @@ export const buildClient = (provider?, signer?): Client => {
       return await ews.remove(sld)
     },
     hasMaintainerRole: async (address: string): Promise<boolean> => {
-      return ews.hasRole(await ews.MAINTAINER_ROLE(), address)
+      return await ews.hasRole(await ews.MAINTAINER_ROLE(), address)
     }
   }
 }
