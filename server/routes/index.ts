@@ -76,7 +76,7 @@ router.get(['/*'], limiter(), async (req, res) => {
   try {
     const parts = req.hostname.split('.')
     const path = req.path.slice(1)
-
+    console.log('[/*]', req.hostname, req.path, 'ua:', req.header('user-agent'))
     if (path && !isValidNotionPageId(path)) {
       res.status(StatusCodes.BAD_REQUEST).json({})
       return
