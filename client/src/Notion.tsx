@@ -179,6 +179,7 @@ const Notion: React.FC = () => {
       recordMap={page}
       fullPage={true}
       darkMode={false}
+      rootPageId={pageId}
       components={{
         Code,
         Collection,
