@@ -76,12 +76,14 @@ router.get(['/*'], limiter(), async (req, res) => {
   try {
     const parts = req.hostname.split('.')
     const path = req.path.slice(1)
+
     if (path && !isValidNotionPageId(path)) {
       res.status(StatusCodes.BAD_REQUEST).json({})
       return
     }
+    const subdomain = parts.length <= 2 ? '' : parts[parts.length - 3].toLowerCase()
     const sld = parts.length <= 1 ? '' : parts[parts.length - 2].toLowerCase()
-    const page = await getOGPage(sld, path)
+    const page = await getOGPage(sld, subdomain, path)
     res.header('content-type', 'text/html; charset=utf-8').send(page)
   } catch (ex: any) {
     console.error(ex)

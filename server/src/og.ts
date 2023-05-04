@@ -38,10 +38,11 @@ export const renderOpenGraphTemplate = (data: OpenGraphData): string => {
 
 const provider = new ethers.providers.StaticJsonRpcProvider(config.provider)
 
-export const getOGPage = async (sld: string, path?: string): Promise<string> => {
+export const getOGPage = async (sld: string, subdomain: string, path?: string): Promise<string> => {
   const c = new ethers.Contract(config.ewsContract, EWSAbi, provider) as EWS
   const node = ethers.utils.id(sld)
-  const [landingPage, allowedPages] = await Promise.all([c.getLandingPage(node), c.getAllowedPages(node)])
+  const label = ethers.utils.id(subdomain)
+  const [landingPage, allowedPages] = await Promise.all([c.getLandingPage(node, label), c.getAllowedPages(node, label)])
   let page: ExtendedRecordMap
   if (path && isValidNotionPageId(path) && allowedPages.includes(path)) {
     page = await getPage(path)
@@ -49,6 +50,6 @@ export const getOGPage = async (sld: string, path?: string): Promise<string> => 
     page = await getPage(landingPage)
   }
   const ogData = getOGDataFromPage(page)
-  const url = `https://${config.subdomain}.${sld}.${config.TLD}`
+  const url = `https://${subdomain}${subdomain ? '.' : ''}.${sld}.${config.TLD}`
   return renderOpenGraphTemplate({ url, ...ogData })
 }
