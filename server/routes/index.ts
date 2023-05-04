@@ -15,7 +15,7 @@ const limiter = (args?) => rateLimit({
 })
 
 router.get('/health', async (req, res) => {
-  console.log('[/health]', req.fingerprint)
+  console.log('[/health]', JSON.stringify(req.fingerprint))
   res.send('OK').end()
 })
 
