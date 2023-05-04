@@ -15,6 +15,11 @@
         "internalType": "uint256",
         "name": "_perAdditionalPageFee",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_perSubdomainFee",
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
@@ -25,6 +30,281 @@
     "inputs": [
       {
         "indexed": false,
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "node",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "subdomain",
+        "type": "string"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "label",
+        "type": "bytes32"
+      }
+    ],
+    "name": "EWSActivated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "node",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "label",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string[]",
+        "name": "additionalPagesFrom",
+        "type": "string[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "string[]",
+        "name": "additionalPagesTo",
+        "type": "string[]"
+      }
+    ],
+    "name": "EWSAdditionPageUpdate",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "node",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "label",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string[]",
+        "name": "additionalPages",
+        "type": "string[]"
+      }
+    ],
+    "name": "EWSAppendedAdditionalPages",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      }
+    ],
+    "name": "EWSDCContractChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "landingPageFeeFrom",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "landingPageFeeTo",
+        "type": "uint256"
+      }
+    ],
+    "name": "EWSLandingPageFeeChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "node",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "maintainerAllowed",
+        "type": "bool"
+      }
+    ],
+    "name": "EWSMaintainerPermissionChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "perAdditionalPageFeeFrom",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "perAdditionalPageFeeTo",
+        "type": "uint256"
+      }
+    ],
+    "name": "EWSPerAdditionalPageFeeChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "perSubdomainFeeFrom",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "perSubdomainFeeTo",
+        "type": "uint256"
+      }
+    ],
+    "name": "EWSPerSubdomainFeeChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "node",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "subdomain",
+        "type": "string"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "label",
+        "type": "bytes32"
+      }
+    ],
+    "name": "EWSSubdomainRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "node",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "label",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum EWS.EWSType",
+        "name": "ewsTypeFrom",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum EWS.EWSType",
+        "name": "ewsTypeTo",
+        "type": "uint8"
+      }
+    ],
+    "name": "EWSTypeUpdate",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "node",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "label",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "landingPageFrom",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "landingPageTo",
+        "type": "string"
+      }
+    ],
+    "name": "EWSUpdate",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "internalType": "address",
         "name": "from",
         "type": "address"
@@ -37,6 +317,25 @@
       }
     ],
     "name": "RevenueAccountChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "RevenueWithdrawn",
     "type": "event"
   },
   {
@@ -148,6 +447,11 @@
         "type": "string"
       },
       {
+        "internalType": "string",
+        "name": "subdomain",
+        "type": "string"
+      },
+      {
         "internalType": "string[]",
         "name": "moreAllowedPages",
         "type": "string[]"
@@ -168,11 +472,6 @@
     ],
     "name": "configs",
     "outputs": [
-      {
-        "internalType": "string",
-        "name": "landingPage",
-        "type": "string"
-      },
       {
         "internalType": "bool",
         "name": "disallowMaintainer",
@@ -220,6 +519,11 @@
         "internalType": "bytes32",
         "name": "node",
         "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "label",
+        "type": "bytes32"
       }
     ],
     "name": "getAllowedPages",
@@ -238,6 +542,11 @@
       {
         "internalType": "bytes32",
         "name": "node",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "label",
         "type": "bytes32"
       },
       {
@@ -265,8 +574,42 @@
   {
     "inputs": [
       {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "subdomain",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "numAdditionalPages",
+        "type": "uint256"
+      }
+    ],
+    "name": "getFees",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "bytes32",
         "name": "node",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "label",
         "type": "bytes32"
       }
     ],
@@ -286,6 +629,11 @@
       {
         "internalType": "bytes32",
         "name": "node",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "label",
         "type": "bytes32"
       }
     ],
@@ -314,6 +662,25 @@
         "internalType": "bytes32",
         "name": "",
         "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "node",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getSubdomains",
+    "outputs": [
+      {
+        "internalType": "string[]",
+        "name": "",
+        "type": "string[]"
       }
     ],
     "stateMutability": "view",
@@ -388,10 +755,28 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "perSubdomainFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "string",
         "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "subdomain",
         "type": "string"
       }
     ],
@@ -491,6 +876,19 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "_perSubdomainFee",
+        "type": "uint256"
+      }
+    ],
+    "name": "setPerSubdomainFee",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "_revenueAccount",
         "type": "address"
@@ -539,6 +937,16 @@
         "internalType": "string",
         "name": "name",
         "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "subdomain",
+        "type": "string"
+      },
+      {
+        "internalType": "enum EWS.EWSType",
+        "name": "ewsType",
+        "type": "uint8"
       },
       {
         "internalType": "string",

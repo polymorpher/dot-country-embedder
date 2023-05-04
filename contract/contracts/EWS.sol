@@ -3,7 +3,6 @@
 pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "./Enums.sol";
 
 interface IDC {
     function ownerOf(string memory name) external view returns (address);
@@ -14,24 +13,36 @@ interface IDC {
 // Embedded Website Service
 
 contract EWS is AccessControl {
-    event RevenueAccountChanged(address from, address to);
-    event EWSActivated(string name, bytes32 indexed node, string subdomain, bytes32 indexed label, EWSType indexed ewsType);
-    event EWSUpdate(bytes32 indexed node, bytes32 indexed label,
-        EWSType indexed ewsTypeFrom, string landingPageFrom, string[] additionalPagesFrom,
-        EWSType indexed ewsTypeTo, string landingPageTo, string[] additionalPagesTo);
+    enum EWSType {
+        EWS_UNKNOWN,
+        EWS_NOTION,
+        EWS_SUBSTACK
+    }
+    event RevenueAccountChanged(address indexed from, address to);
+    event RevenueWithdrawn(address indexed to, uint256 amount);
+    event EWSActivated(string name, bytes32 indexed node, string subdomain, bytes32 indexed label);
+    event EWSUpdate(bytes32 indexed node, bytes32 indexed label, string landingPageFrom, string landingPageTo);
+    event EWSTypeUpdate(bytes32 indexed node, bytes32 indexed label, EWSType ewsTypeFrom, EWSType ewsTypeTo);
+    event EWSAdditionPageUpdate(bytes32 indexed node, bytes32 indexed label, string[] additionalPagesFrom, string[] additionalPagesTo);
+    event EWSSubdomainRemoved(string name, bytes32 indexed node, string subdomain, bytes32 indexed label);
     event EWSAppendedAdditionalPages(bytes32 indexed node, bytes32 indexed label, string[] additionalPages);
-    event EWSMaintainerPermissionChanged(bytes32 indexed node, bytes32 indexed label, bool maintainerAllowed);
+    event EWSMaintainerPermissionChanged(bytes32 indexed node, bool maintainerAllowed);
 
     event EWSLandingPageFeeChanged(uint256 landingPageFeeFrom, uint256 landingPageFeeTo);
     event EWSPerAdditionalPageFeeChanged(uint256 perAdditionalPageFeeFrom, uint256 perAdditionalPageFeeTo);
     event EWSPerSubdomainFeeChanged(uint256 perSubdomainFeeFrom, uint256 perSubdomainFeeTo);
+    event EWSDCContractChanged(address indexed from, address indexed to);
 
     bytes32 public constant MAINTAINER_ROLE = keccak256("MAINTAINER_ROLE");
     address public revenueAccount;
+
     struct EWSConfig {
         string landingPage;
         string[] allowedPages;
+        bool initialized;
+        EWSType ewsType;
     }
+
     struct EWSMultiConfig {
         mapping(bytes32 => EWSConfig) subdomainConfigs;
         string[] subdomains;
@@ -53,8 +64,8 @@ contract EWS is AccessControl {
         _grantRole(MAINTAINER_ROLE, msg.sender);
     }
 
-    function getAllowMaintainerAccess(bytes32 node, bytes32 label) public view returns (bool){
-        return !configs[node].subdomainConfigs[label].disallowMaintainer;
+    function getAllowMaintainerAccess(bytes32 node) public view returns (bool){
+        return !configs[node].disallowMaintainer;
     }
 
     function getLandingPage(bytes32 node, bytes32 label) public view returns (string memory){
@@ -82,18 +93,22 @@ contract EWS is AccessControl {
     }
 
     function setDc(IDC _dc) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        emit EWSDCContractChanged(address(dc), address(_dc));
         dc = _dc;
     }
 
     function setLandingPageFee(uint256 _landingPageFee) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        emit EWSLandingPageFeeChanged(landingPageFee, _landingPageFee);
         landingPageFee = _landingPageFee;
     }
 
     function setPerAdditionalPageFee(uint256 _perAdditionalPageFee) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        emit EWSPerAdditionalPageFeeChanged(perAdditionalPageFee, _perAdditionalPageFee);
         perAdditionalPageFee = _perAdditionalPageFee;
     }
 
     function setPerSubdomainFee(uint256 _perSubdomainFee) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        emit EWSPerSubdomainFeeChanged(perSubdomainFee, _perSubdomainFee);
         perSubdomainFee = _perSubdomainFee;
     }
 
@@ -121,35 +136,89 @@ contract EWS is AccessControl {
     function toggleMaintainerAccess(string memory name) public onlyNameOwner(name) {
         bytes32 node = keccak256(bytes(name));
         configs[node].disallowMaintainer = !configs[node].disallowMaintainer;
+        emit EWSMaintainerPermissionChanged(node, configs[node].disallowMaintainer);
     }
 
-    function update(string memory name, string memory landingPage, string[] memory allowedPages, bool landingPageOnly) public payable onlyNameOwnerOrMaintainer(name) {
-        uint256 fees = landingPageFee + (landingPageOnly ? 0 : allowedPages.length * perAdditionalPageFee);
-        require(msg.value >= fees, "EWS:update: insufficient payment");
+    function getFees(string memory name, string memory subdomain, uint256 numAdditionalPages) public view returns (uint256){
+        uint256 fees = landingPageFee + numAdditionalPages * perAdditionalPageFee;
         bytes32 node = keccak256(bytes(name));
-        EWSConfig storage ec = configs[node];
+        bytes32 label = keccak256(bytes(subdomain));
+        EWSMultiConfig storage emc = configs[node];
+        EWSConfig storage ec = emc.subdomainConfigs[label];
+        if (!ec.initialized) {
+            fees += perSubdomainFee;
+        }
+        return fees;
+    }
+
+    function _activate(string memory name, string memory subdomain) internal {
+        bytes32 node = keccak256(bytes(name));
+        bytes32 label = keccak256(bytes(subdomain));
+        EWSMultiConfig storage emc = configs[node];
+        EWSConfig storage ec = emc.subdomainConfigs[label];
+        ec.initialized = true;
+        emc.subdomains.push(subdomain);
+        emit EWSActivated(name, node, subdomain, label);
+    }
+
+    function update(string memory name, string memory subdomain, EWSType ewsType, string memory landingPage, string[] memory allowedPages, bool landingPageOnly) public payable onlyNameOwnerOrMaintainer(name) {
+        {
+            uint256 fees = getFees(name, subdomain, landingPageOnly ? 0 : allowedPages.length);
+            require(msg.value >= fees, "EWS:update: insufficient payment");
+        }
+        bytes32 node = keccak256(bytes(name));
+        bytes32 label = keccak256(bytes(subdomain));
+        EWSMultiConfig storage emc = configs[node];
+        EWSConfig storage ec = emc.subdomainConfigs[label];
+        if (keccak256(bytes(landingPage)) != keccak256(bytes(ec.landingPage))) {
+            emit EWSUpdate(node, label, ec.landingPage, landingPage);
+        }
+        if (ec.ewsType != ewsType) {
+            emit EWSTypeUpdate(node, label, ec.ewsType, ewsType);
+        }
+        emit EWSAdditionPageUpdate(node, label, ec.allowedPages, allowedPages);
+        if (!ec.initialized) {
+            _activate(name, subdomain);
+        }
+        ec.ewsType = ewsType;
         ec.landingPage = landingPage;
         if (!landingPageOnly) {
             ec.allowedPages = allowedPages;
         }
+
     }
 
-    function appendAllowedPages(string memory name, string[] memory moreAllowedPages) public payable onlyNameOwnerOrMaintainer(name) {
+    function appendAllowedPages(string memory name, string memory subdomain, string[] memory moreAllowedPages) public payable onlyNameOwnerOrMaintainer(name) {
         uint256 fees = moreAllowedPages.length * perAdditionalPageFee;
         require(msg.value >= fees, "EWS:append: insufficient payment");
         bytes32 node = keccak256(bytes(name));
-        EWSConfig storage ec = configs[node];
+        bytes32 label = keccak256(bytes(subdomain));
+        EWSConfig storage ec = configs[node].subdomainConfigs[label];
         for (uint256 i = 0; i < moreAllowedPages.length; i++) {
             ec.allowedPages.push(moreAllowedPages[i]);
         }
+        emit EWSAppendedAdditionalPages(node, label, moreAllowedPages);
     }
 
-    function remove(string memory name) public onlyNameOwnerOrMaintainer(name) {
+    function remove(string memory name, string memory subdomain) public onlyNameOwnerOrMaintainer(name) {
         bytes32 node = keccak256(bytes(name));
-        EWSConfig storage ec = configs[node];
-        ec.landingPage = "";
+        bytes32 label = keccak256(bytes(subdomain));
+        EWSConfig storage ec = configs[node].subdomainConfigs[label];
+        delete ec.landingPage;
         delete ec.allowedPages;
-        delete configs[node];
+        delete ec.initialized;
+        delete ec.ewsType;
+        delete configs[node].subdomainConfigs[label];
+        string[] storage subdomains = configs[node].subdomains;
+        for (uint256 i = 0; i < subdomains.length; i++) {
+            if (keccak256(bytes(subdomains[i])) == keccak256(bytes(subdomain))) {
+                subdomains[i] = subdomains[subdomains.length - 1];
+                subdomains.pop();
+                emit EWSSubdomainRemoved(name, node, subdomain, label);
+                return;
+            }
+        }
+        revert("EWS: subdomain not found");
     }
 
     function setRevenueAccount(address _revenueAccount) public onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -159,7 +228,9 @@ contract EWS is AccessControl {
 
     function withdraw() external {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender) || msg.sender == revenueAccount, "EWS: must be admin or revenue account");
-        (bool success,) = revenueAccount.call{value : address(this).balance}("");
+        emit RevenueWithdrawn(revenueAccount, address(this).balance);
+        (bool success,) = revenueAccount.call{value: address(this).balance}("");
         require(success, "EWS: failed to withdraw");
+
     }
 }

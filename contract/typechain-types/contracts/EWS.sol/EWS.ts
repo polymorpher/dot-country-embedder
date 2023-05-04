@@ -32,30 +32,34 @@ export interface EWSInterface extends utils.Interface {
   functions: {
     "DEFAULT_ADMIN_ROLE()": FunctionFragment;
     "MAINTAINER_ROLE()": FunctionFragment;
-    "appendAllowedPages(string,string[])": FunctionFragment;
+    "appendAllowedPages(string,string,string[])": FunctionFragment;
     "configs(bytes32)": FunctionFragment;
     "dc()": FunctionFragment;
     "getAllowMaintainerAccess(bytes32)": FunctionFragment;
-    "getAllowedPages(bytes32)": FunctionFragment;
-    "getAllowedPagesSlice(bytes32,uint256,uint256)": FunctionFragment;
-    "getLandingPage(bytes32)": FunctionFragment;
-    "getNumAllowedPages(bytes32)": FunctionFragment;
+    "getAllowedPages(bytes32,bytes32)": FunctionFragment;
+    "getAllowedPagesSlice(bytes32,bytes32,uint256,uint256)": FunctionFragment;
+    "getFees(string,string,uint256)": FunctionFragment;
+    "getLandingPage(bytes32,bytes32)": FunctionFragment;
+    "getNumAllowedPages(bytes32,bytes32)": FunctionFragment;
     "getRoleAdmin(bytes32)": FunctionFragment;
+    "getSubdomains(bytes32)": FunctionFragment;
     "grantRole(bytes32,address)": FunctionFragment;
     "hasRole(bytes32,address)": FunctionFragment;
     "landingPageFee()": FunctionFragment;
     "perAdditionalPageFee()": FunctionFragment;
-    "remove(string)": FunctionFragment;
+    "perSubdomainFee()": FunctionFragment;
+    "remove(string,string)": FunctionFragment;
     "renounceRole(bytes32,address)": FunctionFragment;
     "revenueAccount()": FunctionFragment;
     "revokeRole(bytes32,address)": FunctionFragment;
     "setDc(address)": FunctionFragment;
     "setLandingPageFee(uint256)": FunctionFragment;
     "setPerAdditionalPageFee(uint256)": FunctionFragment;
+    "setPerSubdomainFee(uint256)": FunctionFragment;
     "setRevenueAccount(address)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "toggleMaintainerAccess(string)": FunctionFragment;
-    "update(string,string,string[],bool)": FunctionFragment;
+    "update(string,string,uint8,string,string[],bool)": FunctionFragment;
     "withdraw()": FunctionFragment;
   };
 
@@ -69,13 +73,16 @@ export interface EWSInterface extends utils.Interface {
       | "getAllowMaintainerAccess"
       | "getAllowedPages"
       | "getAllowedPagesSlice"
+      | "getFees"
       | "getLandingPage"
       | "getNumAllowedPages"
       | "getRoleAdmin"
+      | "getSubdomains"
       | "grantRole"
       | "hasRole"
       | "landingPageFee"
       | "perAdditionalPageFee"
+      | "perSubdomainFee"
       | "remove"
       | "renounceRole"
       | "revenueAccount"
@@ -83,6 +90,7 @@ export interface EWSInterface extends utils.Interface {
       | "setDc"
       | "setLandingPageFee"
       | "setPerAdditionalPageFee"
+      | "setPerSubdomainFee"
       | "setRevenueAccount"
       | "supportsInterface"
       | "toggleMaintainerAccess"
@@ -100,7 +108,11 @@ export interface EWSInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "appendAllowedPages",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>[]]
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>[]
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "configs",
@@ -113,26 +125,39 @@ export interface EWSInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getAllowedPages",
-    values: [PromiseOrValue<BytesLike>]
+    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
     functionFragment: "getAllowedPagesSlice",
     values: [
+      PromiseOrValue<BytesLike>,
       PromiseOrValue<BytesLike>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "getFees",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getLandingPage",
-    values: [PromiseOrValue<BytesLike>]
+    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
     functionFragment: "getNumAllowedPages",
-    values: [PromiseOrValue<BytesLike>]
+    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
     functionFragment: "getRoleAdmin",
+    values: [PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getSubdomains",
     values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
@@ -152,8 +177,12 @@ export interface EWSInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "perSubdomainFee",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "remove",
-    values: [PromiseOrValue<string>]
+    values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "renounceRole",
@@ -180,6 +209,10 @@ export interface EWSInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
+    functionFragment: "setPerSubdomainFee",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setRevenueAccount",
     values: [PromiseOrValue<string>]
   ): string;
@@ -195,6 +228,8 @@ export interface EWSInterface extends utils.Interface {
     functionFragment: "update",
     values: [
       PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
       PromiseOrValue<string>,
       PromiseOrValue<string>[],
       PromiseOrValue<boolean>
@@ -228,6 +263,7 @@ export interface EWSInterface extends utils.Interface {
     functionFragment: "getAllowedPagesSlice",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "getFees", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getLandingPage",
     data: BytesLike
@@ -240,6 +276,10 @@ export interface EWSInterface extends utils.Interface {
     functionFragment: "getRoleAdmin",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "getSubdomains",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
   decodeFunctionResult(
@@ -248,6 +288,10 @@ export interface EWSInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "perAdditionalPageFee",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "perSubdomainFee",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "remove", data: BytesLike): Result;
@@ -270,6 +314,10 @@ export interface EWSInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "setPerSubdomainFee",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "setRevenueAccount",
     data: BytesLike
   ): Result;
@@ -285,17 +333,185 @@ export interface EWSInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {
+    "EWSActivated(string,bytes32,string,bytes32)": EventFragment;
+    "EWSAdditionPageUpdate(bytes32,bytes32,string[],string[])": EventFragment;
+    "EWSAppendedAdditionalPages(bytes32,bytes32,string[])": EventFragment;
+    "EWSDCContractChanged(address,address)": EventFragment;
+    "EWSLandingPageFeeChanged(uint256,uint256)": EventFragment;
+    "EWSMaintainerPermissionChanged(bytes32,bool)": EventFragment;
+    "EWSPerAdditionalPageFeeChanged(uint256,uint256)": EventFragment;
+    "EWSPerSubdomainFeeChanged(uint256,uint256)": EventFragment;
+    "EWSSubdomainRemoved(string,bytes32,string,bytes32)": EventFragment;
+    "EWSTypeUpdate(bytes32,bytes32,uint8,uint8)": EventFragment;
+    "EWSUpdate(bytes32,bytes32,string,string)": EventFragment;
     "RevenueAccountChanged(address,address)": EventFragment;
+    "RevenueWithdrawn(address,uint256)": EventFragment;
     "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
     "RoleGranted(bytes32,address,address)": EventFragment;
     "RoleRevoked(bytes32,address,address)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "EWSActivated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "EWSAdditionPageUpdate"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "EWSAppendedAdditionalPages"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "EWSDCContractChanged"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "EWSLandingPageFeeChanged"): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "EWSMaintainerPermissionChanged"
+  ): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "EWSPerAdditionalPageFeeChanged"
+  ): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "EWSPerSubdomainFeeChanged"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "EWSSubdomainRemoved"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "EWSTypeUpdate"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "EWSUpdate"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RevenueAccountChanged"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RevenueWithdrawn"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleAdminChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleGranted"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleRevoked"): EventFragment;
 }
+
+export interface EWSActivatedEventObject {
+  name: string;
+  node: string;
+  subdomain: string;
+  label: string;
+}
+export type EWSActivatedEvent = TypedEvent<
+  [string, string, string, string],
+  EWSActivatedEventObject
+>;
+
+export type EWSActivatedEventFilter = TypedEventFilter<EWSActivatedEvent>;
+
+export interface EWSAdditionPageUpdateEventObject {
+  node: string;
+  label: string;
+  additionalPagesFrom: string[];
+  additionalPagesTo: string[];
+}
+export type EWSAdditionPageUpdateEvent = TypedEvent<
+  [string, string, string[], string[]],
+  EWSAdditionPageUpdateEventObject
+>;
+
+export type EWSAdditionPageUpdateEventFilter =
+  TypedEventFilter<EWSAdditionPageUpdateEvent>;
+
+export interface EWSAppendedAdditionalPagesEventObject {
+  node: string;
+  label: string;
+  additionalPages: string[];
+}
+export type EWSAppendedAdditionalPagesEvent = TypedEvent<
+  [string, string, string[]],
+  EWSAppendedAdditionalPagesEventObject
+>;
+
+export type EWSAppendedAdditionalPagesEventFilter =
+  TypedEventFilter<EWSAppendedAdditionalPagesEvent>;
+
+export interface EWSDCContractChangedEventObject {
+  from: string;
+  to: string;
+}
+export type EWSDCContractChangedEvent = TypedEvent<
+  [string, string],
+  EWSDCContractChangedEventObject
+>;
+
+export type EWSDCContractChangedEventFilter =
+  TypedEventFilter<EWSDCContractChangedEvent>;
+
+export interface EWSLandingPageFeeChangedEventObject {
+  landingPageFeeFrom: BigNumber;
+  landingPageFeeTo: BigNumber;
+}
+export type EWSLandingPageFeeChangedEvent = TypedEvent<
+  [BigNumber, BigNumber],
+  EWSLandingPageFeeChangedEventObject
+>;
+
+export type EWSLandingPageFeeChangedEventFilter =
+  TypedEventFilter<EWSLandingPageFeeChangedEvent>;
+
+export interface EWSMaintainerPermissionChangedEventObject {
+  node: string;
+  maintainerAllowed: boolean;
+}
+export type EWSMaintainerPermissionChangedEvent = TypedEvent<
+  [string, boolean],
+  EWSMaintainerPermissionChangedEventObject
+>;
+
+export type EWSMaintainerPermissionChangedEventFilter =
+  TypedEventFilter<EWSMaintainerPermissionChangedEvent>;
+
+export interface EWSPerAdditionalPageFeeChangedEventObject {
+  perAdditionalPageFeeFrom: BigNumber;
+  perAdditionalPageFeeTo: BigNumber;
+}
+export type EWSPerAdditionalPageFeeChangedEvent = TypedEvent<
+  [BigNumber, BigNumber],
+  EWSPerAdditionalPageFeeChangedEventObject
+>;
+
+export type EWSPerAdditionalPageFeeChangedEventFilter =
+  TypedEventFilter<EWSPerAdditionalPageFeeChangedEvent>;
+
+export interface EWSPerSubdomainFeeChangedEventObject {
+  perSubdomainFeeFrom: BigNumber;
+  perSubdomainFeeTo: BigNumber;
+}
+export type EWSPerSubdomainFeeChangedEvent = TypedEvent<
+  [BigNumber, BigNumber],
+  EWSPerSubdomainFeeChangedEventObject
+>;
+
+export type EWSPerSubdomainFeeChangedEventFilter =
+  TypedEventFilter<EWSPerSubdomainFeeChangedEvent>;
+
+export interface EWSSubdomainRemovedEventObject {
+  name: string;
+  node: string;
+  subdomain: string;
+  label: string;
+}
+export type EWSSubdomainRemovedEvent = TypedEvent<
+  [string, string, string, string],
+  EWSSubdomainRemovedEventObject
+>;
+
+export type EWSSubdomainRemovedEventFilter =
+  TypedEventFilter<EWSSubdomainRemovedEvent>;
+
+export interface EWSTypeUpdateEventObject {
+  node: string;
+  label: string;
+  ewsTypeFrom: number;
+  ewsTypeTo: number;
+}
+export type EWSTypeUpdateEvent = TypedEvent<
+  [string, string, number, number],
+  EWSTypeUpdateEventObject
+>;
+
+export type EWSTypeUpdateEventFilter = TypedEventFilter<EWSTypeUpdateEvent>;
+
+export interface EWSUpdateEventObject {
+  node: string;
+  label: string;
+  landingPageFrom: string;
+  landingPageTo: string;
+}
+export type EWSUpdateEvent = TypedEvent<
+  [string, string, string, string],
+  EWSUpdateEventObject
+>;
+
+export type EWSUpdateEventFilter = TypedEventFilter<EWSUpdateEvent>;
 
 export interface RevenueAccountChangedEventObject {
   from: string;
@@ -308,6 +524,18 @@ export type RevenueAccountChangedEvent = TypedEvent<
 
 export type RevenueAccountChangedEventFilter =
   TypedEventFilter<RevenueAccountChangedEvent>;
+
+export interface RevenueWithdrawnEventObject {
+  to: string;
+  amount: BigNumber;
+}
+export type RevenueWithdrawnEvent = TypedEvent<
+  [string, BigNumber],
+  RevenueWithdrawnEventObject
+>;
+
+export type RevenueWithdrawnEventFilter =
+  TypedEventFilter<RevenueWithdrawnEvent>;
 
 export interface RoleAdminChangedEventObject {
   role: string;
@@ -379,6 +607,7 @@ export interface EWS extends BaseContract {
 
     appendAllowedPages(
       name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
       moreAllowedPages: PromiseOrValue<string>[],
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -386,9 +615,7 @@ export interface EWS extends BaseContract {
     configs(
       arg0: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
-    ): Promise<
-      [string, boolean] & { landingPage: string; disallowMaintainer: boolean }
-    >;
+    ): Promise<[boolean] & { disallowMaintainer: boolean }>;
 
     dc(overrides?: CallOverrides): Promise<[string]>;
 
@@ -399,23 +626,34 @@ export interface EWS extends BaseContract {
 
     getAllowedPages(
       node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<[string[]]>;
 
     getAllowedPagesSlice(
       node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
       start: PromiseOrValue<BigNumberish>,
       end: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[string[]]>;
 
+    getFees(
+      name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
+      numAdditionalPages: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     getLandingPage(
       node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<[string]>;
 
     getNumAllowedPages(
       node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
@@ -423,6 +661,11 @@ export interface EWS extends BaseContract {
       role: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<[string]>;
+
+    getSubdomains(
+      node: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<[string[]]>;
 
     grantRole(
       role: PromiseOrValue<BytesLike>,
@@ -440,8 +683,11 @@ export interface EWS extends BaseContract {
 
     perAdditionalPageFee(overrides?: CallOverrides): Promise<[BigNumber]>;
 
+    perSubdomainFee(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     remove(
       name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -474,6 +720,11 @@ export interface EWS extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    setPerSubdomainFee(
+      _perSubdomainFee: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     setRevenueAccount(
       _revenueAccount: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -491,6 +742,8 @@ export interface EWS extends BaseContract {
 
     update(
       name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
+      ewsType: PromiseOrValue<BigNumberish>,
       landingPage: PromiseOrValue<string>,
       allowedPages: PromiseOrValue<string>[],
       landingPageOnly: PromiseOrValue<boolean>,
@@ -508,6 +761,7 @@ export interface EWS extends BaseContract {
 
   appendAllowedPages(
     name: PromiseOrValue<string>,
+    subdomain: PromiseOrValue<string>,
     moreAllowedPages: PromiseOrValue<string>[],
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -515,9 +769,7 @@ export interface EWS extends BaseContract {
   configs(
     arg0: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
-  ): Promise<
-    [string, boolean] & { landingPage: string; disallowMaintainer: boolean }
-  >;
+  ): Promise<boolean>;
 
   dc(overrides?: CallOverrides): Promise<string>;
 
@@ -528,23 +780,34 @@ export interface EWS extends BaseContract {
 
   getAllowedPages(
     node: PromiseOrValue<BytesLike>,
+    label: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<string[]>;
 
   getAllowedPagesSlice(
     node: PromiseOrValue<BytesLike>,
+    label: PromiseOrValue<BytesLike>,
     start: PromiseOrValue<BigNumberish>,
     end: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<string[]>;
 
+  getFees(
+    name: PromiseOrValue<string>,
+    subdomain: PromiseOrValue<string>,
+    numAdditionalPages: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   getLandingPage(
     node: PromiseOrValue<BytesLike>,
+    label: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<string>;
 
   getNumAllowedPages(
     node: PromiseOrValue<BytesLike>,
+    label: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
@@ -552,6 +815,11 @@ export interface EWS extends BaseContract {
     role: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<string>;
+
+  getSubdomains(
+    node: PromiseOrValue<BytesLike>,
+    overrides?: CallOverrides
+  ): Promise<string[]>;
 
   grantRole(
     role: PromiseOrValue<BytesLike>,
@@ -569,8 +837,11 @@ export interface EWS extends BaseContract {
 
   perAdditionalPageFee(overrides?: CallOverrides): Promise<BigNumber>;
 
+  perSubdomainFee(overrides?: CallOverrides): Promise<BigNumber>;
+
   remove(
     name: PromiseOrValue<string>,
+    subdomain: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -603,6 +874,11 @@ export interface EWS extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  setPerSubdomainFee(
+    _perSubdomainFee: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   setRevenueAccount(
     _revenueAccount: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -620,6 +896,8 @@ export interface EWS extends BaseContract {
 
   update(
     name: PromiseOrValue<string>,
+    subdomain: PromiseOrValue<string>,
+    ewsType: PromiseOrValue<BigNumberish>,
     landingPage: PromiseOrValue<string>,
     allowedPages: PromiseOrValue<string>[],
     landingPageOnly: PromiseOrValue<boolean>,
@@ -637,6 +915,7 @@ export interface EWS extends BaseContract {
 
     appendAllowedPages(
       name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
       moreAllowedPages: PromiseOrValue<string>[],
       overrides?: CallOverrides
     ): Promise<void>;
@@ -644,9 +923,7 @@ export interface EWS extends BaseContract {
     configs(
       arg0: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
-    ): Promise<
-      [string, boolean] & { landingPage: string; disallowMaintainer: boolean }
-    >;
+    ): Promise<boolean>;
 
     dc(overrides?: CallOverrides): Promise<string>;
 
@@ -657,23 +934,34 @@ export interface EWS extends BaseContract {
 
     getAllowedPages(
       node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<string[]>;
 
     getAllowedPagesSlice(
       node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
       start: PromiseOrValue<BigNumberish>,
       end: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<string[]>;
 
+    getFees(
+      name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
+      numAdditionalPages: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getLandingPage(
       node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<string>;
 
     getNumAllowedPages(
       node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -681,6 +969,11 @@ export interface EWS extends BaseContract {
       role: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<string>;
+
+    getSubdomains(
+      node: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<string[]>;
 
     grantRole(
       role: PromiseOrValue<BytesLike>,
@@ -698,8 +991,11 @@ export interface EWS extends BaseContract {
 
     perAdditionalPageFee(overrides?: CallOverrides): Promise<BigNumber>;
 
+    perSubdomainFee(overrides?: CallOverrides): Promise<BigNumber>;
+
     remove(
       name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -732,6 +1028,11 @@ export interface EWS extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    setPerSubdomainFee(
+      _perSubdomainFee: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     setRevenueAccount(
       _revenueAccount: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -749,6 +1050,8 @@ export interface EWS extends BaseContract {
 
     update(
       name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
+      ewsType: PromiseOrValue<BigNumberish>,
       landingPage: PromiseOrValue<string>,
       allowedPages: PromiseOrValue<string>[],
       landingPageOnly: PromiseOrValue<boolean>,
@@ -759,14 +1062,144 @@ export interface EWS extends BaseContract {
   };
 
   filters: {
+    "EWSActivated(string,bytes32,string,bytes32)"(
+      name?: null,
+      node?: PromiseOrValue<BytesLike> | null,
+      subdomain?: null,
+      label?: PromiseOrValue<BytesLike> | null
+    ): EWSActivatedEventFilter;
+    EWSActivated(
+      name?: null,
+      node?: PromiseOrValue<BytesLike> | null,
+      subdomain?: null,
+      label?: PromiseOrValue<BytesLike> | null
+    ): EWSActivatedEventFilter;
+
+    "EWSAdditionPageUpdate(bytes32,bytes32,string[],string[])"(
+      node?: PromiseOrValue<BytesLike> | null,
+      label?: PromiseOrValue<BytesLike> | null,
+      additionalPagesFrom?: null,
+      additionalPagesTo?: null
+    ): EWSAdditionPageUpdateEventFilter;
+    EWSAdditionPageUpdate(
+      node?: PromiseOrValue<BytesLike> | null,
+      label?: PromiseOrValue<BytesLike> | null,
+      additionalPagesFrom?: null,
+      additionalPagesTo?: null
+    ): EWSAdditionPageUpdateEventFilter;
+
+    "EWSAppendedAdditionalPages(bytes32,bytes32,string[])"(
+      node?: PromiseOrValue<BytesLike> | null,
+      label?: PromiseOrValue<BytesLike> | null,
+      additionalPages?: null
+    ): EWSAppendedAdditionalPagesEventFilter;
+    EWSAppendedAdditionalPages(
+      node?: PromiseOrValue<BytesLike> | null,
+      label?: PromiseOrValue<BytesLike> | null,
+      additionalPages?: null
+    ): EWSAppendedAdditionalPagesEventFilter;
+
+    "EWSDCContractChanged(address,address)"(
+      from?: PromiseOrValue<string> | null,
+      to?: PromiseOrValue<string> | null
+    ): EWSDCContractChangedEventFilter;
+    EWSDCContractChanged(
+      from?: PromiseOrValue<string> | null,
+      to?: PromiseOrValue<string> | null
+    ): EWSDCContractChangedEventFilter;
+
+    "EWSLandingPageFeeChanged(uint256,uint256)"(
+      landingPageFeeFrom?: null,
+      landingPageFeeTo?: null
+    ): EWSLandingPageFeeChangedEventFilter;
+    EWSLandingPageFeeChanged(
+      landingPageFeeFrom?: null,
+      landingPageFeeTo?: null
+    ): EWSLandingPageFeeChangedEventFilter;
+
+    "EWSMaintainerPermissionChanged(bytes32,bool)"(
+      node?: PromiseOrValue<BytesLike> | null,
+      maintainerAllowed?: null
+    ): EWSMaintainerPermissionChangedEventFilter;
+    EWSMaintainerPermissionChanged(
+      node?: PromiseOrValue<BytesLike> | null,
+      maintainerAllowed?: null
+    ): EWSMaintainerPermissionChangedEventFilter;
+
+    "EWSPerAdditionalPageFeeChanged(uint256,uint256)"(
+      perAdditionalPageFeeFrom?: null,
+      perAdditionalPageFeeTo?: null
+    ): EWSPerAdditionalPageFeeChangedEventFilter;
+    EWSPerAdditionalPageFeeChanged(
+      perAdditionalPageFeeFrom?: null,
+      perAdditionalPageFeeTo?: null
+    ): EWSPerAdditionalPageFeeChangedEventFilter;
+
+    "EWSPerSubdomainFeeChanged(uint256,uint256)"(
+      perSubdomainFeeFrom?: null,
+      perSubdomainFeeTo?: null
+    ): EWSPerSubdomainFeeChangedEventFilter;
+    EWSPerSubdomainFeeChanged(
+      perSubdomainFeeFrom?: null,
+      perSubdomainFeeTo?: null
+    ): EWSPerSubdomainFeeChangedEventFilter;
+
+    "EWSSubdomainRemoved(string,bytes32,string,bytes32)"(
+      name?: null,
+      node?: PromiseOrValue<BytesLike> | null,
+      subdomain?: null,
+      label?: PromiseOrValue<BytesLike> | null
+    ): EWSSubdomainRemovedEventFilter;
+    EWSSubdomainRemoved(
+      name?: null,
+      node?: PromiseOrValue<BytesLike> | null,
+      subdomain?: null,
+      label?: PromiseOrValue<BytesLike> | null
+    ): EWSSubdomainRemovedEventFilter;
+
+    "EWSTypeUpdate(bytes32,bytes32,uint8,uint8)"(
+      node?: PromiseOrValue<BytesLike> | null,
+      label?: PromiseOrValue<BytesLike> | null,
+      ewsTypeFrom?: null,
+      ewsTypeTo?: null
+    ): EWSTypeUpdateEventFilter;
+    EWSTypeUpdate(
+      node?: PromiseOrValue<BytesLike> | null,
+      label?: PromiseOrValue<BytesLike> | null,
+      ewsTypeFrom?: null,
+      ewsTypeTo?: null
+    ): EWSTypeUpdateEventFilter;
+
+    "EWSUpdate(bytes32,bytes32,string,string)"(
+      node?: PromiseOrValue<BytesLike> | null,
+      label?: PromiseOrValue<BytesLike> | null,
+      landingPageFrom?: null,
+      landingPageTo?: null
+    ): EWSUpdateEventFilter;
+    EWSUpdate(
+      node?: PromiseOrValue<BytesLike> | null,
+      label?: PromiseOrValue<BytesLike> | null,
+      landingPageFrom?: null,
+      landingPageTo?: null
+    ): EWSUpdateEventFilter;
+
     "RevenueAccountChanged(address,address)"(
-      from?: null,
+      from?: PromiseOrValue<string> | null,
       to?: null
     ): RevenueAccountChangedEventFilter;
     RevenueAccountChanged(
-      from?: null,
+      from?: PromiseOrValue<string> | null,
       to?: null
     ): RevenueAccountChangedEventFilter;
+
+    "RevenueWithdrawn(address,uint256)"(
+      to?: PromiseOrValue<string> | null,
+      amount?: null
+    ): RevenueWithdrawnEventFilter;
+    RevenueWithdrawn(
+      to?: PromiseOrValue<string> | null,
+      amount?: null
+    ): RevenueWithdrawnEventFilter;
 
     "RoleAdminChanged(bytes32,bytes32,bytes32)"(
       role?: PromiseOrValue<BytesLike> | null,
@@ -809,6 +1242,7 @@ export interface EWS extends BaseContract {
 
     appendAllowedPages(
       name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
       moreAllowedPages: PromiseOrValue<string>[],
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -827,28 +1261,44 @@ export interface EWS extends BaseContract {
 
     getAllowedPages(
       node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     getAllowedPagesSlice(
       node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
       start: PromiseOrValue<BigNumberish>,
       end: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getFees(
+      name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
+      numAdditionalPages: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getLandingPage(
       node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     getNumAllowedPages(
       node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     getRoleAdmin(
       role: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    getSubdomains(
+      node: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -868,8 +1318,11 @@ export interface EWS extends BaseContract {
 
     perAdditionalPageFee(overrides?: CallOverrides): Promise<BigNumber>;
 
+    perSubdomainFee(overrides?: CallOverrides): Promise<BigNumber>;
+
     remove(
       name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -902,6 +1355,11 @@ export interface EWS extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    setPerSubdomainFee(
+      _perSubdomainFee: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     setRevenueAccount(
       _revenueAccount: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -919,6 +1377,8 @@ export interface EWS extends BaseContract {
 
     update(
       name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
+      ewsType: PromiseOrValue<BigNumberish>,
       landingPage: PromiseOrValue<string>,
       allowedPages: PromiseOrValue<string>[],
       landingPageOnly: PromiseOrValue<boolean>,
@@ -939,6 +1399,7 @@ export interface EWS extends BaseContract {
 
     appendAllowedPages(
       name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
       moreAllowedPages: PromiseOrValue<string>[],
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
@@ -957,28 +1418,44 @@ export interface EWS extends BaseContract {
 
     getAllowedPages(
       node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     getAllowedPagesSlice(
       node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
       start: PromiseOrValue<BigNumberish>,
       end: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getFees(
+      name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
+      numAdditionalPages: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     getLandingPage(
       node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     getNumAllowedPages(
       node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     getRoleAdmin(
       role: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getSubdomains(
+      node: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -1000,8 +1477,11 @@ export interface EWS extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    perSubdomainFee(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     remove(
       name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1034,6 +1514,11 @@ export interface EWS extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    setPerSubdomainFee(
+      _perSubdomainFee: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     setRevenueAccount(
       _revenueAccount: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1051,6 +1536,8 @@ export interface EWS extends BaseContract {
 
     update(
       name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
+      ewsType: PromiseOrValue<BigNumberish>,
       landingPage: PromiseOrValue<string>,
       allowedPages: PromiseOrValue<string>[],
       landingPageOnly: PromiseOrValue<boolean>,
