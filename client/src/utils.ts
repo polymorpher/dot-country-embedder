@@ -1,26 +1,16 @@
-
+import { getSubdomain as _getSubdomain, getSld as _getSld } from '../../common/domain-utils'
 export const getSld = (): string => {
   if (!window) {
     return ''
   }
-  const host = window.location.host
-  const parts = host.split('.')
-  if (parts.length <= 1) {
-    return ''
-  }
-  return parts[parts.length - 2]
+  return _getSld(window.location.host)
 }
 
 export const getSubdomain = (): string => {
   if (!window) {
     return ''
   }
-  const host = window.location.host
-  const parts = host.split('.')
-  if (parts.length <= 2) {
-    return ''
-  }
-  return parts[parts.length - 3]
+  return _getSubdomain(window.location.host)
 }
 
 export const getPath = (): string => {
