@@ -86,7 +86,7 @@ const notion = config.embedPlatform === 'notion'
 const Page: React.FC = () => {
   const [client] = useState(buildClient())
   const [page, setPage] = useState<ExtendedRecordMap | string>()
-  const [pageId, setPageId] = useState<string>('https://polymorpher.substack.com/')
+  const [pageId, setPageId] = useState<string>('https://polymorpher.substack.com')
   const [allowedPageIds, setAllowedPageIds] = useState<string[]>([])
 
   const { pending, initializing, tryCatch } = useTryCatch()
@@ -99,18 +99,50 @@ const Page: React.FC = () => {
     if (pageIdOverride && !allowedPageIds.includes(pageIdOverride) && pageIdOverride !== pageId) {
       return
     }
-    const renderedPageId = pageIdOverride || pageId
 
     void tryCatch(async function f () {
       if (notion) {
-        const records = await apis.getNotionPage(renderedPageId)
+        const records = await apis.getNotionPage(pageIdOverride || pageId)
         setPage(records)
       } else {
-        const page = await apis.getPage(pageId + '/' + renderedPageId)
+        const page = await apis.getPage(pageId + '/' + pageIdOverride) as string
+        const newDiv = document.createElement('div')
+
+        newDiv.innerHTML = page
+
+        const scripts = Array.from(newDiv.querySelectorAll('script'))
+        const oldScripts = Array.from(window.document.querySelectorAll('script[created-from=substack]'))
+
+        for (const script of oldScripts) {
+          script.remove()
+        }
+
+        for (const script of scripts) {
+          script.setAttribute('created-from', 'substack')
+          script.setAttribute('async', 'false')
+          script.setAttribute('type', 'text/javascript')
+          script.addEventListener('error', (e) => {
+            console.log(e)
+          })
+          document.body.appendChild(script)
+        }
+
+        newDiv.remove()
+
         setPage(page)
       }
     })
   }, [pageId, allowedPageIds, tryCatch])
+
+  useEffect(() => {
+    return () => {
+      const oldScripts = Array.from(window.document.querySelectorAll('script[created-from=substack]'))
+
+      for (const script of oldScripts) {
+        script.remove()
+      }
+    }
+  }, [])
 
   useEffect(() => {
     // @ts-expect-error debugging
@@ -164,9 +196,7 @@ const Page: React.FC = () => {
 
   if (!notion) {
     return (
-      <LinkReplacer pageId={pageId} allowedPageIds={allowedPageIds}>
-        <div dangerouslySetInnerHTML={{ __html: page as string }}></div>
-      </LinkReplacer>
+      <div dangerouslySetInnerHTML={{ __html: page as string }} />
     )
   }
 

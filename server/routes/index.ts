@@ -22,18 +22,20 @@ router.get('/health', async (req, res) => {
   res.send('OK').end()
 })
 
-router.get('/page', async (req, res) => {
-  try {
-    if (!req.query.url) {
-      throw new Error('URL query param is not specified')
+router.get('/page',
+  limiter(),
+  async (req, res) => {
+    try {
+      if (!req.query.url) {
+        throw new Error('URL query param is not specified')
+      }
+      const { data } = await axiosBase.get(req.query.url as string)
+      res.status(200).send(data)
+    } catch (ex: any) {
+      console.error(ex)
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
     }
-    const { data } = await axiosBase.get(req.query.url as string)
-    res.status(200).send(data)
-  } catch (ex: any) {
-    console.error(ex)
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
-  }
-})
+  })
 
 router.get('/notion',
   limiter(),
