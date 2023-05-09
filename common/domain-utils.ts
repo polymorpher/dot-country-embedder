@@ -2,7 +2,7 @@ export function getSld (hostname: string | string[] ) {
     const parts = hostname instanceof Array ? hostname : hostname.split('.')
     let sld = parts.length <= 1 ? '' : parts[parts.length - 2].toLowerCase()
     if(sld === 'harmony'){
-        sld = 'h'
+        sld = 'harmony-mirror'
     }
     return sld
 }
