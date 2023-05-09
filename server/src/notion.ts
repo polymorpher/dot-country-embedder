@@ -12,7 +12,7 @@ import {
   extractEmoji,
   extractPageImagePreview
 } from '../../common/notion-utils.ts'
-import { axiosBase } from 'routes/index.ts.ts'
+import { axiosBase } from '../routes/index.ts'
 const notion = new NotionAPI()
 
 const HexRegex = /[0-9a-f]+/

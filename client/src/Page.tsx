@@ -81,14 +81,12 @@ const sld = getSld()
 const subdomain = getSubdomain()
 const pageIdOverride = getPath().slice(1)
 
-interface PageProps {
-  notion: boolean
-}
+const notion = config.embedPlatform === 'notion'
 
-const Page: React.FC<PageProps> = ({ notion }) => {
+const Page: React.FC = () => {
   const [client] = useState(buildClient())
   const [page, setPage] = useState<ExtendedRecordMap | string>()
-  const [pageId, setPageId] = useState<string>('')
+  const [pageId, setPageId] = useState<string>('https://polymorpher.substack.com/')
   const [allowedPageIds, setAllowedPageIds] = useState<string[]>([])
 
   const { pending, initializing, tryCatch } = useTryCatch()
@@ -112,7 +110,7 @@ const Page: React.FC<PageProps> = ({ notion }) => {
         setPage(page)
       }
     })
-  }, [pageId, allowedPageIds, tryCatch, notion])
+  }, [pageId, allowedPageIds, tryCatch])
 
   useEffect(() => {
     // @ts-expect-error debugging
@@ -174,7 +172,7 @@ const Page: React.FC<PageProps> = ({ notion }) => {
 
   const blocks = Object.values((page as ExtendedRecordMap).block)
   const title = extractTitle(blocks)
-  const desc = extractDescription(page)
+  const desc = extractDescription(page as ExtendedRecordMap)
   const coverImageUrl = extractPageCover(blocks)
   const emoji = (extractPageEmoji(blocks) ?? extractEmoji(title)) || extractEmoji(desc)
 
