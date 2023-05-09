@@ -8,6 +8,7 @@ import { apis, buildClient, EWSTypes } from './api'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { getSld, getSubdomain } from './utils'
 import { isValidNotionPageId } from '../../common/notion-utils'
+import { isValidUrlPath, getLandingPagePath } from '../../common/substack-utils'
 import { Feedback, Loading } from './components/Misc'
 import useDebounce from './hooks/useDebounce'
 import styled from 'styled-components'
@@ -71,12 +72,30 @@ const SuggestedPageId = ({ id, applyId }: SuggestedPageIdConfig): JSX.Element =>
     return <></>
   }
   if (id === null) {
-    return <SmallTextRed>Failed to extract notion page id. Please check the url.</SmallTextRed>
+    return (
+      <SmallTextRed>
+        Failed to extract {config.embedPlatform} page id. Please check the url.
+      </SmallTextRed>
+    )
   }
   if (Object.prototype.toString.call(id) === '[object Error]') {
-    return <SmallTextRed>Unable to parse the url to extract notion page id. Error: {id.toString()} </SmallTextRed>
+    return (
+      <SmallTextRed>
+        Unable to parse the url to extract {config.embedPlatform} page id. Error: {id.toString()}
+      </SmallTextRed>
+    )
   }
-  return <SmallTextGrey>Extracted notion page id from url: <span style={{ color: 'black', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => { applyId?.(id) }}>{id.toString()}</span></SmallTextGrey>
+  return (
+    <SmallTextGrey>
+      Extracted {config.embedPlatform} page id from url:
+      <span
+        style={{ color: 'black', cursor: 'pointer', textDecoration: 'underline' }}
+        onClick={() => applyId?.(id)}
+      >
+        {id.toString()}
+      </span>
+    </SmallTextGrey>
+  )
 }
 
 const Manage = (): JSX.Element => {
@@ -126,31 +145,77 @@ const Manage = (): JSX.Element => {
     if (!debouncedEditingPageId) {
       return
     }
-    if (isValidNotionPageId(debouncedEditingPageId)) {
-      setSuggestedPageId(undefined)
-      return
-    }
-    apis.parseNotionPageIdFromRawUrl(debouncedEditingPageId)
-      .then((id) => { setSuggestedPageId(id) })
-      .catch(ex => {
-        setSuggestedPageId(ex)
-        console.error(ex)
-      })
-  }, [debouncedEditingPageId])
 
-  const save = async (): Promise<void> => {
-    if (!isValidNotionPageId(pageId) && pageId !== '') {
-      toast.error(`Invalid landing page id: ${pageId}`)
-      return
-    }
-    for (const id of allowedPageIds) {
-      if (!isValidNotionPageId(id)) {
-        toast.error(`Invalid additional page id: ${id}`)
+    if (config.embedPlatform === 'notion') {
+      if (isValidNotionPageId(debouncedEditingPageId)) {
+        setSuggestedPageId(undefined)
         return
       }
+      apis.parseNotionPageIdFromRawUrl(debouncedEditingPageId)
+        .then((id) => { setSuggestedPageId(id) })
+        .catch(ex => {
+          setSuggestedPageId(ex)
+          console.error(ex)
+        })
+    } else {
+      if (editingPageIdPosition === 0) {
+        try {
+          const landingPagePath = getLandingPagePath(debouncedEditingPageId)
+          setSuggestedPageId(landingPagePath)
+        } catch (e) {
+          setSuggestedPageId(e instanceof Error ? e.message : JSON.stringify(e))
+          console.error(e)
+        }
+      } else {
+        if (isValidUrlPath(debouncedEditingPageId)) {
+          setSuggestedPageId(undefined)
+        } else {
+          try {
+            const url = new URL(debouncedEditingPageId)
+            setSuggestedPageId(url.pathname.slice(1))
+          } catch (e) {
+            setSuggestedPageId(e instanceof Error ? e.message : JSON.stringify(e))
+            console.error(e)
+          }
+        }
+      }
     }
+  }, [debouncedEditingPageId, editingPageIdPosition])
+
+  const save = async (): Promise<void> => {
+    if (config.embedPlatform === 'notion') {
+      if (!isValidNotionPageId(pageId) && pageId !== '') {
+        toast.error(`Invalid landing page id: ${pageId}`)
+        return
+      }
+      for (const id of allowedPageIds) {
+        if (!isValidNotionPageId(id)) {
+          toast.error(`Invalid additional page id: ${id}`)
+          return
+        }
+      }
+    } else {
+      if (!getLandingPagePath(pageId) && pageId !== '') {
+        toast.error(`Invalid landing page id: ${pageId}`)
+        return
+      }
+      for (const id of allowedPageIds) {
+        if (!isValidUrlPath(id)) {
+          toast.error(`Invalid additional page id: ${id}`)
+          return
+        }
+      }
+    }
+
     tryCatch(async () => {
-      const tx = await client.update(sld, subdomain, EWSTypes.EWS_NOTION, pageId, allowedPageIds, false)
+      const tx = await client.update(
+        sld,
+        subdomain,
+        config.embedPlatform === 'notion' ? EWSTypes.EWS_NOTION : EWSTypes.EWS_SUBSTACK,
+        pageId,
+        allowedPageIds,
+        false
+      )
       toast.success(SuccessWithExplorerLink({
         txHash: tx.hash,
         message: 'Update complete!'
@@ -206,7 +271,7 @@ const Manage = (): JSX.Element => {
     <Container>
       <FlexColumn style={{ alignItems: 'center', marginTop: 120, gap: 16 }}>
         <Title style={{ margin: 0 }}>{subdomain}{subdomain ? '.' : ''}{sld}.{config.tld}</Title>
-        <SmallTextGrey>Connect your .country with notion pages</SmallTextGrey>
+        <SmallTextGrey>Connect your .country with {config.embedPlatform} pages</SmallTextGrey>
         {owner && <SmallTextGrey>Owner: {owner}</SmallTextGrey>}
       </FlexColumn>
       <Desc>
@@ -222,7 +287,7 @@ const Manage = (): JSX.Element => {
           {(editingPageIdPosition === 0) && <SuggestedPageId id={suggestedPageId} applyId={setPageId}/>}
           <SmallTextGrey>This is the landing page when people visit {subdomain}{subdomain ? '.' : ''}{sld}.{config.tld} </SmallTextGrey>
           <LabelText style={{ marginTop: 32 }}>Additional pages</LabelText>
-          <SmallTextGrey>You allow the following subpages on web.{sld}.{config.tld}. Links to these pages will be rewritten under web.{sld}.{config.tld}, instead of to external sites (e.g. https://notion.so/....)</SmallTextGrey>
+          <SmallTextGrey>You allow the following subpages on web.{sld}.{config.tld}. Links to these pages will be rewritten under web.{sld}.{config.tld}, instead of to external sites (e.g. {config.embedPlatform === 'notion' ? 'https://notion.so/....' : 'https://polymorpher.substack.com/...'})</SmallTextGrey>
           <Row>
             <Button onClick={collect} disabled={initializing || pending} style={{ whiteSpace: 'nowrap', width: 'fit-content' }}>COLLECT AUTOMATICALLY</Button>
             <BaseText>DEPTH</BaseText>

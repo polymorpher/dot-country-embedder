@@ -17,6 +17,10 @@ export const apis = {
     const { data } = await base.get('/notion', { params: { id } })
     return data
   },
+  getPage: async (url: string) => {
+    const { data } = await base.get('/page', { params: { url } })
+    return data
+  },
   getSameSitePageIds: async (id: string, depth = 0): Promise<string[]> => {
     const { data } = await base.get('/links', { params: { id, depth } })
     return data

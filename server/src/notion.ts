@@ -1,6 +1,5 @@
 import { NotionAPI } from 'notion-client'
 import { type Block, type ExtendedRecordMap, type Role } from 'notion-types'
-import axios from 'axios'
 import { JSDOM } from 'jsdom'
 import { uniq } from 'lodash-es'
 import { type OpenGraphData } from './types.ts'
@@ -13,9 +12,8 @@ import {
   extractEmoji,
   extractPageImagePreview
 } from '../../common/notion-utils.ts'
+import { axiosBase } from 'routes/index.ts.ts'
 const notion = new NotionAPI()
-
-const axiosBase = axios.create({ timeout: 15000 })
 
 const HexRegex = /[0-9a-f]+/
 export const isValidateNotionPageId = (id: string): boolean => {

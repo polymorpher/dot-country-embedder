@@ -1,9 +1,12 @@
 import express from 'express'
 import { StatusCodes } from 'http-status-codes'
 import rateLimit from 'express-rate-limit'
+import axios from 'axios'
 import { getAllPageIds, getNotionPageId, getPage } from '../src/notion.ts'
 import { getOGPage } from '../src/og.ts'
 import { isValidNotionPageId } from '../../common/notion-utils.ts'
+
+export const axiosBase = axios.create({ timeout: 15000 })
 
 const router = express.Router()
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -17,6 +20,19 @@ const limiter = (args?) => rateLimit({
 router.get('/health', async (req, res) => {
   console.log('[/health]', JSON.stringify(req.fingerprint))
   res.send('OK').end()
+})
+
+router.get('/page', async (req, res) => {
+  try {
+    if (!req.query.url) {
+      throw new Error('URL query param is not specified')
+    }
+    const { data } = await axiosBase.get(req.query.url as string)
+    res.status(200).send(data)
+  } catch (ex: any) {
+    console.error(ex)
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
+  }
 })
 
 router.get('/notion',
