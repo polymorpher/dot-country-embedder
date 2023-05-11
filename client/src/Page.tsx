@@ -118,13 +118,18 @@ const Page: React.FC = () => {
         }
 
         for (const script of scripts) {
-          script.setAttribute('created-from', 'substack')
-          script.setAttribute('async', 'false')
-          script.setAttribute('type', 'text/javascript')
-          script.addEventListener('error', (e) => {
-            console.log(e)
-          })
-          document.body.appendChild(script)
+          const newScript = document.createElement('script')
+
+          if (script.src) {
+            newScript.src = script.src
+          }
+
+          if (script.innerHTML) {
+            newScript.innerHTML = script.innerHTML
+          }
+
+          newScript.setAttribute('created-from', 'substack')
+          document.body.appendChild(newScript)
         }
 
         newDiv.remove()
