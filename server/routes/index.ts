@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes'
 import rateLimit from 'express-rate-limit'
 import { getAllPageIds, getNotionPageId, getPage } from '../src/notion.ts'
 import { getOGPage } from '../src/og.ts'
-import { isValidNotionPageId } from '../../common/notion-utils.ts'
+import { isValidNotionPageId, parsePath } from '../../common/notion-utils.ts'
 import { getSld, getSubdomain } from '../../common/domain-utils.ts'
 
 const router = express.Router()
@@ -82,13 +82,14 @@ router.get(['/*'], limiter(), async (req, res) => {
       return
     }
     console.log('[/*]', req.hostname, req.path, 'ua:', req.header('user-agent'))
-    if (path && !isValidNotionPageId(path)) {
+    const parsedPath = parsePath(path)
+    if (path && !isValidNotionPageId(parsedPath)) {
       res.status(StatusCodes.BAD_REQUEST).json({})
       return
     }
     const subdomain = getSubdomain(parts)
     const sld = getSld(parts)
-    const page = await getOGPage(sld, subdomain, path)
+    const page = await getOGPage(sld, subdomain, parsedPath)
     res.header('content-type', 'text/html; charset=utf-8').send(page)
   } catch (ex: any) {
     console.error(ex)
