@@ -195,7 +195,7 @@ const Page: React.FC = () => {
       fullPage={true}
       darkMode={false}
       rootPageId={pageId}
-      mapPageUrl={titleEmbeddedMapPageUrl(page)}
+      mapPageUrl={titleEmbeddedMapPageUrl(page as ExtendedRecordMap)}
       components={{
         Code,
         Collection,
