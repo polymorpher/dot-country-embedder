@@ -18,6 +18,13 @@ module.exports = {
     client: {
       overlay: false,
       progress: true
+    },
+    // need to be configured via web server like nginx or apache in production mode
+    proxy: {
+      '/api/v1': {
+        target: 'http://localhost:3100',
+        router: () => 'http://localhost:3002/polymorpher.substack.com'
+      }
     }
   },
   cache: { type: 'filesystem' },

@@ -89,6 +89,14 @@ router.get('/links',
     }
   })
 
+router.get('/:substackHost/api/v1/archive',
+  limiter(),
+  async (req, res) => {
+    const { data } = await axiosBase.get(`https://${req.params.substackHost}/api/v1/archive`, { params: req.query })
+    res.status(200).send(data)
+  }
+)
+
 // rendering preview data for crawler bots
 router.get(['/*'], limiter(), async (req, res) => {
   try {

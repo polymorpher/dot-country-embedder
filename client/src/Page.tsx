@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import { renderToString } from 'react-dom/server'
-
 import { BaseText } from './components/Text'
 import { apis, buildClient } from './api'
 
@@ -15,7 +13,6 @@ import { Modal } from 'react-notion-x/build/third-party/modal'
 import { Pdf } from 'react-notion-x/build/third-party/pdf'
 import { extractTitle, extractDescription, extractPageCover, extractPageEmoji, makeEmojiDataUrl, extractEmoji, isValidNotionPageId } from '../../common/notion-utils'
 import { type ExtendedRecordMap } from 'notion-types'
-import htmlReactParser, { Element as ParserElement } from 'html-react-parser'
 import { getPath, getSld, getSubdomain } from './utils'
 import { useTryCatch } from './hooks/useTryCatch'
 import { Navigate } from 'react-router-dom'
@@ -24,54 +21,6 @@ import { LinkWrarpper } from './components/Controls'
 import { FlexColumn } from './components/Layout'
 import { Helmet } from 'react-helmet'
 import config from '../config'
-
-interface LinkReplacerConfig {
-  children: JSX.Element
-  pageId: string
-  allowedPageIds: string[]
-}
-
-// DEPRECATED: TODO: this doesn't work with pages that have iframe, which is needed by tweets. We probably don't need this anymore, since we now have recursive crawler which can set allowed-pages correctly in the first place.
-const LinkReplacer = ({ children, pageId, allowedPageIds = [] }: LinkReplacerConfig): JSX.Element => {
-  const [element, setElement] = useState<JSX.Element>(<></>)
-  useEffect(() => {
-    const str = renderToString(children)
-    setElement(htmlReactParser(str, {
-      replace: (node) => {
-        if (node.type !== 'tag' || !(node instanceof ParserElement)) {
-          return
-        }
-
-        if (node.name === 'a') {
-          if (node.attribs.href.startsWith('http://') || node.attribs.href.startsWith('https://')) {
-            return
-          }
-          let replaced = false
-          for (const attr of node.attributes) {
-            if (attr.name !== 'href') {
-              continue
-            }
-            if (attr.value.startsWith('/' + pageId)) {
-              // console.log('replacing', attr.value, attr.value.slice(`/${pageId}`.length))
-              node.attribs.href = attr.value.slice(`/${pageId}`.length)
-              replaced = true
-            } else {
-              const matchedPageIds = allowedPageIds.filter(e => attr.value.startsWith(`/${e}`))
-              if (attr.value.startsWith('/') && matchedPageIds.length === 0) {
-                node.attribs.href = `https://notion.so/${attr.value.slice(1)}`
-                replaced = true
-              }
-            }
-          }
-          if (replaced) {
-            return node.cloneNode()
-          }
-        }
-      }
-    }) as JSX.Element)
-  }, [children, pageId, allowedPageIds])
-  return element
-}
 
 const Tweet = ({ id }: { id: string }): JSX.Element => {
   return <TweetEmbed tweetId={id} />
@@ -86,7 +35,9 @@ const notion = config.embedPlatform === 'notion'
 const Page: React.FC = () => {
   const [client] = useState(buildClient())
   const [page, setPage] = useState<ExtendedRecordMap | string>()
-  const [pageId, setPageId] = useState<string>('https://polymorpher.substack.com')
+  // set "https://polymorpher.substack.com" to `pageId` for test purpose
+  const [pageId, setPageId] = useState<string>('')
+  // set ["archive"] to `allowedPageIds` for test purpose
   const [allowedPageIds, setAllowedPageIds] = useState<string[]>([])
 
   const { pending, initializing, tryCatch } = useTryCatch()
@@ -176,7 +127,7 @@ const Page: React.FC = () => {
       <BlankPage>
         <FlexColumn style={{ textAlign: 'center' }}>
           <BaseText>
-            This site has not connected with any notion page<br/><br/>
+            This site has not connected with any {notion ? 'notion' : 'substack'} page<br/><br/>
             If you are the owner, please visit <LinkWrarpper href={'/manage'}>here</LinkWrarpper> to configure the site
           </BaseText>
         </FlexColumn>
@@ -185,7 +136,7 @@ const Page: React.FC = () => {
   }
 
   if (pageIdOverride && !allowedPageIds.includes(pageIdOverride) && pageIdOverride !== pageId) {
-    if (isValidNotionPageId(pageIdOverride)) {
+    if (notion && isValidNotionPageId(pageIdOverride)) {
       return <Navigate to={`https://notion.so/${pageIdOverride}`}/>
     }
     return <Navigate to={'/manage'}/>
