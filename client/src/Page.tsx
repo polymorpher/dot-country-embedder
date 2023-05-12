@@ -11,9 +11,19 @@ import { Collection } from 'react-notion-x/build/third-party/collection'
 import { Equation } from 'react-notion-x/build/third-party/equation'
 import { Modal } from 'react-notion-x/build/third-party/modal'
 import { Pdf } from 'react-notion-x/build/third-party/pdf'
-import { extractTitle, extractDescription, extractPageCover, extractPageEmoji, makeEmojiDataUrl, extractEmoji, isValidNotionPageId } from '../../common/notion-utils'
+import {
+  extractTitle,
+  extractDescription,
+  extractPageCover,
+  extractPageEmoji,
+  makeEmojiDataUrl,
+  extractEmoji,
+  isValidNotionPageId,
+  parsePath,
+  urlNormalize
+} from '../../common/notion-utils'
 import { type ExtendedRecordMap } from 'notion-types'
-import { getPath, getSld, getSubdomain } from './utils'
+import { getPath, getSld, getSubdomain, titleEmbeddedMapPageUrl } from './utils'
 import { useTryCatch } from './hooks/useTryCatch'
 import { Navigate } from 'react-router-dom'
 import { BlankPage, LoadingScreen } from './components/Misc'
@@ -28,7 +38,7 @@ const Tweet = ({ id }: { id: string }): JSX.Element => {
 
 const sld = getSld()
 const subdomain = getSubdomain()
-const pageIdOverride = getPath().slice(1)
+const pageIdOverride = parsePath(getPath().slice(1))
 
 const notion = config.embedPlatform === 'notion'
 
@@ -53,10 +63,16 @@ const Page: React.FC = () => {
 
     void tryCatch(async function f () {
       if (notion) {
-        const records = await apis.getNotionPage(pageIdOverride || pageId)
+        const renderedPageId = pageIdOverride || pageId
+        const records = await apis.getNotionPage(renderedPageId)
+        const title = extractTitle(Object.values(records.block))
+        if (title) {
+          const stub = urlNormalize(title)
+          history.pushState({}, '', `${stub}-${renderedPageId}`)
+        }
         setPage(records)
       } else {
-        const page = await apis.getPage(pageId + '/' + pageIdOverride) as string
+        const page = await apis.getPage(`${pageId}/${pageIdOverride}`) as string
         const newDiv = document.createElement('div')
 
         newDiv.innerHTML = page
@@ -137,7 +153,9 @@ const Page: React.FC = () => {
 
   if (pageIdOverride && !allowedPageIds.includes(pageIdOverride) && pageIdOverride !== pageId) {
     if (notion && isValidNotionPageId(pageIdOverride)) {
-      return <Navigate to={`https://notion.so/${pageIdOverride}`}/>
+      // return <Navigate to={`https://notion.so/${pageIdOverride}`}/>
+      window.location.href = `https://notion.so/${pageIdOverride}`
+      return <LoadingScreen/>
     }
     return <Navigate to={'/manage'}/>
   }
@@ -177,6 +195,7 @@ const Page: React.FC = () => {
       fullPage={true}
       darkMode={false}
       rootPageId={pageId}
+      mapPageUrl={titleEmbeddedMapPageUrl(page)}
       components={{
         Code,
         Collection,

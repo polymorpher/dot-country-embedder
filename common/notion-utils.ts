@@ -81,3 +81,16 @@ export const isValidNotionPageId = (id: string): boolean => {
     }
     return true
 }
+
+export const parsePath = (path: string): string => {
+    if(!path){
+        return ''
+    }
+    const parts = path.split('-')
+    const tentativePageId = parts[parts.length - 1]
+    return tentativePageId
+}
+
+export const urlNormalize = (content: string): string =>{
+    return content.replace(/[^a-z0-9_]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()
+}

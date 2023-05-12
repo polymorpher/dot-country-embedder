@@ -4,7 +4,8 @@ import rateLimit from 'express-rate-limit'
 import axios from 'axios'
 import { getAllPageIds, getNotionPageId, getPage } from '../src/notion.ts'
 import { getOGPage } from '../src/og.ts'
-import { isValidNotionPageId } from '../../common/notion-utils.ts'
+import { isValidNotionPageId, parsePath } from '../../common/notion-utils.ts'
+import { getSld, getSubdomain } from '../../common/domain-utils.ts'
 
 export const axiosBase = axios.create({ timeout: 15000 })
 
@@ -107,13 +108,14 @@ router.get(['/*'], limiter(), async (req, res) => {
       return
     }
     console.log('[/*]', req.hostname, req.path, 'ua:', req.header('user-agent'))
-    if (path && !isValidNotionPageId(path)) {
+    const parsedPath = parsePath(path)
+    if (path && !isValidNotionPageId(parsedPath)) {
       res.status(StatusCodes.BAD_REQUEST).json({})
       return
     }
-    const subdomain = parts.length <= 2 ? '' : parts[parts.length - 3].toLowerCase()
-    const sld = parts.length <= 1 ? '' : parts[parts.length - 2].toLowerCase()
-    const page = await getOGPage(sld, subdomain, path)
+    const subdomain = getSubdomain(parts)
+    const sld = getSld(parts)
+    const page = await getOGPage(sld, subdomain, parsedPath)
     res.header('content-type', 'text/html; charset=utf-8').send(page)
   } catch (ex: any) {
     console.error(ex)

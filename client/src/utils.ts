@@ -1,26 +1,18 @@
-
+import { getSubdomain as _getSubdomain, getSld as _getSld } from '../../common/domain-utils'
+import { type ExtendedRecordMap } from 'notion-types'
+import { urlNormalize } from '../../common/notion-utils'
 export const getSld = (): string => {
   if (!window) {
     return ''
   }
-  const host = window.location.host
-  const parts = host.split('.')
-  if (parts.length <= 1) {
-    return ''
-  }
-  return parts[parts.length - 2]
+  return _getSld(window.location.host)
 }
 
 export const getSubdomain = (): string => {
   if (!window) {
     return ''
   }
-  const host = window.location.host
-  const parts = host.split('.')
-  if (parts.length <= 2) {
-    return ''
-  }
-  return parts[parts.length - 3]
+  return _getSubdomain(window.location.host)
 }
 
 export const getPath = (): string => {
@@ -28,4 +20,16 @@ export const getPath = (): string => {
     return ''
   }
   return window.location.pathname
+}
+
+export const titleEmbeddedMapPageUrl = (blockMap: ExtendedRecordMap) => {
+  return (pageId: string) => {
+    const title = blockMap.block[pageId]?.value.properties?.title?.flat().join(' ')
+    if (!title) {
+      console.log(pageId)
+    }
+    const urlPrefix = urlNormalize(title || '')
+    pageId = (pageId || '').replace(/-/g, '')
+    return `/${urlPrefix}-${pageId}`
+  }
 }
