@@ -47,12 +47,12 @@ const cached = (ttl?: number) => (req: Request, res: Response, next: NextFunctio
     return
   } else {
     // @ts-expect-error wrapper
-    res.__send = res.send
-    res.send = (r) => {
+    res.__json = res.json
+    res.json = (r) => {
       console.log(`Cache set key=[${key}] value=`, abbrv(r))
       cache.set(key, r, { ttl: ttl ?? 60 * 1000 })
       // @ts-expect-error wrapper
-      return res.__send(r)
+      return res.__json(r)
     }
   }
   next()
