@@ -39,20 +39,20 @@ const abbrv = (s: string | object, len: number = 10): string => {
   return printout
 }
 const cached = (ttl?: number) => (req: Request, res: Response, next: NextFunction): void => {
-  const key = `${req.path}|${JSON.stringify(req.query)}|${JSON.stringify(req.body)}`
+  const key = `${req.method}|${req.path}|${JSON.stringify(req.query)}|${JSON.stringify(req.body)}`
   const v = cache.get(key)
   if (v) {
-    console.log(`Cache hit key=[${key}] value=`, abbrv(v))
-    res.json(v)
+    console.log(`Cache hit key=[${key}] value=`, abbrv(v), typeof v)
+    res.send(v)
     return
   } else {
     // @ts-expect-error wrapper
-    res.__json = res.json
-    res.json = (r) => {
-      console.log(`Cache set key=[${key}] value=`, abbrv(r))
+    res.__send = res.send
+    res.send = (r) => {
+      console.log(`Cache set key=[${key}] value=`, abbrv(r), typeof r)
       cache.set(key, r, { ttl: ttl ?? 60 * 1000 })
       // @ts-expect-error wrapper
-      return res.__json(r)
+      return res.__send(r)
     }
   }
   next()
