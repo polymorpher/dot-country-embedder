@@ -78,7 +78,7 @@ router.get('/health', async (req, res) => {
   res.send('OK').end()
 })
 
-router.get('/page',
+router.get('/substack',
   limiter(),
   async (req, res) => {
     try {
