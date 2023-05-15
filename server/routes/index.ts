@@ -1,3 +1,4 @@
+import { type NextFunction, type Request, type Response } from 'express'
 import express from 'express'
 import { StatusCodes } from 'http-status-codes'
 import rateLimit from 'express-rate-limit'
@@ -6,6 +7,7 @@ import { getAllPageIds, getNotionPageId, getPage } from '../src/notion.ts'
 import { getOGPage } from '../src/og.ts'
 import { isValidNotionPageId, parsePath } from '../../common/notion-utils.ts'
 import { getSld, getSubdomain } from '../../common/domain-utils.ts'
+import { LRUCache } from 'lru-cache'
 
 export const axiosBase = axios.create({ timeout: 15000 })
 
@@ -17,6 +19,59 @@ const limiter = (args?) => rateLimit({
   keyGenerator: req => req.fingerprint?.hash ?? '',
   ...args
 })
+
+const cache = new LRUCache({
+  max: 5000,
+  maxSize: 50000,
+  sizeCalculation: (value, key) => {
+    return 1
+  },
+  ttl: 1000 * 60
+
+})
+
+const abbrv = (s: string | object, len: number = 10): string => {
+  let printout = ''
+  if (typeof s !== 'string') {
+    printout = JSON.stringify(s)
+  } else {
+    printout = s
+  }
+  if (printout.length > len) {
+    printout = printout.slice(0, len) + '...' + printout.slice(printout.length - 5)
+  }
+  return printout
+}
+const cached = (ttl?: number) => (req: Request, res: Response, next: NextFunction): void => {
+  const key = `${req.method}|${req.path}|${JSON.stringify(req.query)}|${JSON.stringify(req.body)}`
+  const keyContentType = key + '|header|content-type'
+  const v = cache.get(key)
+  if (v) {
+    const contentType = cache.get(keyContentType)
+    if (contentType) {
+      console.log(`Cache header hit key=[${keyContentType}] value=`, contentType)
+      res.header('content-type', contentType as string)
+    }
+    console.log(`Cache hit key=[${key}] value=`, abbrv(v), typeof v)
+    res.send(v)
+    return
+  } else {
+    // @ts-expect-error wrapper
+    res.__send = res.send
+    res.send = (r) => {
+      console.log(`Cache set key=[${key}] value=`, abbrv(r), typeof r)
+      cache.set(key, r, { ttl: ttl ?? 60 * 1000 })
+      if (res.hasHeader('content-type')) {
+        const h = res.getHeader('content-type')
+        console.log(`Cache header set key=[${keyContentType}] value=`, h)
+        cache.set(keyContentType, h, { ttl: ttl ?? 60 * 1000 })
+      }
+      // @ts-expect-error wrapper
+      return res.__send(r)
+    }
+  }
+  next()
+}
 
 router.get('/health', async (req, res) => {
   console.log('[/health]', JSON.stringify(req.fingerprint))
@@ -40,6 +95,7 @@ router.get('/page',
 
 router.get('/notion',
   limiter(),
+  cached(),
   async (req, res) => {
     const id = req.query?.id as (string | undefined)
     if (!id) {
@@ -56,6 +112,7 @@ router.get('/notion',
   })
 router.post('/parse',
   limiter(),
+  cached(30 * 1000),
   async (req, res) => {
     const url = req.body?.url as (string | undefined)
     if (!url) {
@@ -74,6 +131,7 @@ router.post('/parse',
 
 router.get('/links',
   limiter(),
+  cached(30 * 1000),
   async (req, res) => {
     const id = req.query?.id as (string | undefined)
     const depth = Number(req.query?.depth ?? '0')
@@ -99,7 +157,7 @@ router.get('/:substackHost/api/v1/archive',
 )
 
 // rendering preview data for crawler bots
-router.get(['/*'], limiter(), async (req, res) => {
+router.get(['/*'], limiter(), cached(), async (req, res) => {
   try {
     const parts = req.hostname.split('.')
     const path = req.path.slice(1)

@@ -27,6 +27,7 @@
     "jsdom": "^21.1.1",
     "keccak": "^3.0.2",
     "lodash-es": "^4.17.21",
+    "lru-cache": "^9.1.1",
     "moment": "^2.29.1",
     "morgan": "^1.10.0",
     "notion-client": "^6.16.0",

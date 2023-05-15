@@ -1,0 +1,14 @@
+[Unit]
+Description=1NS Embedded Web Services
+After=network.target
+
+[Service]
+Environment=PORT=80 HTTPS_PORT=443
+Type=simple
+User=worker
+WorkingDirectory=/opt/dot-country-embedder/server
+ExecStart=/opt/dot-country-embedder/server/node_modules/.bin/ts-node-esm /opt/dot-country-embedder/server/bin/run.ts
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
