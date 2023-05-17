@@ -128,6 +128,9 @@ export const buildClient = (provider?, signer?): Client => {
       return await ews.remove(sld, subdomain)
     },
     hasMaintainerRole: async (address: string): Promise<boolean> => {
+      if (!address) {
+        return false
+      }
       return await ews.hasRole(await ews.MAINTAINER_ROLE(), address)
     }
   }
