@@ -105,7 +105,7 @@ export const buildClient = (provider?, signer?): Client => {
       return await ews.perAdditionalPageFee()
     },
     getPerSubdomainFees: async (): Promise<BigNumber> => {
-      return ews.perSubdomainFee()
+      return await ews.perSubdomainFee()
     },
     getLandingPage: async (sld: string, subdomain: string): Promise<string> => {
       return await ews.getLandingPage(ethers.utils.id(sld), ethers.utils.id(subdomain))

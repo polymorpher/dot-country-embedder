@@ -90,14 +90,10 @@ const Tweet = ({ id }: { id: string }): JSX.Element => {
 const Notion: React.FC = () => {
   const [client] = useState(buildClient())
   const [page, setPage] = useState<ExtendedRecordMap>()
-  // const [pageId, setPageId] = useState<string>('ae42787a7d774e3bb86dcd897f720a0b')
   const [pageId, setPageId] = useState<string>('')
-  // const [allowedPageIds, setAllowedPageIds] = useState<string[]>(['7bebb4bb632c4fd985a0f816518b853f', '82036c958834437786427b83ca55bfbe'])
   const [allowedPageIds, setAllowedPageIds] = useState<string[]>([])
   const sld = getSld()
-  // const sld = 'h'
   const subdomain = getSubdomain()
-  // const subdomain = 'www'
   const pageIdOverride = parsePath(getPath().slice(1))
 
   const { pending, initializing, tryCatch } = useTryCatch()

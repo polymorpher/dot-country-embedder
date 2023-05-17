@@ -3,7 +3,6 @@ import { FlexColumn, Main, Row } from './components/Layout'
 import { BaseText, Desc, DescLeft, SmallText, Title } from './components/Text'
 import config from '../config'
 import { Button, Input, LinkWrarpper } from './components/Controls'
-import { useAccount, useConnect, useNetwork, useProvider, useSigner, useSwitchNetwork } from 'wagmi'
 import { apis, buildClient, EWSTypes } from './api'
 import { getSld, getSubdomain } from './utils'
 import { isValidNotionPageId } from '../../common/notion-utils'
@@ -13,6 +12,9 @@ import styled from 'styled-components'
 import { toast } from 'react-toastify'
 import { useTryCatch } from './hooks/useTryCatch'
 import { ethers } from 'ethers'
+import detectEthereumProvider from '@metamask/detect-provider'
+import { type ExternalProvider } from '@ethersproject/providers'
+import { EthereumProvider } from '@walletconnect/ethereum-provider'
 
 const Container = styled(Main)`
   margin: 0 auto;
@@ -79,14 +81,10 @@ const SuggestedPageId = ({ id, applyId }: SuggestedPageIdConfig): JSX.Element =>
 }
 
 const Manage = (): JSX.Element => {
-  const { chain } = useNetwork()
-  const { switchNetwork } = useSwitchNetwork()
-
-  const { address, isConnected } = useAccount()
-  const provider = useProvider()
+  const [address, setAddress] = useState('')
+  const [provider, setProvider] = useState<any>()
+  const [signer, setSigner] = useState<any>()
   const [client, setClient] = useState(buildClient())
-  const { data: signer } = useSigner()
-  const { connect, connectors, error, isLoading, pendingConnector } = useConnect()
   const [pageId, setPageId] = useState<string>('')
   const [depth, setDepth] = useState<number>(0)
   const [editingPageId, setEditingPageId] = useState<string>('')
@@ -104,6 +102,89 @@ const Manage = (): JSX.Element => {
   const sld = getSld()
   const subdomain = getSubdomain()
   const totalFees = baseFees.add(perPageFees.mul(allowedPageIds.length)).add(perSubdomainFees)
+
+  const wcConnect = async (): Promise<void> => {
+    try {
+      const options = {
+        projectId: config.walletConnectId, // REQUIRED your projectId
+        chains: [Number(config.chainParameters.chainId)], // REQUIRED chain ids
+        showQrModal: true, // REQUIRED set to "true" to use @web3modal/standalone,
+        rpcMap: { [Number(config.chainParameters.chainId)]: config.defaultRpc } // OPTIONAL rpc urls for each chain
+      }
+      // console.log(options)
+      const provider = await EthereumProvider.init(options)
+      const [address] = await provider.enable()
+      setAddress(address)
+      const ethersProvider = new ethers.providers.Web3Provider(provider as ExternalProvider)
+      const signer = ethersProvider.getSigner()
+      setProvider(ethersProvider)
+      setSigner(signer)
+    } catch (ex: any) {
+      console.error(ex)
+      toast.error(`Failed to connect with WalletConnect: ${ex.toString()}`)
+    }
+  }
+
+  async function init (): Promise<void> {
+    const provider = await detectEthereumProvider()
+    const ethersProvider = new ethers.providers.Web3Provider(provider as ExternalProvider)
+    const signer = ethersProvider.getSigner()
+    setProvider(ethersProvider)
+    setSigner(signer)
+  }
+  const switchChain = async (address, silence): Promise<void> => {
+    return window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: config.chainParameters.chainId }]
+    }).then(() => {
+      !silence && toast.success(`Switched to network: ${config.chainParameters.chainName}`)
+      setClient(buildClient(provider, signer))
+    })
+  }
+
+  const connect = async (silence): Promise<void> => {
+    if (!window.ethereum) {
+      !silence && toast.error('Wallet not found')
+      return
+    }
+    try {
+      const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' })
+      setAddress(address)
+
+      try {
+        await switchChain(address, silence)
+      } catch (ex: any & { code: number }) {
+        console.error(ex)
+        if (ex.code !== 4902) {
+          !silence && toast.error(`Failed to switch to network ${config.chainParameters.chainName}: ${ex.message}`)
+          return
+        }
+        try {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [config.chainParameters]
+          })
+          !silence && toast.success(`Added ${config.chainParameters.chainName} Network on MetaMask`)
+        } catch (ex2) {
+          // message.error('Failed to add Harmony network:' + ex.toString())
+          !silence && toast.error(`Failed to add network ${config.chainParameters.chainName}: ${ex.message}`)
+        }
+      }
+
+      window.ethereum.on('accountsChanged', accounts => { setAddress(accounts[0]) })
+      window.ethereum.on('networkChanged', networkId => {
+        console.log('networkChanged', networkId)
+        init().catch(ex => { console.error(ex) })
+      })
+    } catch (ex) {
+      console.error(ex)
+    }
+  }
+
+  useEffect(() => {
+    init().catch(ex => { console.error(ex) })
+  }, [])
+
   useEffect(() => {
     if (!provider || !signer) {
       return
@@ -118,7 +199,7 @@ const Manage = (): JSX.Element => {
     if (!client) {
       return
     }
-    client.hasMaintainerRole(address as string).then(e => { setIsMaintainer(e) }).catch(console.error)
+    client.hasMaintainerRole(address).then(e => { setIsMaintainer(e) }).catch(console.error)
   }, [address, client])
 
   useEffect(() => {
@@ -181,15 +262,15 @@ const Manage = (): JSX.Element => {
     }, true).catch(e => { console.error(e) })
   }, [client, subdomain, sld, tryCatch])
 
-  useEffect(() => {
-    if (!isConnected || !chain || !switchNetwork) {
-      return
-    }
-    if (chain.id !== config.chainId) {
-      console.log(config.chainId)
-      switchNetwork(config.chainId)
-    }
-  }, [isConnected, chain, switchNetwork])
+  // useEffect(() => {
+  //   if (!isConnected || !chain || !switchNetwork) {
+  //     return
+  //   }
+  //   if (chain.id !== config.chainId) {
+  //     console.log(config.chainId)
+  //     switchNetwork(config.chainId)
+  //   }
+  // }, [isConnected, chain, switchNetwork])
 
   const allowAccess = (): boolean => {
     if (owner?.toLowerCase() === address?.toLowerCase()) {
@@ -209,21 +290,11 @@ const Manage = (): JSX.Element => {
         {owner && <SmallTextGrey>Owner: {owner}</SmallTextGrey>}
       </FlexColumn>
       <Desc>
-        {!isConnected && connectors.map((connector, i) => {
-          return (
-            <Button
-              isDisabled={!connector.ready || isLoading || pendingConnector?.id}
-              key={`${i}-${connector.id}`}
-              onClick={() => { connect({ connector }) }}
-              style={{ width: 'auto' }}
-          >
-              CONNECT {connector.name.toUpperCase()} {isLoading && connector.id === pendingConnector?.id && ' (...)'}
-            </Button>)
-        }) }
-        {error && <BaseText $color={'red'}>{error.message}</BaseText>}
-        {isConnected && <SmallTextGrey style={{ wordBreak: 'break-word', userSelect: 'all' }}>connected: {address}</SmallTextGrey>}
+        <Button onClick={connect} style={{ width: 'auto' }}> CONNECT METAMASK</Button>
+        <Button onClick={wcConnect} style={{ width: 'auto' }}> CONNECT WALLET CONNECT</Button>
+        {address && <SmallTextGrey style={{ wordBreak: 'break-word', userSelect: 'all' }}>connected: {address}</SmallTextGrey>}
       </Desc>
-      {isConnected && (allowAccess()) &&
+      {address && (allowAccess()) &&
         <DescLeft>
           <Row>
             <LabelText>Main page id</LabelText>
