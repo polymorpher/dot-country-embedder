@@ -91,6 +91,7 @@ const Notion: React.FC = () => {
   const [client] = useState(buildClient())
   const [page, setPage] = useState<ExtendedRecordMap>()
   const [pageId, setPageId] = useState<string>('')
+  const [unrestrictedMode, setUnrestrictedMode] = useState<boolean>(false)
   const [allowedPageIds, setAllowedPageIds] = useState<string[]>([])
   const sld = getSld()
   const subdomain = getSubdomain()
@@ -103,7 +104,7 @@ const Notion: React.FC = () => {
       return
     }
     // console.log(pageIdOverride, pageId, allowedPageIds)
-    if (pageIdOverride && !allowedPageIds.includes(pageIdOverride) && pageIdOverride !== pageId) {
+    if (pageIdOverride && !unrestrictedMode && !allowedPageIds.includes(pageIdOverride) && pageIdOverride !== pageId) {
       return
     }
     const renderedPageId = pageIdOverride || pageId
@@ -134,7 +135,13 @@ const Notion: React.FC = () => {
 
     tryCatch(async () => {
       return await Promise.all([
-        client.getLandingPage(sld, subdomain).then(e => { setPageId(e) }),
+        client.getLandingPage(sld, subdomain).then(e => {
+          const [id, mode] = e.split(':')
+          if (mode === 'all') {
+            setUnrestrictedMode(true)
+          }
+          setPageId(id)
+        }),
         client.getAllowedPages(sld, subdomain).then(e => { setAllowedPageIds(e) })
       ])
     }, true).catch(e => { console.error(e) })
@@ -156,13 +163,17 @@ const Notion: React.FC = () => {
     </BlankPage>
   }
 
-  if (pageIdOverride && !allowedPageIds.includes(pageIdOverride) && pageIdOverride !== pageId) {
+  if (pageIdOverride && !unrestrictedMode && !allowedPageIds.includes(pageIdOverride) && pageIdOverride !== pageId) {
     if (isValidNotionPageId(pageIdOverride)) {
       // return <Navigate to={`https://notion.so/${pageIdOverride}`}/>
       window.location.href = `https://notion.so/${pageIdOverride}`
       return <LoadingScreen/>
     }
     return <Navigate to={'/manage'}/>
+  }
+
+  if (pageIdOverride && unrestrictedMode && !isValidNotionPageId(pageIdOverride)) {
+    return <Navigate to={'/'}/>
   }
 
   if (pending) {
