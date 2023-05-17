@@ -5,7 +5,6 @@ import config from '../config'
 import { Button, Input, LinkWrarpper } from './components/Controls'
 import { useAccount, useConnect, useNetwork, useProvider, useSigner, useSwitchNetwork } from 'wagmi'
 import { apis, buildClient, EWSTypes } from './api'
-import { InjectedConnector } from 'wagmi/connectors/injected'
 import { getSld, getSubdomain } from './utils'
 import { isValidNotionPageId } from '../../common/notion-utils'
 import { Feedback, Loading } from './components/Misc'
@@ -87,7 +86,7 @@ const Manage = (): JSX.Element => {
   const provider = useProvider()
   const [client, setClient] = useState(buildClient())
   const { data: signer } = useSigner()
-  const { connect } = useConnect({ connector: new InjectedConnector() })
+  const { connect, connectors, error, isLoading, pendingConnector } = useConnect()
   const [pageId, setPageId] = useState<string>('')
   const [depth, setDepth] = useState<number>(0)
   const [editingPageId, setEditingPageId] = useState<string>('')
@@ -210,7 +209,18 @@ const Manage = (): JSX.Element => {
         {owner && <SmallTextGrey>Owner: {owner}</SmallTextGrey>}
       </FlexColumn>
       <Desc>
-        {!isConnected && <Button onClick={connect} style={{ width: 'auto' }}>CONNECT WALLET</Button> }
+        {!isConnected && connectors.map((connector, i) => {
+          return (
+            <Button
+              isDisabled={!connector.ready || isLoading || pendingConnector?.id}
+              key={`${i}-${connector.id}`}
+              onClick={() => { connect({ connector }) }}
+              style={{ width: 'auto' }}
+          >
+              CONNECT {connector.name.toUpperCase()} {isLoading && connector.id === pendingConnector?.id && ' (...)'}
+            </Button>)
+        }) }
+        {error && <BaseText $color={'red'}>{error.message}</BaseText>}
         {isConnected && <SmallTextGrey style={{ wordBreak: 'break-word', userSelect: 'all' }}>connected: {address}</SmallTextGrey>}
       </Desc>
       {isConnected && (allowAccess()) &&
@@ -235,15 +245,15 @@ const Manage = (): JSX.Element => {
                 onClick={() => { setDepth(d => Math.min(2, d + 1)) } } disabled={initializing || pending}>+</Button>
           </Row>
           {allowedPageIds.map((pid, i) => {
-            return <>
-              <Row key={pid}>
+            return <React.Fragment key={`${i}-${pid}`}>
+              <Row>
                 <InputBox $width={'100%'} value={pid} onChange={({ target: { value } }) => { setAllowedPageIds(e => [...e.slice(0, i), value, ...e.slice(i + 1)]); setEditingPageId(value); setEditingPagePosition(i + 1) }}/>
                 <Button disabled={initializing || pending} $width={'auto'} onClick={ () => { setAllowedPageIds(e => [...e.slice(0, i), ...e.slice(i + 1)]); setEditingPageId(''); setEditingPagePosition(0) }}>
                   {pending ? <Loading/> : 'REMOVE' }
                 </Button>
               </Row>
               {(i === editingPageIdPosition - 1) && <SuggestedPageId id={suggestedPageId} applyId={id => { setAllowedPageIds(e => [...e.slice(0, i), id, ...e.slice(i + 1)]) }} />}
-            </>
+            </React.Fragment>
           })}
           <Row style={{ marginTop: 32, justifyContent: 'space-between' }}>
             <Button disabled={initializing || pending} $width={'auto'} onClick={ () => { setAllowedPageIds(e => [...e, '']) }}>{'ADD MORE'}</Button>

@@ -33,7 +33,6 @@
     "@types/express": "^4.17.17",
     "@typescript-eslint/eslint-plugin": "^5.53.0",
     "@typescript-eslint/parser": "^5.53.0",
-    "@wagmi/core": "^0.9.7",
     "assert": "^2.0.0",
     "babel-loader": "^8.2.5",
     "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
@@ -97,13 +96,14 @@
     ]
   },
   "dependencies": {
-    "@ethersproject/providers": "^5.7.2",
-    "@metamask/detect-provider": "^2.0.0",
+    "@wagmi/core": "^0.10.10",
+    "@walletconnect/ethereum-provider": "2.7.4",
+    "@web3modal/ethereum": "2.4.1",
     "axios": "^0.21.1",
     "bn.js": "^5.2.1",
     "connected-react-router": "^6.9.1",
     "dotenv-webpack": "^8.0.0",
-    "ethers": "^5.6.7",
+    "ethers": "^5",
     "humanize-duration": "^3.27.3",
     "lodash": "^4.17.10",
     "query-string": "^7.0.0",
@@ -117,7 +117,7 @@
     "react-toastify": "^9.0.8",
     "react-tweet-embed": "^2.0.0",
     "styled-components": "^5.3.0",
-    "wagmi": "^0.11.7"
+    "wagmi": "^0.12.12"
   },
   "resolutions": {
     "tar": ">=4.4.15"

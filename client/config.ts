@@ -6,6 +6,7 @@ const config = {
   explorer (txHash: string): string {
     return (process.env.EXPLORER_URL ?? 'https://explorer.harmony.one/#/tx/{{txId}}').replace('{{txId}}', txHash)
   },
+  walletConnectId: process.env.WALLET_CONNECT_ID ?? '',
   defaultRpc: process.env.DEFAULT_RPC ?? 'https://api.harmony.one',
   server: process.env.SERVER ?? 'https://1ns-embedder-server.hiddenstate.xyz',
   tld: process.env.TLD ?? 'country',
