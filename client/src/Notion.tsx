@@ -113,7 +113,10 @@ const Notion: React.FC = () => {
       const title = extractTitle(Object.values(records.block))
       if (title) {
         const stub = urlNormalize(title)
-        history.pushState({}, '', `${stub}-${renderedPageId}`)
+        if (pageIdOverride && pageIdOverride !== pageId) {
+          // console.log(pageIdOverride, pageId)
+          history.pushState({}, '', `${stub}-${renderedPageId}`)
+        }
       }
       setPage(records)
     })
@@ -196,7 +199,7 @@ const Notion: React.FC = () => {
       fullPage={true}
       darkMode={false}
       rootPageId={pageId}
-      mapPageUrl={titleEmbeddedMapPageUrl(page)}
+      mapPageUrl={titleEmbeddedMapPageUrl(pageId, page)}
       components={{
         Code,
         Collection,

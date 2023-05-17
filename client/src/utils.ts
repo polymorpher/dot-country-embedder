@@ -22,14 +22,20 @@ export const getPath = (): string => {
   return window.location.pathname
 }
 
-export const titleEmbeddedMapPageUrl = (blockMap: ExtendedRecordMap) => {
+export const titleEmbeddedMapPageUrl = (rootId: string, blockMap: ExtendedRecordMap) => {
   return (pageId: string) => {
+    pageId = (pageId || '').replace(/-/g, '')
+    console.log({ pageId, rootId })
+    if (pageId === rootId) {
+      console.log('match', { pageId, rootId })
+      return '/'
+    }
     const title = blockMap.block[pageId]?.value.properties?.title?.flat().join(' ')
     if (!title) {
-      console.log(pageId)
+      console.log(`page ${pageId} has no title`)
     }
     const urlPrefix = urlNormalize(title || '')
-    pageId = (pageId || '').replace(/-/g, '')
+
     return `/${urlPrefix}-${pageId}`
   }
 }
