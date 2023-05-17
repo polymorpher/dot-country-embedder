@@ -34,10 +34,11 @@ export function getSld (hostname: string | string[]) : string {
     let sld = parts.length <= 1 ? '' : parts[parts.length - 2].toLowerCase()
     if(sld === 'harmony'){
         sld = 'harmony-mirror'
-    }
-    const target = specialDomainTargetMap[hostname + '.' + tld]
-    if(target){
-        sld = target.slice(0, target.length - '.country'.length)
+    } else {
+        const target = specialDomainTargetMap[hostname + '.' + tld]
+        if (target) {
+            sld = target.slice(0, target.length - '.country'.length)
+        }
     }
     return sld
 }

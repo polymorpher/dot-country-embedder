@@ -43,9 +43,11 @@ export const getOGPage = async (sld: string, subdomain: string, path?: string): 
   const c = new ethers.Contract(config.ewsContract, EWSAbi, provider) as EWS
   const node = ethers.utils.id(sld)
   const label = ethers.utils.id(subdomain)
-  const [landingPage, allowedPages] = await Promise.all([c.getLandingPage(node, label), c.getAllowedPages(node, label)])
+  const [landingPageSetting, allowedPages] = await Promise.all([c.getLandingPage(node, label), c.getAllowedPages(node, label)])
+  const [landingPage, mode] = landingPageSetting.split(':')
+  const unrestrictedMode = mode !== 'strict'
   let page: ExtendedRecordMap
-  if (path && isValidNotionPageId(path) && allowedPages.includes(path)) {
+  if (path && isValidNotionPageId(path) && (unrestrictedMode || allowedPages.includes(path))) {
     page = await getPage(path)
   } else {
     page = await getPage(landingPage)
