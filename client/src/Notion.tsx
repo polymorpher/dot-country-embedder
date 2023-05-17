@@ -91,7 +91,7 @@ const Notion: React.FC = () => {
   const [client] = useState(buildClient())
   const [page, setPage] = useState<ExtendedRecordMap>()
   const [pageId, setPageId] = useState<string>('')
-  const [unrestrictedMode, setUnrestrictedMode] = useState<boolean>(false)
+  const [unrestrictedMode, setUnrestrictedMode] = useState<boolean>(true)
   const [allowedPageIds, setAllowedPageIds] = useState<string[]>([])
   const sld = getSld()
   const subdomain = getSubdomain()
@@ -137,8 +137,8 @@ const Notion: React.FC = () => {
       return await Promise.all([
         client.getLandingPage(sld, subdomain).then(e => {
           const [id, mode] = e.split(':')
-          if (mode === 'all') {
-            setUnrestrictedMode(true)
+          if (mode === 'strict') {
+            setUnrestrictedMode(false)
           }
           setPageId(id)
         }),
