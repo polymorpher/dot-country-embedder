@@ -206,11 +206,12 @@ const Manage = (): JSX.Element => {
     if (!debouncedEditingPageId) {
       return
     }
-    if (isValidNotionPageId(debouncedEditingPageId)) {
+    const [parsedId] = debouncedEditingPageId.split(':')
+    if (isValidNotionPageId(parsedId)) {
       setSuggestedPageId(undefined)
       return
     }
-    apis.parseNotionPageIdFromRawUrl(debouncedEditingPageId)
+    apis.parseNotionPageIdFromRawUrl(parsedId)
       .then((id) => { setSuggestedPageId(id) })
       .catch(ex => {
         setSuggestedPageId(ex)
@@ -219,7 +220,8 @@ const Manage = (): JSX.Element => {
   }, [debouncedEditingPageId])
 
   const save = async (): Promise<void> => {
-    if (!isValidNotionPageId(pageId) && pageId !== '') {
+    const [parsedId] = debouncedEditingPageId.split(':')
+    if (!isValidNotionPageId(parsedId) && pageId !== '') {
       toast.error(`Invalid landing page id: ${pageId}`)
       return
     }
