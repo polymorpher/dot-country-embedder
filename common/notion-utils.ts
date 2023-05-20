@@ -13,7 +13,14 @@ export const extractPageEmoji = (blocks: BlockEntry[]): string | undefined => {
 }
 
 export const extractPageCover = (blocks: BlockEntry[]): string | undefined => {
-    return blocks[0].value?.format?.page_cover
+    const cover = blocks[0].value?.format?.page_cover
+    if(!cover){
+        return undefined
+    }
+    if(cover.startsWith('/')){
+        return `https://notion.so${cover}`
+    }
+    return cover
 }
 
 export const extractPageImagePreview = (page: ExtendedRecordMap): string | undefined => {
