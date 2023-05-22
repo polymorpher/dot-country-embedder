@@ -4,8 +4,9 @@
       "incremental": true,
       "sourceMap": true,
       "lib": ["dom", "es2021"],
-      "target": "es2021",
-      "module": "commonjs",
+      "target": "esnext",
+      "module": "esnext",
+      "moduleResolution": "node",
       "strict": true,
       "esModuleInterop": true,
       "outDir": "dist",
@@ -15,5 +16,5 @@
       "allowJs": true
     },
     "include": ["./", "./src"]
-  }
+}
   
