@@ -10,6 +10,7 @@ import bodyParser from 'body-parser'
 import https from 'https'
 import http from 'http'
 import fs from 'fs'
+import compression from 'compression'
 
 dotenv.config()
 
@@ -42,7 +43,7 @@ if (config.https.only) {
   httpServer = http.createServer(app)
 }
 const httpsServer = https.createServer(httpsOptions, app)
-
+app.use(compression())
 app.use(Fingerprint({
   parameters: [
     // @ts-expect-error missing decl
