@@ -10,9 +10,9 @@ import 'react-notion-x/src/styles.css'
 import { Code } from 'react-notion-x/build/third-party/code'
 import TweetEmbed from 'react-tweet-embed'
 import { Collection } from 'react-notion-x/build/third-party/collection'
-import { Equation } from 'react-notion-x/build/third-party/equation'
+// import { Equation } from 'react-notion-x/build/third-party/equation'
 import { Modal } from 'react-notion-x/build/third-party/modal'
-import { Pdf } from 'react-notion-x/build/third-party/pdf'
+// import { Pdf } from 'react-notion-x/build/third-party/pdf'
 import {
   extractTitle,
   extractDescription,
@@ -214,9 +214,9 @@ const Notion: React.FC = () => {
       components={{
         Code,
         Collection,
-        Equation,
+        // Equation,
         Modal,
-        Pdf,
+        // Pdf,
         Tweet
       }}/>
   </>
