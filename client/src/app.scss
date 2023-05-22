@@ -7,6 +7,12 @@ html {
   background-color: var(--background-color);
 }
 
+body{
+  margin: 0;
+  color: var(--text-color);
+  background-color: var(--background-color);
+}
+
 .notion-header{
   display: none;
 }

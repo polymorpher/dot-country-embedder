@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { renderToString } from 'react-dom/server'
-
 import { BaseText } from './components/Text'
 import { apis, buildClient } from './api'
-
 import { NotionRenderer } from 'react-notion-x'
-import 'react-notion-x/src/styles.css'
-
 import { Code } from 'react-notion-x/build/third-party/code'
 import TweetEmbed from 'react-tweet-embed'
 import { Collection } from 'react-notion-x/build/third-party/collection'
@@ -34,6 +30,7 @@ import { LinkWrarpper } from './components/Controls'
 import { FlexColumn } from './components/Layout'
 import { Helmet } from 'react-helmet'
 import config from '../config'
+import 'react-notion-x/src/styles.css'
 
 interface LinkReplacerConfig {
   children: JSX.Element
