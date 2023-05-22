@@ -15,7 +15,7 @@ import { ethers } from 'ethers'
 import detectEthereumProvider from '@metamask/detect-provider'
 import { type ExternalProvider } from '@ethersproject/providers'
 import { EthereumProvider } from '@walletconnect/ethereum-provider'
-
+import './manage.scss'
 const Container = styled(Main)`
   margin: 0 auto;
   padding: 0 16px;
