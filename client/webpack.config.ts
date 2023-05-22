@@ -112,7 +112,7 @@ export default {
     new HtmlWebpackPlugin({
       inject: true,
       filename: 'index.html',
-      favicon: 'assets/favicon.png',
+      favicon: 'assets/favicon.webp',
       template: 'assets/index.html',
       environment: process.env.NODE_ENV,
       hash: true
