@@ -64,7 +64,8 @@ export default {
         use: [
           { loader: 'style-loader' },
           // translates CSS into CommonJS
-          { loader: 'css-loader' }, {
+          { loader: 'css-loader' },
+          {
             loader: 'less-loader',
             options: { lessOptions: { javascriptEnabled: true } }
           }

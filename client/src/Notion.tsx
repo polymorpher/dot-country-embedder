@@ -30,7 +30,7 @@ import { LinkWrarpper } from './components/Controls'
 import { FlexColumn } from './components/Layout'
 import { Helmet } from 'react-helmet'
 import config from '../config'
-import 'react-notion-x/src/styles.css'
+import './notion.scss'
 
 interface LinkReplacerConfig {
   children: JSX.Element

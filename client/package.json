@@ -5,10 +5,9 @@
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
-    "debug": "DEBUG=1 webpack serve --mode=development",
-    "local": "webpack serve --mode=development",
-    "build": "NODE_OPTIONS=\"--loader ts-node/esm\" webpack --config webpack.config.ts",
-    "build2": "TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack"
+    "debug": "NODE_OPTIONS=\"--loader ts-node/esm\" DEBUG=1 webpack serve --mode=development",
+    "local": "NODE_OPTIONS=\"--loader ts-node/esm\" webpack serve --mode=development",
+    "build": "NODE_OPTIONS=\"--loader ts-node/esm\" webpack --config webpack.config.ts"
   },
   "devDependencies": {
     "@babel/core": "^7.18.9",
