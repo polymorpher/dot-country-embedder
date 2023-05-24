@@ -6,7 +6,7 @@ const config = {
   TLD: process.env.TLD ?? 'country',
   subdomain: process.env.SUBDOMAIN ?? 'www',
   debug: DEBUG,
-  provider: process.env.DEFAULT_RPC ?? '',
+  provider: process.env.DEFAULT_RPC ?? 'https://api.harmony.one',
   ewsContract: process.env.EMBEDDER_CONTRACT ?? '',
   verbose: process.env.VERBOSE === 'true' || process.env.VERBOSE === '1',
   https: {

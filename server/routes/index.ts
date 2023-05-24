@@ -1,12 +1,16 @@
 import { type NextFunction, type Request, type Response } from 'express'
 import express from 'express'
+import axios from 'axios'
 import { StatusCodes } from 'http-status-codes'
 import rateLimit from 'express-rate-limit'
 import { getAllPageIds, getNotionPageId, getPage } from '../src/notion.ts'
 import { getOGPage } from '../src/og.ts'
 import { isValidNotionPageId, parsePath } from '../../common/notion-utils.ts'
+import { isValidSubstackUrl } from '../../common/substack-utils.ts'
 import { getSld, getSubdomain } from '../../common/domain-utils.ts'
 import { LRUCache } from 'lru-cache'
+import { buildClient } from '../src/client'
+
 const router = express.Router()
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 const limiter = (args?) => rateLimit({
@@ -73,6 +77,61 @@ router.get('/health', async (req, res) => {
   console.log('[/health]', JSON.stringify(req.fingerprint))
   res.send('OK').end()
 })
+
+const substackDomainCache = {}
+
+const client = buildClient()
+
+router.get('/substack/api/v1/archive',
+  limiter(),
+  async (req, res) => {
+    const host = req.get('host')
+
+    if (!host) {
+      return
+    }
+
+    let substackDomain = substackDomainCache[host]
+
+    if (!substackDomain) {
+      const [subdomain, sld] = host?.split('.')
+
+      substackDomain = await client.getLandingPage(sld, subdomain)
+
+      if (!substackDomain.endsWith('.substack.com')) {
+        throw new Error('Not substack page')
+      }
+
+      substackDomainCache[host] = substackDomain
+    }
+
+    const { data } = await axiosBase.get(`https://${substackDomain}/api/v1/archive`, { params: req.query })
+
+    res.status(200).send(data)
+  }
+)
+
+const axiosBase = axios.create({ timeout: 15000 })
+
+router.get('/substack',
+  limiter(),
+  async (req, res) => {
+    try {
+      if (!req.query.url) {
+        throw new Error('URL query param is not specified')
+      }
+
+      if (typeof req.query.url === 'string' && !isValidSubstackUrl(req.query.url)) {
+        throw new Error('Not substack url')
+      }
+
+      const { data } = await axiosBase.get(req.query.url as string)
+      res.status(200).send(data)
+    } catch (ex: any) {
+      console.error(ex)
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
+    }
+  })
 
 router.get('/notion',
   limiter(),
