@@ -1,14 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Notion from './Notion'
 import Substack from './Substack'
-import { buildClient, EWSTypes } from '../api'
-import { getSld, getSubdomain } from '../utils'
-import { LoadingScreen } from '../components/Misc'
+import { EWSTypes } from '../api'
 import { Button } from '../components/Controls'
 import styled from 'styled-components'
 import './manage.scss'
-
-const client = buildClient()
 
 const Container = styled.div`
   display: flex;
@@ -29,22 +25,12 @@ const BackButton = styled(Button)`
   margin-top: 1em;
 `
 
-const Manage = (): JSX.Element => {
+interface ManageProps {
+  ewsType: number
+}
+
+const Manage = ({ ewsType }: ManageProps): JSX.Element => {
   const [platform, setPlatform] = useState<number>()
-  const [ewsType, setEwsType] = useState<number>(0)
-  const sld = getSld()
-  const subdomain = getSubdomain()
-
-  useEffect(() => {
-    client
-      .getEwsType(sld, subdomain)
-      .then(e => { setEwsType(e) })
-      .catch(console.error)
-  }, [sld, subdomain])
-
-  if (ewsType === undefined) {
-    return <LoadingScreen />
-  }
 
   if (ewsType === EWSTypes.EWS_NOTION) {
     return <Notion />
