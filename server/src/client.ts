@@ -1,5 +1,7 @@
-import config from '../config'
-import EWSAbi from '../../contract/abi/EWS.json'
+import config from '../config.ts'
+import EWSAbi from '../../contract/abi/EWS.json' assert {
+  type: 'json'
+}
 import { ethers } from 'ethers'
 import { type EWS } from '../../contract/typechain-types'
 

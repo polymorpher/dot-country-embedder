@@ -9,7 +9,7 @@ import { isValidNotionPageId, parsePath } from '../../common/notion-utils.ts'
 import { isValidSubstackUrl } from '../../common/substack-utils.ts'
 import { getSld, getSubdomain } from '../../common/domain-utils.ts'
 import { LRUCache } from 'lru-cache'
-import { buildClient } from '../src/client'
+import { buildClient } from '../src/client.ts'
 
 const router = express.Router()
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
