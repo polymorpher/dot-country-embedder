@@ -27,8 +27,8 @@ export default {
     },
     proxy: {
       '/api/v1': {
-        target: 'http://localhost:3100',
-        router: () => 'http://localhost:3002/substack/api/v1/archive'
+        target: 'http://localhost:3002/',
+        pathRewrite: { '^/api/v1': '/substack/api/v1' }
       }
     }
   },

@@ -13,13 +13,13 @@ const Notion: React.FC = () => {
   const [client] = useState(buildClient())
   const [page, setPage] = useState<string>()
   // set "https://polymorpher.substack.com" to `pageId` for test purpose
-  const [pageId, setPageId] = useState<string>('')
+  const [pageId, setPageId] = useState<string>()
   const [unrestrictedMode, setUnrestrictedMode] = useState<boolean>(true)
   const sld = getSld()
   const subdomain = getSubdomain()
   const pageIdOverride = parsePath(getPath().slice(1))
 
-  const { pending, initializing, tryCatch } = useTryCatch()
+  const { pending, tryCatch } = useTryCatch()
 
   useEffect(() => {
     if (!pageId) {
@@ -60,11 +60,6 @@ const Notion: React.FC = () => {
   }, [pageId, pageIdOverride, tryCatch, unrestrictedMode])
 
   useEffect(() => {
-    // @ts-expect-error debugging
-    window.client = client
-  }, [client])
-
-  useEffect(() => {
     if (!client || !sld) {
       return
     }
@@ -80,11 +75,7 @@ const Notion: React.FC = () => {
         })
       ])
     }, true).catch(e => { console.error(e) })
-  }, [client, sld, subdomain, tryCatch])
-
-  if (initializing) {
-    return <LoadingScreen/>
-  }
+  }, [tryCatch])
 
   if (!pageId) {
     return <BlankPage>

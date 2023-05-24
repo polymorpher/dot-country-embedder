@@ -78,7 +78,10 @@ router.get('/health', async (req, res) => {
   res.send('OK').end()
 })
 
-const substackDomainCache = {}
+const substackDomainCache = {
+  // uncomment the below for test purpose
+  'localhost:3100': 'polymorpher.substack.com'
+}
 
 const client = buildClient()
 
