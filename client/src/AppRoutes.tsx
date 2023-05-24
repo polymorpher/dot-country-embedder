@@ -1,7 +1,7 @@
 import React from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Notion from './Notion'
-import Substack from './Substack'
+import Substack from './substack/Substack'
 import Manage from './Manage'
 import config from '../config'
 

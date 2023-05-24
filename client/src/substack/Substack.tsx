@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react'
-import { BaseText } from './components/Text'
-import { apis, buildClient } from './api'
-import { parsePath } from '../../common/notion-utils'
-import { getPath, getSld, getSubdomain } from './utils'
-import { useTryCatch } from './hooks/useTryCatch'
+import { BaseText } from '../components/Text'
+import { apis, buildClient } from '../api'
+import { parsePath } from '../../../common/notion-utils'
+import { getPath, getSld, getSubdomain } from '../utils'
+import { useTryCatch } from '../hooks/useTryCatch'
 import { Navigate } from 'react-router-dom'
-import { BlankPage, LoadingScreen } from './components/Misc'
-import { LinkWrarpper } from './components/Controls'
-import { FlexColumn } from './components/Layout'
+import { BlankPage, LoadingScreen } from '../components/Misc'
+import { LinkWrarpper } from '../components/Controls'
+import { FlexColumn } from '../components/Layout'
 
 const sld = getSld()
 const subdomain = getSubdomain()
