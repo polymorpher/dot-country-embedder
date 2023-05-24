@@ -1,19 +1,18 @@
 import React, { useEffect, useState } from 'react'
-import { FlexColumn, Main, Row } from './components/Layout'
-import { BaseText, Desc, DescLeft, SmallText, Title } from './components/Text'
-import config from '../config'
-import { Button, Input, LinkWrarpper } from './components/Controls'
+import { FlexColumn, Main, Row } from '../components/Layout'
+import { BaseText, Desc, DescLeft, SmallText, Title } from '../components/Text'
+import config from '../../config'
+import { Button, Input, LinkWrarpper } from '../components/Controls'
 import { useAccount, useConnect, useNetwork, useProvider, useSigner, useSwitchNetwork } from 'wagmi'
-import { apis, buildClient, EWSTypes } from './api'
+import { apis, buildClient, EWSTypes } from '../api'
 import { InjectedConnector } from 'wagmi/connectors/injected'
-import { getSld, getSubdomain } from './utils'
-import { isValidNotionPageId } from '../../common/notion-utils'
-import { isValidUrlPath, getLandingPagePath } from '../../common/substack-utils'
-import { Feedback, Loading } from './components/Misc'
-import useDebounce from './hooks/useDebounce'
+import { getSld, getSubdomain } from '../utils'
+import { isValidUrlPath, getLandingPagePath } from '../../../common/substack-utils'
+import { Feedback, Loading } from '../components/Misc'
+import useDebounce from '../hooks/useDebounce'
 import styled from 'styled-components'
 import { toast } from 'react-toastify'
-import { useTryCatch } from './hooks/useTryCatch'
+import { useTryCatch } from '../hooks/useTryCatch'
 import { ethers } from 'ethers'
 
 const Container = styled(Main)`
@@ -72,22 +71,14 @@ const SuggestedPageId = ({ id, applyId }: SuggestedPageIdConfig): JSX.Element =>
     return <></>
   }
   if (id === null) {
-    return (
-      <SmallTextRed>
-        Failed to extract {config.embedPlatform} page id. Please check the url.
-      </SmallTextRed>
-    )
+    return <SmallTextRed>Failed to extract substack page id. Please check the url.</SmallTextRed>
   }
   if (Object.prototype.toString.call(id) === '[object Error]') {
-    return (
-      <SmallTextRed>
-        Unable to parse the url to extract {config.embedPlatform} page id. Error: {id.toString()}
-      </SmallTextRed>
-    )
+    return <SmallTextRed>Unable to parse the url to extract substack page id. Error: {id.toString()} </SmallTextRed>
   }
   return (
     <SmallTextGrey>
-      Extracted {config.embedPlatform} page id from url:
+      Extracted substack page id from url:
       <span
         style={{ color: 'black', cursor: 'pointer', textDecoration: 'underline' }}
         onClick={() => applyId?.(id)}
@@ -146,64 +137,38 @@ const Manage = (): JSX.Element => {
       return
     }
 
-    if (config.embedPlatform === 'notion') {
-      if (isValidNotionPageId(debouncedEditingPageId)) {
-        setSuggestedPageId(undefined)
-        return
+    if (editingPageIdPosition === 0) {
+      try {
+        const landingPagePath = getLandingPagePath(debouncedEditingPageId)
+        setSuggestedPageId(landingPagePath)
+      } catch (e) {
+        setSuggestedPageId(e instanceof Error ? e.message : JSON.stringify(e))
+        console.error(e)
       }
-      apis.parseNotionPageIdFromRawUrl(debouncedEditingPageId)
-        .then((id) => { setSuggestedPageId(id) })
-        .catch(ex => {
-          setSuggestedPageId(ex)
-          console.error(ex)
-        })
     } else {
-      if (editingPageIdPosition === 0) {
+      if (isValidUrlPath(debouncedEditingPageId)) {
+        setSuggestedPageId(undefined)
+      } else {
         try {
-          const landingPagePath = getLandingPagePath(debouncedEditingPageId)
-          setSuggestedPageId(landingPagePath)
+          const url = new URL(debouncedEditingPageId)
+          setSuggestedPageId(url.pathname.slice(1))
         } catch (e) {
           setSuggestedPageId(e instanceof Error ? e.message : JSON.stringify(e))
           console.error(e)
-        }
-      } else {
-        if (isValidUrlPath(debouncedEditingPageId)) {
-          setSuggestedPageId(undefined)
-        } else {
-          try {
-            const url = new URL(debouncedEditingPageId)
-            setSuggestedPageId(url.pathname.slice(1))
-          } catch (e) {
-            setSuggestedPageId(e instanceof Error ? e.message : JSON.stringify(e))
-            console.error(e)
-          }
         }
       }
     }
   }, [debouncedEditingPageId, editingPageIdPosition])
 
   const save = async (): Promise<void> => {
-    if (config.embedPlatform === 'notion') {
-      if (!isValidNotionPageId(pageId) && pageId !== '') {
-        toast.error(`Invalid landing page id: ${pageId}`)
+    if (!getLandingPagePath(pageId) && pageId !== '') {
+      toast.error(`Invalid landing page id: ${pageId}`)
+      return
+    }
+    for (const id of allowedPageIds) {
+      if (!isValidUrlPath(id)) {
+        toast.error(`Invalid additional page id: ${id}`)
         return
-      }
-      for (const id of allowedPageIds) {
-        if (!isValidNotionPageId(id)) {
-          toast.error(`Invalid additional page id: ${id}`)
-          return
-        }
-      }
-    } else {
-      if (!getLandingPagePath(pageId) && pageId !== '') {
-        toast.error(`Invalid landing page id: ${pageId}`)
-        return
-      }
-      for (const id of allowedPageIds) {
-        if (!isValidUrlPath(id)) {
-          toast.error(`Invalid additional page id: ${id}`)
-          return
-        }
       }
     }
 
@@ -271,7 +236,7 @@ const Manage = (): JSX.Element => {
     <Container>
       <FlexColumn style={{ alignItems: 'center', marginTop: 120, gap: 16 }}>
         <Title style={{ margin: 0 }}>{subdomain}{subdomain ? '.' : ''}{sld}.{config.tld}</Title>
-        <SmallTextGrey>Connect your .country with {config.embedPlatform} pages</SmallTextGrey>
+        <SmallTextGrey>Connect your .country with substack pages</SmallTextGrey>
         {owner && <SmallTextGrey>Owner: {owner}</SmallTextGrey>}
       </FlexColumn>
       <Desc>
@@ -287,7 +252,7 @@ const Manage = (): JSX.Element => {
           {(editingPageIdPosition === 0) && <SuggestedPageId id={suggestedPageId} applyId={setPageId}/>}
           <SmallTextGrey>This is the landing page when people visit {subdomain}{subdomain ? '.' : ''}{sld}.{config.tld} </SmallTextGrey>
           <LabelText style={{ marginTop: 32 }}>Additional pages</LabelText>
-          <SmallTextGrey>You allow the following subpages on web.{sld}.{config.tld}. Links to these pages will be rewritten under web.{sld}.{config.tld}, instead of to external sites (e.g. {config.embedPlatform === 'notion' ? 'https://notion.so/....' : 'https://polymorpher.substack.com/...'})</SmallTextGrey>
+          <SmallTextGrey>You allow the following subpages on web.{sld}.{config.tld}. Links to these pages will be rewritten under web.{sld}.{config.tld}, instead of to external sites (e.g. https://polymorpher.substack.com/...)</SmallTextGrey>
           <Row>
             <Button onClick={collect} disabled={initializing || pending} style={{ whiteSpace: 'nowrap', width: 'fit-content' }}>COLLECT AUTOMATICALLY</Button>
             <BaseText>DEPTH</BaseText>
