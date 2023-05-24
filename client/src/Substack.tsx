@@ -1,17 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { BaseText } from './components/Text'
 import { apis, buildClient } from './api'
-import {
-  extractTitle,
-  parsePath,
-  urlNormalize
-} from '../../common/notion-utils'
 import { getPath, getSld, getSubdomain } from './utils'
 import { useTryCatch } from './hooks/useTryCatch'
 import { BlankPage, LoadingScreen } from './components/Misc'
 import { LinkWrarpper } from './components/Controls'
 import { FlexColumn } from './components/Layout'
 import parse from 'html-react-parser'
+import { parsePath } from '../../common/notion-utils'
 
 const Notion: React.FC = () => {
   const [client] = useState(buildClient())
@@ -30,19 +26,7 @@ const Notion: React.FC = () => {
       return
     }
 
-    const renderedPageId = pageIdOverride || pageId
-
     void tryCatch(async function f () {
-      const records = await apis.getNotionPage(renderedPageId)
-      const title = extractTitle(Object.values(records.block))
-      if (title) {
-        const stub = urlNormalize(title)
-        if (pageIdOverride && pageIdOverride !== pageId) {
-          // console.log(pageIdOverride, pageId)
-          history.pushState({}, '', `${stub}-${renderedPageId}`)
-        }
-      }
-
       const page = await apis.getSubstackPage(`${pageId}/${pageIdOverride}`) as string
       const substackScripts = Array.from(window.document.querySelectorAll('script[created-from=substack]'))
 

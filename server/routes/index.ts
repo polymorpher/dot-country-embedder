@@ -121,11 +121,13 @@ router.get('/substack',
         throw new Error('URL query param is not specified')
       }
 
-      if (typeof req.query.url === 'string' && !isValidSubstackUrl(req.query.url)) {
+      const url = decodeURI(req.query.url as string)
+
+      if (!isValidSubstackUrl(url)) {
         throw new Error('Not substack url')
       }
 
-      const { data } = await axiosBase.get(req.query.url as string)
+      const { data } = await axiosBase.get(url)
       res.status(200).send(data)
     } catch (ex: any) {
       console.error(ex)
