@@ -3,7 +3,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Notion from './Notion'
 import { Loading } from './components/Misc'
 // import Manage from './Manage'
-const Manage = lazy(async () => await import('./Manage'))
+const Manage = lazy(async () => await import('./manage'))
 
 const AppRoutes: React.FC = () => {
   return (

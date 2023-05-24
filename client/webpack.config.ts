@@ -24,6 +24,12 @@ export default {
     client: {
       overlay: false,
       progress: true
+    },
+    proxy: {
+      '/api/v1': {
+        target: 'http://localhost:3100',
+        router: () => 'http://localhost:3002/substack/api/v1/archive'
+      }
     }
   },
   cache: { type: 'filesystem' },
