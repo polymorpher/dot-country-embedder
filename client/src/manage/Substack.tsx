@@ -203,16 +203,6 @@ const Manage = (): JSX.Element => {
     }, true).catch(e => { console.error(e) })
   }, [client, subdomain, sld, tryCatch])
 
-  // useEffect(() => {
-  //   if (!isConnected || !chain || !switchNetwork) {
-  //     return
-  //   }
-  //   if (chain.id !== config.chainId) {
-  //     console.log(config.chainId)
-  //     switchNetwork(config.chainId)
-  //   }
-  // }, [isConnected, chain, switchNetwork])
-
   const allowAccess = (): boolean => {
     if (owner?.toLowerCase() === address?.toLowerCase()) {
       return true
