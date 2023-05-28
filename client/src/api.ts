@@ -39,6 +39,10 @@ export const apis = {
       return null
     }
     return id
+  },
+  getSubstackPage: async (url: string) => {
+    const { data } = await base.get('/substack', { params: { url } })
+    return data
   }
 }
 
@@ -63,6 +67,7 @@ export interface Client {
   getPerSubdomainFees: () => Promise<BigNumber>
   getLandingPage: (sld: string, subdomain: string) => Promise<string>
   getAllowedPages: (sld: string, subdomain: string) => Promise<string[]>
+  getEwsType: (sld: string, subdomain: string) => Promise<number>
   update: (sld: string, subdomain: string, ewsType: EWSType, page: string, pages: string[], landingPageOnly: boolean) => Promise<ContractTransaction>
   appendAllowedPages: (sld: string, subdomain: string, pages: string[]) => Promise<ContractTransaction>
   remove: (sld: string, subdomain: string) => Promise<ContractTransaction>
@@ -109,6 +114,9 @@ export const buildClient = (provider?, signer?): Client => {
     },
     getLandingPage: async (sld: string, subdomain: string): Promise<string> => {
       return await ews.getLandingPage(ethers.utils.id(sld), ethers.utils.id(subdomain))
+    },
+    getEwsType: async (sld: string, subdomain: string): Promise<number> => {
+      return await ews.getEwsType(ethers.utils.id(sld), ethers.utils.id(subdomain))
     },
     getAllowedPages: async (sld: string, subdomain: string): Promise<string[]> => {
       return await ews.getAllowedPages(ethers.utils.id(sld), ethers.utils.id(subdomain))

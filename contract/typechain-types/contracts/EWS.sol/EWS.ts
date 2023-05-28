@@ -38,6 +38,7 @@ export interface EWSInterface extends utils.Interface {
     "getAllowMaintainerAccess(bytes32)": FunctionFragment;
     "getAllowedPages(bytes32,bytes32)": FunctionFragment;
     "getAllowedPagesSlice(bytes32,bytes32,uint256,uint256)": FunctionFragment;
+    "getEwsType(bytes32,bytes32)": FunctionFragment;
     "getFees(string,string,uint256)": FunctionFragment;
     "getLandingPage(bytes32,bytes32)": FunctionFragment;
     "getNumAllowedPages(bytes32,bytes32)": FunctionFragment;
@@ -73,6 +74,7 @@ export interface EWSInterface extends utils.Interface {
       | "getAllowMaintainerAccess"
       | "getAllowedPages"
       | "getAllowedPagesSlice"
+      | "getEwsType"
       | "getFees"
       | "getLandingPage"
       | "getNumAllowedPages"
@@ -135,6 +137,10 @@ export interface EWSInterface extends utils.Interface {
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>
     ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getEwsType",
+    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
     functionFragment: "getFees",
@@ -263,6 +269,7 @@ export interface EWSInterface extends utils.Interface {
     functionFragment: "getAllowedPagesSlice",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "getEwsType", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "getFees", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getLandingPage",
@@ -638,6 +645,12 @@ export interface EWS extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string[]]>;
 
+    getEwsType(
+      node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<[number]>;
+
     getFees(
       name: PromiseOrValue<string>,
       subdomain: PromiseOrValue<string>,
@@ -792,6 +805,12 @@ export interface EWS extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string[]>;
 
+  getEwsType(
+    node: PromiseOrValue<BytesLike>,
+    label: PromiseOrValue<BytesLike>,
+    overrides?: CallOverrides
+  ): Promise<number>;
+
   getFees(
     name: PromiseOrValue<string>,
     subdomain: PromiseOrValue<string>,
@@ -945,6 +964,12 @@ export interface EWS extends BaseContract {
       end: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<string[]>;
+
+    getEwsType(
+      node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<number>;
 
     getFees(
       name: PromiseOrValue<string>,
@@ -1273,6 +1298,12 @@ export interface EWS extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getEwsType(
+      node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getFees(
       name: PromiseOrValue<string>,
       subdomain: PromiseOrValue<string>,
@@ -1427,6 +1458,12 @@ export interface EWS extends BaseContract {
       label: PromiseOrValue<BytesLike>,
       start: PromiseOrValue<BigNumberish>,
       end: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getEwsType(
+      node: PromiseOrValue<BytesLike>,
+      label: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
