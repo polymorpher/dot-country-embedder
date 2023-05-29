@@ -1,13 +1,26 @@
 import { type NextFunction, type Request, type Response } from 'express'
-import { getSld, getSubdomain } from '../../common/domain-utils'
-import { buildClient } from 'src/client.ts'
+import { getSld, getSubdomain } from '../../common/domain-utils.ts'
+import { buildClient } from '../src/client.ts'
 
-const substackDomainCache = {
-  // uncomment the below for test purpose
-  'www.polymorpher.localhost:3100': 'polymorpher.substack.com'
-}
+const substackDomainCache: Record<string, string> =
+  process.env.DEBUG
+    ? {
+        'www.polymorpher.localhost:3100': 'polymorpher.substack.com',
+        'localhost:3100': 'polymorpher.substack.com',
+        'localhost:3002': 'polymorpher.substack.com'
+      }
+    : {}
 
 const client = buildClient()
+
+const getDomain = (host: string): string => {
+  const res = host.split('://')
+  if (res.length === 0) {
+    return res[0]
+  } else {
+    return res[1]
+  }
+}
 
 const cache = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const host = req.get('host')
@@ -31,7 +44,9 @@ const cache = async (req: Request, res: Response, next: NextFunction): Promise<v
     substackDomainCache[host] = substackDomain
   }
 
-  res.locals.substackDomain = substackDomain
+  substackDomain.startsWith('https://')
+
+  res.locals.substackDomain = getDomain(substackDomain)
 
   next()
 }

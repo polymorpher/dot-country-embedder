@@ -34,15 +34,9 @@ router.get('/substack',
   substackDomainCache,
   async (req, res) => {
     try {
-      if (!req.query.url) {
-        throw new Error('URL query param is not specified')
-      }
-
-      const url = decodeURI(req.query.url as string)
-
+      const url = decodeURI(req.query.url as string ?? '')
       const { substackDomain } = res.locals
-
-      const { data } = await axiosBase.get(`${substackDomain}/${url}`)
+      const { data } = await axiosBase.get(`https://${substackDomain}/${url}`)
 
       res.status(200).send(data)
     } catch (ex: any) {
