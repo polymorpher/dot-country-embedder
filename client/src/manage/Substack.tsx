@@ -55,7 +55,7 @@ const LabelText = styled(BaseText)`
   white-space: nowrap;
 `
 
-const Manage = (): JSX.Element => {
+const ManageSubstack = (): JSX.Element => {
   const [address, setAddress] = useState('')
   const [provider, setProvider] = useState<any>()
   const [signer, setSigner] = useState<any>()
@@ -248,4 +248,4 @@ const Manage = (): JSX.Element => {
     </Container>)
 }
 
-export default Manage
+export default ManageSubstack

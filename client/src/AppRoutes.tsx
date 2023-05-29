@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react'
-import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Notion from './Notion'
 import Substack from './Substack'
 import { Loading, LoadingScreen } from './components/Misc'
@@ -18,7 +18,7 @@ const AppRoutes: React.FC = () => {
     client
       .getEwsType(sld, subdomain)
       .then(e => { setEwsType(e) })
-    .catch(console.error)
+      .catch(console.error)
   }, [])
 
   if (ewsType === undefined) {
@@ -35,11 +35,9 @@ const AppRoutes: React.FC = () => {
         <Route
           path='/*'
           element={
-            ewsType === EWSTypes.EWS_UNKNOWN
-              ? <Navigate to="/manage" />
-              : ewsType === EWSTypes.EWS_NOTION
-              ? <Notion />
-              : <Substack />
+            ewsType === EWSTypes.EWS_SUBSTACK
+              ? <Substack />
+              : <Notion />
           }
         />
       </Routes>

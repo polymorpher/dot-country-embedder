@@ -80,7 +80,7 @@ const SuggestedPageId = ({ id, applyId }: SuggestedPageIdConfig): JSX.Element =>
   return <SmallTextGrey>Extracted notion page id from url: <span style={{ color: 'black', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => { applyId?.(id) }}>{id.toString()}</span></SmallTextGrey>
 }
 
-const Manage = (): JSX.Element => {
+const ManageNotion = (): JSX.Element => {
   const [address, setAddress] = useState('')
   const [provider, setProvider] = useState<any>()
   const [signer, setSigner] = useState<any>()
@@ -345,4 +345,4 @@ const Manage = (): JSX.Element => {
     </Container>)
 }
 
-export default Manage
+export default ManageNotion

@@ -9,10 +9,9 @@ import { FlexColumn } from './components/Layout'
 import parse from 'html-react-parser'
 import { parsePath } from '../../common/notion-utils'
 
-const Notion: React.FC = () => {
+const Substack: React.FC = () => {
   const [client] = useState(buildClient())
   const [page, setPage] = useState<string>()
-  // set "https://polymorpher.substack.com" to `pageId` for test purpose
   const [pageId, setPageId] = useState<string>()
   const [unrestrictedMode, setUnrestrictedMode] = useState<boolean>(true)
   const sld = getSld()
@@ -27,7 +26,7 @@ const Notion: React.FC = () => {
     }
 
     void tryCatch(async function f () {
-      const page = await apis.getSubstackPage(`${pageId}/${pageIdOverride}`) as string
+      const page = await apis.getSubstackPage(pageIdOverride) as string
       const substackScripts = Array.from(window.document.querySelectorAll('script[created-from=substack]'))
 
       if (substackScripts.length === 0) {
@@ -75,7 +74,7 @@ const Notion: React.FC = () => {
         })
       ])
     }, true).catch(e => { console.error(e) })
-  }, [tryCatch])
+  }, [client, sld, subdomain, tryCatch])
 
   if (!pageId) {
     return <BlankPage>
@@ -99,4 +98,4 @@ const Notion: React.FC = () => {
   return <>{parse(page)}</>
 }
 
-export default Notion
+export default Substack
