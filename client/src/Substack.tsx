@@ -12,6 +12,7 @@ import { parsePath } from '../../common/notion-utils'
 const Substack: React.FC = () => {
   const [client] = useState(buildClient())
   const [page, setPage] = useState<string>()
+  // set "https://polymorpher.substack.com" to `pageId` for test purpose
   const [pageId, setPageId] = useState<string>()
   const [unrestrictedMode, setUnrestrictedMode] = useState<boolean>(true)
   const sld = getSld()
