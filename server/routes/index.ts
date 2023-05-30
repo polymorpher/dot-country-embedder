@@ -34,9 +34,8 @@ router.get('/substack',
   substackDomain,
   async (req, res) => {
     try {
-      const url = decodeURI(req.query.url as string ?? '')
       const { substackDomain } = res.locals
-      const { data } = await axiosBase.get(`https://${substackDomain}/${url}`)
+      const { data } = await axiosBase.get(`https://${substackDomain}/${req.query.url}`)
 
       res.status(200).send(data)
     } catch (ex: any) {
