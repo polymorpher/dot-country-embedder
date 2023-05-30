@@ -7,7 +7,7 @@ import { isValidNotionPageId, parsePath } from '../../common/notion-utils.ts'
 import { getSld, getSubdomain } from '../../common/domain-utils.ts'
 import limiter from '../middlewares/limiter.ts'
 import cached from '../middlewares/cache.ts'
-import substackDomainCache from '../middlewares/substackDomainCache.ts'
+import substackDomain from '../middlewares/substackDomain.ts'
 
 const router = express.Router()
 
@@ -18,12 +18,12 @@ router.get('/health', async (req, res) => {
 
 router.get('/substack/api/v1/archive',
   limiter(),
-  substackDomainCache,
+  substackDomain,
   async (req, res) => {
     const { substackDomain } = res.locals
-    const { data } = await axiosBase.get(`https://${substackDomain}/api/v1/archive`, { params: req.query })
+    const { headers, data } = await axiosBase.get(`https://${substackDomain}/api/v1/archive`, { params: req.query })
 
-    res.status(200).set('content-type', 'application/json; charset=utf-8').send(data)
+    res.status(200).set(headers).send(data)
   }
 )
 
@@ -31,7 +31,7 @@ const axiosBase = axios.create({ timeout: 15000 })
 
 router.get('/substack',
   limiter(),
-  substackDomainCache,
+  substackDomain,
   async (req, res) => {
     try {
       const url = decodeURI(req.query.url as string ?? '')
