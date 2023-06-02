@@ -30,3 +30,6 @@ body{
   color: #101042;
 }
 
+.notion-text:empty:after{
+  content:' ';
+}
