@@ -24,18 +24,18 @@ export const getPath = (): string => {
 
 export const titleEmbeddedMapPageUrl = (rootId: string, blockMap: ExtendedRecordMap) => {
   return (pageId: string) => {
-    pageId = (pageId || '').replace(/-/g, '')
+    const shortPageId = (pageId || '').replace(/-/g, '')
     // console.log({ pageId, rootId })
-    if (pageId === rootId) {
+    if (shortPageId === rootId) {
       // console.log('match', { pageId, rootId })
       return '/'
     }
     const title = blockMap.block[pageId]?.value.properties?.title?.flat().join(' ')
-    // if (!title) {
-    // console.log(`page ${pageId} has no title`)
-    // }
+    if (!title) {
+      // console.log(`page ${pageId} has no title`)
+    }
     const urlPrefix = urlNormalize(title || '')
 
-    return `/${urlPrefix}-${pageId}`
+    return `/${urlPrefix}-${shortPageId}`
   }
 }
