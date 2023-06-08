@@ -5,7 +5,8 @@ interface BlockEntry{
     value: Block
 }
 export const extractTitle = (blocks: BlockEntry[]): string => {
-    return blocks[0].value.properties?.title?.flat().join(' ')
+    // return blocks[0].value.properties?.title?.flat().join(' ')
+    return blocks[0].value.properties?.title?.map(e=>e[0]).join('')
 }
 
 export const extractPageEmoji = (blocks: BlockEntry[]): string | undefined => {
