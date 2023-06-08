@@ -31,8 +31,8 @@ export const extractPageImagePreview = (page: ExtendedRecordMap): string | undef
 }
 
 export  const extractTextFromBlock = (block: BlockEntry): string => {
-    if (block.value.type === 'text') {
-        return block?.value?.properties?.title?.flat().join(' ') as string
+    if (block?.value.type === 'text') {
+        return block?.value?.properties?.title?.map(e=>e[0]).join('') as string
     }
     return ''
 }
@@ -52,13 +52,14 @@ export const extractDescription = (page: ExtendedRecordMap): string => {
         return desc
     }
     while (!desc) {
-        if (currentBlock.value?.content) {
+        if (currentBlock?.value?.content) {
             blockPaths.push(...(currentBlock.value.content.reverse()))
         }
         if (blockPaths.length === 0) {
             return ''
         }
         currentBlock = page.block[blockPaths.pop() as string]
+
         desc = extractTextFromBlock(currentBlock)
         if (desc) {
             return desc
