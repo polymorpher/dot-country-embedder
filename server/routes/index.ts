@@ -39,7 +39,7 @@ const abbrv = (s: string | object, len: number = 10): string => {
   return printout
 }
 const cached = (ttl?: number) => (req: Request, res: Response, next: NextFunction): void => {
-  const key = `${req.method}|${req.path}|${JSON.stringify(req.query)}|${JSON.stringify(req.body)}`
+  const key = `${req.method}|${req.path}|${JSON.stringify(req.query)}|${JSON.stringify(req.body)}|${req.header('user-agent')}`
   const keyContentType = key + '|header|content-type'
   const v = cache.get(key)
   if (v) {
@@ -146,7 +146,7 @@ router.get(['/*'], limiter(), cached(), async (req, res) => {
     }
     const subdomain = getSubdomain(parts)
     const sld = getSld(parts)
-    const page = await getOGPage(sld, subdomain, parsedPath)
+    const page = await getOGPage(sld, subdomain, parsedPath, req.get('user-agent'))
     res.header('content-type', 'text/html; charset=utf-8').send(page)
   } catch (ex: any) {
     console.error(ex)
