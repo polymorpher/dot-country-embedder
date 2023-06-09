@@ -30,9 +30,13 @@ export const extractPageImagePreview = (page: ExtendedRecordMap): string | undef
     return page.signed_urls[blocks[0].value.id] || extractPageCover(blocks)
 }
 
-export  const extractTextFromBlock = (block: BlockEntry): string => {
+export const extractTextFromBlock = (block: BlockEntry): string => {
     if (block?.value.type === 'text') {
-        return block?.value?.properties?.title?.map(e=>e[0]).join('') as string
+        const tentative = block?.value?.properties?.title?.map(e=>e[0]).join('') as string
+        if(!tentative || tentative.trim().length < 4){
+            return ''
+        }
+        return tentative
     }
     return ''
 }
