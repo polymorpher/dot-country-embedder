@@ -30,7 +30,7 @@ export const titleEmbeddedMapPageUrl = (rootId: string, blockMap: ExtendedRecord
       // console.log('match', { pageId, rootId })
       return '/'
     }
-    const title = blockMap.block[pageId]?.value.properties?.title?.flat().join(' ')
+    const title = blockMap.block?.[pageId]?.value.properties?.title?.map(e=>e[0]).join('')
     if (!title) {
       // console.log(`page ${pageId} has no title`)
     }
