@@ -1,6 +1,7 @@
 import { getSubdomain as _getSubdomain, getSld as _getSld } from '../../common/domain-utils'
 import { type ExtendedRecordMap } from 'notion-types'
 import { urlNormalize } from '../../common/notion-utils'
+import config from "../config";
 export const getSld = (): string => {
   if (!window) {
     return ''
@@ -30,12 +31,12 @@ export const titleEmbeddedMapPageUrl = (rootId: string, blockMap: ExtendedRecord
       // console.log('match', { pageId, rootId })
       return '/'
     }
-    const title = blockMap.block?.[pageId]?.value.properties?.title?.map(e=>e[0]).join('')
+    const title = blockMap.block?.[pageId]?.value.properties?.title?.map(e => e[0]).join('')
     if (!title) {
       // console.log(`page ${pageId} has no title`)
     }
     const urlPrefix = urlNormalize(title || '')
 
-    return `/${urlPrefix}-${shortPageId}`
+    return `/${config.titleUrlPrefix}${urlPrefix}-${shortPageId}`
   }
 }
