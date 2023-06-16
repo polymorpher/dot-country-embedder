@@ -119,6 +119,13 @@ const Notion: React.FC = () => {
       setPage(records)
     })
   }, [pageId, pageIdOverride, allowedPageIds, tryCatch, unrestrictedMode])
+  useEffect(() => {
+    if (!page) {
+      return
+    }
+    const el = document.querySelector('.notion-page-cover')
+    el?.setAttribute('fetchpriority', 'high')
+  }, [page])
 
   useEffect(() => {
     // @ts-expect-error debugging
