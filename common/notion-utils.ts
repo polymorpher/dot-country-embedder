@@ -31,7 +31,7 @@ export const extractPageImagePreview = (page: ExtendedRecordMap): string | undef
 }
 
 export const extractTextFromBlock = (block: BlockEntry): string => {
-    if (block?.value.type === 'text') {
+    if (block?.value?.type === 'text') {
         const tentative = block?.value?.properties?.title?.map(e=>e[0]).join('') as string
         if(!tentative || tentative.trim().length < 4){
             return ''
