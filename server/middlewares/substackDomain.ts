@@ -45,7 +45,7 @@ const substackDomain = async (req: Request, res: Response, next: NextFunction): 
     res.status(401).json({ error: 'Not substack page' })
     return
   }
-  res.locals.substackDomain = getDomain(url.host)
+  res.locals.substackDomain = url.host
   next()
 }
 
