@@ -113,12 +113,19 @@ const Notion: React.FC = () => {
         const stub = urlNormalize(title)
         if (pageIdOverride && pageIdOverride !== pageId) {
           // console.log(pageIdOverride, pageId)
-          history.pushState({}, '', `${stub}-${renderedPageId}`)
+          history.pushState({}, '', `${config.titleUrlPrefix}${stub}-${renderedPageId}`)
         }
       }
       setPage(records)
     })
-  }, [pageId, pageIdOverride, allowedPageIds, tryCatch])
+  }, [pageId, pageIdOverride, allowedPageIds, tryCatch, unrestrictedMode])
+  useEffect(() => {
+    if (!page) {
+      return
+    }
+    const el = document.querySelector('.notion-page-cover')
+    el?.setAttribute('fetchpriority', 'high')
+  }, [page])
 
   useEffect(() => {
     // @ts-expect-error debugging

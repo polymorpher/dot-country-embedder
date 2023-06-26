@@ -9,6 +9,7 @@ const config = {
   walletConnectId: process.env.WALLET_CONNECT_ID ?? '',
   defaultRpc: process.env.DEFAULT_RPC ?? 'https://api.harmony.one',
   server: process.env.SERVER ?? 'https://1ns-embedder-server.hiddenstate.xyz',
+  titleUrlPrefix: process.env.TITLE_URL_PREFIX ?? '',
   tld: process.env.TLD ?? 'country',
   chainParameters: process.env.CHAIN_PARAMETERS
     ? JSON.parse(process.env.CHAIN_PARAMETERS)

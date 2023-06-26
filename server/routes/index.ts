@@ -116,7 +116,7 @@ router.get(['/*'], limiter(), cached(), async (req, res) => {
     }
     const subdomain = getSubdomain(parts)
     const sld = getSld(parts)
-    const page = await getOGPage(sld, subdomain, parsedPath)
+    const page = await getOGPage(sld, subdomain, parsedPath, req.get('user-agent'))
     res.header('content-type', 'text/html; charset=utf-8').send(page)
   } catch (ex: any) {
     console.error(ex)
