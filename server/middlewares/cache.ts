@@ -13,22 +13,18 @@ const cache = new LRUCache({
 
 const abbrv = (s: string | object, len: number = 10): string => {
   let printout = ''
-
   if (typeof s !== 'string') {
     printout = JSON.stringify(s)
   } else {
     printout = s
   }
-
   if (printout.length > len) {
     printout = printout.slice(0, len) + '...' + printout.slice(printout.length - 5)
   }
-
   return printout
 }
-
 const cached = (ttl?: number) => (req: Request, res: Response, next: NextFunction): void => {
-  const key = `${req.method}|${req.path}|${JSON.stringify(req.query)}|${JSON.stringify(req.body)}`
+  const key = `${req.method}|${req.path}|${JSON.stringify(req.query)}|${JSON.stringify(req.body)}|${req.header('user-agent')}`
   const keyContentType = key + '|header|content-type'
   const v = cache.get(key)
   if (v) {
