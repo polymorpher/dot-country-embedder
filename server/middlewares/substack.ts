@@ -4,15 +4,6 @@ import { buildClient } from '../src/client.ts'
 
 const client = buildClient()
 
-const getDomain = (host: string): string => {
-  const res = host.split('://')
-  if (res.length === 0) {
-    return res[0]
-  } else {
-    return res[1]
-  }
-}
-
 function parseUrl (urlStr: string): URL | null {
   if (!urlStr?.startsWith('https://') && !urlStr?.startsWith('http://')) {
     return parseUrl(`https://${urlStr}`)
@@ -30,7 +21,7 @@ function parseUrl (urlStr: string): URL | null {
   }
 }
 
-const substackDomain = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const substack = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const host = req.get('host')
   if (!host) {
     return
@@ -49,4 +40,4 @@ const substackDomain = async (req: Request, res: Response, next: NextFunction): 
   next()
 }
 
-export default substackDomain
+export default substack

@@ -7,7 +7,7 @@ import { isValidNotionPageId, parsePath } from '../../common/notion-utils.ts'
 import { getSld, getSubdomain } from '../../common/domain-utils.ts'
 import limiter from '../middlewares/limiter.ts'
 import cached from '../middlewares/cache.ts'
-import substackDomain from '../middlewares/substackDomain.ts'
+import substack from '../middlewares/substack.ts'
 
 const router = express.Router()
 
@@ -18,12 +18,16 @@ router.get('/health', async (req, res) => {
 
 router.get('/substack/api/v1/archive',
   limiter(),
-  substackDomain,
+  substack,
   async (req, res) => {
     const { substackDomain } = res.locals
-    const { headers, data } = await axiosBase.get(`https://${substackDomain}/api/v1/archive`, { params: req.query })
-
-    res.status(200).set(headers).send(data)
+    try {
+      const { headers, data } = await axiosBase.get(`https://${substackDomain}/api/v1/archive`, { params: req.query })
+      res.status(200).set(headers).send(data)
+    } catch (ex: any) {
+      console.error(ex)
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
+    }
   }
 )
 
@@ -31,13 +35,12 @@ const axiosBase = axios.create({ timeout: 15000 })
 
 router.get('/substack',
   limiter(),
-  substackDomain,
+  substack,
   async (req, res) => {
     try {
       const { substackDomain } = res.locals
-      const { data } = await axiosBase.get(`https://${substackDomain}/${req.query.url}`)
-
-      res.status(200).send(data)
+      const { headers, data } = await axiosBase.get(`https://${substackDomain}/${req.query.url}`)
+      res.status(200).set(headers).send(data)
     } catch (ex: any) {
       console.error(ex)
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
