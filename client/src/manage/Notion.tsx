@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { FlexColumn, Main, Row } from '../components/Layout'
-import {Address, BaseText, Desc, DescLeft, SmallText, Title} from '../components/Text'
+import { Address, BaseText, Desc, DescLeft, SmallText, Title } from '../components/Text'
 import config from '../../config'
 import { Button, Input, LinkWrarpper } from '../components/Controls'
 import { apis, buildClient, EWSTypes } from '../api'
@@ -15,53 +15,7 @@ import { ethers } from 'ethers'
 import detectEthereumProvider from '@metamask/detect-provider'
 import { type ExternalProvider } from '@ethersproject/providers'
 import { EthereumProvider } from '@walletconnect/ethereum-provider'
-
-const Container = styled(Main)`
-  margin: 0 auto;
-  padding: 0 16px;
-  max-width: 800px;
-  // TODO: responsive
-`
-
-interface SuccessWithExplorerLinkParameters {
-  message: string
-  txHash: string
-}
-
-const SuccessWithExplorerLink = ({ message, txHash }: SuccessWithExplorerLinkParameters): JSX.Element => {
-  return <FlexColumn style={{ gap: 8 }}>
-    <BaseText>{message}</BaseText>
-    <LinkWrarpper target='_blank' href={config.explorer(txHash)}>
-      <BaseText>View transaction</BaseText>
-    </LinkWrarpper>
-  </FlexColumn>
-}
-
-const SmallTextGrey = styled(SmallText)`
-  color: grey;
-`
-
-const SmallTextRed = styled(SmallText)`
-  color: indianred;
-`
-
-const SmallTextGreen = styled(SmallText)`
-  color: limegreen;
-`
-
-const InputBox = styled(Input)`
-  border-bottom: none;
-  font-size: 16px;
-  margin: 0;
-  background: #e0e0e0;
-  &:hover{
-    border-bottom: none;
-  }
-`
-
-const LabelText = styled(BaseText)`
-  white-space: nowrap;
-`
+import { SmallTextGrey, SmallTextRed, Container, SuccessWithExplorerLink, InputBox, LabelText } from './Common'
 
 interface SuggestedPageIdConfig {
   id: string | undefined | null | Error

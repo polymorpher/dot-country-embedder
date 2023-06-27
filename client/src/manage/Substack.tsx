@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { FlexColumn, Main, Row } from '../components/Layout'
-import {Address, BaseText, Desc, DescLeft, SmallText, Title} from '../components/Text'
+import { Address, BaseText, Desc, DescLeft, SmallText, Title } from '../components/Text'
 import config from '../../config'
 import { Button, Input, LinkWrarpper } from '../components/Controls'
 import { buildClient, EWSTypes } from '../api'
@@ -15,45 +15,7 @@ import { ethers } from 'ethers'
 import detectEthereumProvider from '@metamask/detect-provider'
 import { type ExternalProvider } from '@ethersproject/providers'
 import { EthereumProvider } from '@walletconnect/ethereum-provider'
-
-const Container = styled(Main)`
-  margin: 0 auto;
-  padding: 0 16px;
-  max-width: 800px;
-  // TODO: responsive
-`
-
-interface SuccessWithExplorerLinkParameters {
-  message: string
-  txHash: string
-}
-
-const SuccessWithExplorerLink = ({ message, txHash }: SuccessWithExplorerLinkParameters): JSX.Element => {
-  return <FlexColumn style={{ gap: 8 }}>
-    <BaseText>{message}</BaseText>
-    <LinkWrarpper target='_blank' href={config.explorer(txHash)}>
-      <BaseText>View transaction</BaseText>
-    </LinkWrarpper>
-  </FlexColumn>
-}
-
-const SmallTextGrey = styled(SmallText)`
-  color: grey;
-`
-
-const InputBox = styled(Input)`
-  border-bottom: none;
-  font-size: 16px;
-  margin: 0;
-  background: #e0e0e0;
-  &:hover{
-    border-bottom: none;
-  }
-`
-
-const LabelText = styled(BaseText)`
-  white-space: nowrap;
-`
+import { SuccessWithExplorerLink, SmallTextGrey, SmallTextRed, Container, InputBox, LabelText } from './Common'
 
 const ManageSubstack = ({ footer = <></> }): JSX.Element => {
   const [address, setAddress] = useState('')
@@ -173,17 +135,17 @@ const ManageSubstack = ({ footer = <></> }): JSX.Element => {
   }, [address, client])
 
   const save = async (): Promise<void> => {
-    const [parsedId] = debouncedEditingPageId.split(':')
-    if (!isValidSubstackLandingUrl(parsedId) && pageId !== '') {
-      toast.error(`Invalid landing page id: ${pageId}`)
+    const id = debouncedEditingPageId
+    if (!isValidSubstackLandingUrl(id) && id !== '') {
+      toast.error(`Invalid landing page id: ${id}`)
       return
     }
 
     tryCatch(async () => {
-      const tx = await client.update(sld, subdomain, EWSTypes.EWS_SUBSTACK, pageId, [], false)
+      const tx = await client.update(sld, subdomain, EWSTypes.EWS_SUBSTACK, id, [], false)
       toast.success(SuccessWithExplorerLink({
         txHash: tx.hash,
-        message: 'Update complete!'
+        message: 'Update complete! Please refresh page to see results'
       }))
     }).catch(e => { console.error(e) })
   }
