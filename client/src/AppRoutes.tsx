@@ -24,8 +24,6 @@ const AppRoutes: React.FC = () => {
     return <LoadingScreen />
   }
 
-  console.log({ sld, subdomain, ewsType })
-
   return (
     <BrowserRouter>
       <Routes>

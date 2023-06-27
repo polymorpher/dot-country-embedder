@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { BaseText } from './components/Text'
 import { apis, buildClient } from './api'
 import { getPath, getSld, getSubdomain } from './utils'
@@ -19,7 +19,7 @@ const Substack: React.FC = () => {
   const subdomain = getSubdomain()
   const pageIdOverride = parsePath(getPath().slice(1))
 
-  const { pending, tryCatch } = useTryCatch()
+  const { pending, initializing, tryCatch } = useTryCatch()
 
   useEffect(() => {
     if (!pageId) {
@@ -39,22 +39,17 @@ const Substack: React.FC = () => {
 
         for (const script of scripts) {
           const newScript = document.createElement('script')
-
-          if (script.src) {
-            newScript.src = script.src
-          }
-
-          if (script.innerHTML) {
-            newScript.innerHTML = script.innerHTML
-          }
-
+          newScript.src = script.src
+          newScript.type = script.type
+          newScript.innerHTML = script.innerHTML
           newScript.setAttribute('created-from', 'substack')
+          console.log(newScript)
           document.body.appendChild(newScript)
         }
 
         newDiv.remove()
+        // newDiv.addEventListener('load', () => { setLoaded(true); console.log('loaded') })
       }
-
       setPage(page)
     })
   }, [pageId, pageIdOverride, tryCatch, unrestrictedMode])
@@ -77,6 +72,10 @@ const Substack: React.FC = () => {
     }, true).catch(e => { console.error(e) })
   }, [client, sld, subdomain, tryCatch])
 
+  if (initializing) {
+    return <LoadingScreen/>
+  }
+
   if (!pageId) {
     return <BlankPage>
       <FlexColumn style={{ textAlign: 'center' }}>
@@ -96,7 +95,11 @@ const Substack: React.FC = () => {
     return <LoadingScreen/>
   }
 
-  return <>{parse(page)}</>
+  const parsedPage = parse(page)
+
+  return <>
+    {parse(page)}
+  </>
 }
 
 export default Substack
