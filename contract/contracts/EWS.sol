@@ -32,6 +32,7 @@ contract EWS is AccessControl {
     event EWSPerAdditionalPageFeeChanged(uint256 perAdditionalPageFeeFrom, uint256 perAdditionalPageFeeTo);
     event EWSPerSubdomainFeeChanged(uint256 perSubdomainFeeFrom, uint256 perSubdomainFeeTo);
     event EWSDCContractChanged(address indexed from, address indexed to);
+    event EWSUpgradedFromContractChanged(address indexed from, address indexed to);
 
     bytes32 public constant MAINTAINER_ROLE = keccak256("MAINTAINER_ROLE");
     address public revenueAccount;
@@ -54,6 +55,7 @@ contract EWS is AccessControl {
     uint256 public landingPageFee;
     uint256 public perAdditionalPageFee;
     uint256 public perSubdomainFee;
+    EWS public upgradedFrom;
 
     constructor(IDC _dc, uint256 _landingPageFee, uint256 _perAdditionalPageFee, uint256 _perSubdomainFee) {
         dc = _dc;
@@ -114,6 +116,11 @@ contract EWS is AccessControl {
     function setPerSubdomainFee(uint256 _perSubdomainFee) public onlyRole(DEFAULT_ADMIN_ROLE) {
         emit EWSPerSubdomainFeeChanged(perSubdomainFee, _perSubdomainFee);
         perSubdomainFee = _perSubdomainFee;
+    }
+
+    function setUpgradedFrom(EWS _upgradedFrom) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        emit EWSUpgradedFromContractChanged(address(upgradedFrom), address(_upgradedFrom));
+        upgradedFrom = _upgradedFrom;
     }
 
     modifier onlyNameOwner(string memory name){
@@ -235,6 +242,34 @@ contract EWS is AccessControl {
         emit RevenueWithdrawn(revenueAccount, address(this).balance);
         (bool success,) = revenueAccount.call{value: address(this).balance}("");
         require(success, "EWS: failed to withdraw");
+    }
 
+    function restore(string memory name, string memory subdomain, EWSType ewsType) public onlyNameOwnerOrMaintainer(name) {
+        if (address(upgradedFrom) == address(0)) {
+            revert("EWS: no old contract");
+        }
+        bytes32 node = keccak256(bytes(name));
+        bytes32 label = keccak256(bytes(subdomain));
+        EWSMultiConfig storage emc = configs[node];
+        EWSConfig storage ec = emc.subdomainConfigs[label];
+        if (ec.initialized) {
+            revert("EWS: already initialized");
+        }
+        //        upgradedFrom.get
+        string memory landingPage = upgradedFrom.getLandingPage(node, label);
+        if (bytes(landingPage).length == 0) {
+            revert("EWS: not configured");
+        }
+        string[] memory allowedPages = upgradedFrom.getAllowedPages(node, label);
+        if (keccak256(bytes(landingPage)) != keccak256(bytes(ec.landingPage))) {
+            emit EWSUpdate(node, label, ec.landingPage, landingPage);
+        }
+        if (ec.ewsType != ewsType) {
+            emit EWSTypeUpdate(node, label, ec.ewsType, ewsType);
+        }
+        ec.ewsType = ewsType;
+        ec.landingPage = landingPage;
+        ec.allowedPages = allowedPages;
+        emit EWSAdditionPageUpdate(node, label, ec.allowedPages, allowedPages);
     }
 }
