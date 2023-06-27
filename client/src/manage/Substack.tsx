@@ -135,10 +135,16 @@ const ManageSubstack = ({ footer = <></> }): JSX.Element => {
   }, [address, client])
 
   const save = async (): Promise<void> => {
-    const id = debouncedEditingPageId
+    let id = debouncedEditingPageId
     if (!isValidSubstackLandingUrl(id) && id !== '') {
       toast.error(`Invalid landing page id: ${id}`)
       return
+    }
+    if (id.endsWith('/')) {
+      id = id.slice(0, id.length - 1)
+    }
+    if (id.startsWith('https://')) {
+      id = id.slice('https://'.length)
     }
 
     tryCatch(async () => {
@@ -194,7 +200,7 @@ const ManageSubstack = ({ footer = <></> }): JSX.Element => {
         <DescLeft>
           <Row>
             <LabelText>Main page url</LabelText>
-            <InputBox $width={'100%'} value={pageId} placeholder={'https://polymorpher.substack.com'} onChange={({ target: { value } }) => { setPageId(value); setEditingPageId(value) }}/>
+            <InputBox $width={'100%'} value={pageId} placeholder={'polymorpher.substack.com'} onChange={({ target: { value } }) => { setPageId(value); setEditingPageId(value) }}/>
           </Row>
           <SmallTextGrey>This is the landing page when people visit {subdomain}{subdomain ? '.' : ''}{sld}.{config.tld} </SmallTextGrey>
           <Row style={{ marginTop: 32, justifyContent: 'space-between' }}>
