@@ -68,9 +68,11 @@ export interface Client {
   getLandingPage: (sld: string, subdomain: string) => Promise<string>
   getAllowedPages: (sld: string, subdomain: string) => Promise<string[]>
   getEwsType: (sld: string, subdomain: string) => Promise<number>
+  canRestore: (sld: string, subdomain: string) => Promise<boolean>
   update: (sld: string, subdomain: string, ewsType: EWSType, page: string, pages: string[], landingPageOnly: boolean) => Promise<ContractTransaction>
   appendAllowedPages: (sld: string, subdomain: string, pages: string[]) => Promise<ContractTransaction>
   remove: (sld: string, subdomain: string) => Promise<ContractTransaction>
+  restore: (sld: string, subdomain: string, ewsType: EWSType) => Promise<ContractTransaction>
 }
 export const buildClient = (provider?, signer?): Client => {
   const etherProvider = provider ?? new ethers.providers.StaticJsonRpcProvider(config.defaultRpc)
@@ -134,6 +136,19 @@ export const buildClient = (provider?, signer?): Client => {
     },
     remove: async (sld: string, subdomain: string): Promise<ContractTransaction> => {
       return await ews.remove(sld, subdomain)
+    },
+    restore: async (sld: string, subdomain: string, ewsType: EWSType): Promise<ContractTransaction> => {
+      return ews.restore(sld, subdomain, ewsType)
+    },
+    canRestore: async (sld: string, subdomain: string): Promise<boolean> => {
+      const upgradedFrom = await ews.upgradedFrom()
+      if (!upgradedFrom || upgradedFrom === ethers.constants.AddressZero) {
+        return false
+      }
+      const c = new ethers.Contract(upgradedFrom, EWSAbi, etherProvider) as EWS
+      const landingPage = await c.getLandingPage(ethers.utils.id(sld), ethers.utils.id(subdomain))
+      console.log(landingPage)
+      return !!landingPage
     },
     hasMaintainerRole: async (address: string): Promise<boolean> => {
       if (!address) {

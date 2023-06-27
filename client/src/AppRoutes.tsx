@@ -15,8 +15,7 @@ const AppRoutes: React.FC = () => {
   const [ewsType, setEwsType] = useState<number>()
 
   useEffect(() => {
-    client
-      .getEwsType(sld, subdomain)
+    client.getEwsType(sld, subdomain)
       .then(e => { setEwsType(e) })
       .catch(console.error)
   }, [])
@@ -24,6 +23,8 @@ const AppRoutes: React.FC = () => {
   if (ewsType === undefined) {
     return <LoadingScreen />
   }
+
+  console.log({ sld, subdomain, ewsType })
 
   return (
     <BrowserRouter>

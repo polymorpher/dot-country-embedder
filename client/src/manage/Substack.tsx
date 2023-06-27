@@ -55,7 +55,7 @@ const LabelText = styled(BaseText)`
   white-space: nowrap;
 `
 
-const ManageSubstack = (): JSX.Element => {
+const ManageSubstack = ({ footer = <></> }): JSX.Element => {
   const [address, setAddress] = useState('')
   const [provider, setProvider] = useState<any>()
   const [signer, setSigner] = useState<any>()
@@ -243,8 +243,8 @@ const ManageSubstack = (): JSX.Element => {
         </DescLeft>
       }
 
-      <div style={{ height: 320 }}/>
       <Feedback/>
+      {footer}
     </Container>)
 }
 

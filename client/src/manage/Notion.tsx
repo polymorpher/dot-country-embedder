@@ -80,7 +80,7 @@ const SuggestedPageId = ({ id, applyId }: SuggestedPageIdConfig): JSX.Element =>
   return <SmallTextGrey>Extracted notion page id from url: <span style={{ color: 'black', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => { applyId?.(id) }}>{id.toString()}</span></SmallTextGrey>
 }
 
-const ManageNotion = (): JSX.Element => {
+const ManageNotion = ({ footer = <></> }): JSX.Element => {
   const [address, setAddress] = useState('')
   const [provider, setProvider] = useState<any>()
   const [signer, setSigner] = useState<any>()
@@ -94,6 +94,7 @@ const ManageNotion = (): JSX.Element => {
   const [allowedPageIds, setAllowedPageIds] = useState<string[]>([])
   const [allowMaintainerAccess, setAllowMaintainerAccess] = useState<boolean>(true)
   const [isMaintainer, setIsMaintainer] = useState<boolean>(true)
+  const [canRestore, setCanRestore] = useState<boolean>(false)
   const [suggestedPageId, setSuggestedPageId] = useState<string | undefined | null | Error>()
   const [baseFees, setBaseFees] = useState(ethers.BigNumber.from(0))
   const [perPageFees, setPerPageFees] = useState(ethers.BigNumber.from(0))
@@ -240,6 +241,21 @@ const ManageNotion = (): JSX.Element => {
     }).catch(e => { console.error(e) })
   }
 
+  const restore = async (): Promise<void> => {
+    if (!canRestore) {
+      return
+    }
+    tryCatch(async () => {
+      const tx = await client.restore(sld, subdomain, EWSTypes.EWS_NOTION)
+      toast.success(SuccessWithExplorerLink({
+        txHash: tx.hash,
+        message: 'Update complete! Please refresh the page to see results'
+      }))
+    }).catch(e => {
+      console.error(e)
+    })
+  }
+
   const collect = async (): Promise<void> => {
     tryCatch(async () => {
       const ids = await apis.getSameSitePageIds(pageId, depth)
@@ -259,7 +275,8 @@ const ManageNotion = (): JSX.Element => {
         client.getBaseFees().then(e => { setBaseFees(e) }),
         client.getPerPageFees().then(e => { setPerPageFees(e) }),
         client.getPerSubdomainFees().then(e => { setPerSubdomainFees(e) }),
-        client.getOwner(sld).then(e => { setOwner(e) })
+        client.getOwner(sld).then(e => { setOwner(e) }),
+        client.canRestore(sld, subdomain).then(e => { setCanRestore(e) })
       ])
     }, true).catch(e => { console.error(e) })
   }, [client, subdomain, sld, tryCatch])
@@ -337,11 +354,18 @@ const ManageNotion = (): JSX.Element => {
               <BaseText>Total fees: {ethers.utils.formatEther(totalFees)} ONE (base fees {ethers.utils.formatEther(baseFees)} ONE, plus per {ethers.utils.formatEther(perPageFees)} page, plus {ethers.utils.formatEther(perSubdomainFees)} per subdomain)</BaseText>
             </Row>
             : <></>}
+          {canRestore && <>
+            <LabelText style={{ marginTop: 32 }}>Lost your page?</LabelText>
+            <SmallTextGrey>Some pages are lost when we were upgrading the service. We detected that you had a page before. You can use the button below to restore your settings</SmallTextGrey>
+            <Row style={{ marginTop: 32, justifyContent: 'space-between' }}>
+              <Button disabled={initializing || pending} $width={'auto'} onClick={restore}>{pending ? <Loading/> : 'RESTORE' }</Button>
+            </Row>
+          </>}
         </DescLeft>
       }
 
-      <div style={{ height: 320 }}/>
       <Feedback/>
+      {footer}
     </Container>)
 }
 
