@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { FlexColumn, Main, Row } from '../components/Layout'
-import { BaseText, Desc, DescLeft, SmallText, Title } from '../components/Text'
+import {Address, BaseText, Desc, DescLeft, SmallText, Title} from '../components/Text'
 import config from '../../config'
 import { Button, Input, LinkWrarpper } from '../components/Controls'
 import { apis, buildClient, EWSTypes } from '../api'
@@ -308,11 +308,14 @@ const ManageNotion = ({ footer = <></> }): JSX.Element => {
         <SmallTextGrey>Connect your .country with notion pages</SmallTextGrey>
         {owner && <SmallTextGrey>Owner: {owner}</SmallTextGrey>}
       </FlexColumn>
-      <Desc>
+      {!address && <Desc>
         <Button onClick={connect} style={{ width: 'auto' }}> CONNECT METAMASK</Button>
         <Button onClick={wcConnect} style={{ width: 'auto' }}> CONNECT WALLET CONNECT</Button>
         {address && <SmallTextGrey style={{ wordBreak: 'break-word', userSelect: 'all' }}>connected: {address}</SmallTextGrey>}
-      </Desc>
+      </Desc>}
+      {address && <Desc>
+        <Address>Connected to {address}</Address>
+      </Desc>}
       {address && (allowAccess()) &&
         <DescLeft>
           <Row>
