@@ -7,6 +7,7 @@ import { type ExtendedRecordMap } from 'notion-types'
 import { type EWS, type IDC } from '../../contract/typechain-types'
 import { isValidNotionPageId } from '../../common/notion-utils'
 const base = axios.create({ baseURL: config.server, timeout: 10000 })
+const substackBase = axios.create({ baseURL: config.substackServer, timeout: 10000 })
 
 // interface APIResponse {
 //   success?: boolean
@@ -41,7 +42,7 @@ export const apis = {
     return id
   },
   getSubstackPage: async (url: string) => {
-    const { data } = await base.get('/substack', { params: { url } })
+    const { data } = await substackBase.get('/substack', { params: { url } })
     return data
   }
 }
