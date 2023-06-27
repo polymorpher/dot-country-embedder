@@ -24,13 +24,35 @@ router.get('/substack/api/v1/:endpoint',
     const { endpoint } = req.params
     try {
       const { headers, data } = await axiosBase.get(`https://${substackDomain}/api/v1/${endpoint}`, { params: req.query })
-      res.status(200).set(headers).send(data)
+      if (headers['transfer-encoding'] === 'chunked') {
+        delete headers['transfer-encoding']
+      }
+      res.set(headers).send(data)
     } catch (ex: any) {
       console.error(ex)
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
     }
   }
 )
+
+// router.post('/substack/api/v1/:endpoint',
+//   limiter(),
+//   substack,
+//   async (req, res) => {
+//     const { substackDomain } = res.locals
+//     const { endpoint } = req.params
+//     try {
+//       const { headers, data } = await axiosBase.post(`https://${substackDomain}/api/v1/${endpoint}`, { ...req.body })
+//       if (headers['transfer-encoding'] === 'chunked') {
+//         delete headers['transfer-encoding']
+//       }
+//       res.set(headers).send(data)
+//     } catch (ex: any) {
+//       console.error(ex)
+//       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
+//     }
+//   }
+// )
 
 const axiosBase = axios.create({ timeout: 15000 })
 
@@ -41,7 +63,10 @@ router.get('/substack',
     try {
       const { substackDomain } = res.locals
       const { headers, data } = await axiosBase.get(`https://${substackDomain}/${req.query.url}`)
-      res.status(200).set(headers).send(data)
+      if (headers['transfer-encoding'] === 'chunked') {
+        delete headers['transfer-encoding']
+      }
+      res.set(headers).send(data)
     } catch (ex: any) {
       console.error(ex)
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })

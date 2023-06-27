@@ -9,7 +9,6 @@ function parseUrl (urlStr: string): URL | null {
     return parseUrl(`https://${urlStr}`)
   }
   try {
-    console.log(urlStr)
     const url = new URL(urlStr)
     if (!url.host.endsWith('.substack.com')) {
       console.error(`${url} is not with substack.com`)
@@ -27,7 +26,6 @@ const substack = async (req: Request, res: Response, next: NextFunction): Promis
   if (!host) {
     return
   }
-  console.log(host)
   const subdomain = getSubdomain(host)
   const sld = getSld(host)
 
