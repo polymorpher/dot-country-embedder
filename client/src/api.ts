@@ -141,6 +141,10 @@ export const buildClient = (provider?, signer?): Client => {
       return ews.restore(sld, subdomain, ewsType)
     },
     canRestore: async (sld: string, subdomain: string): Promise<boolean> => {
+      const currentLandingPage = await ews.getLandingPage(ethers.utils.id(sld), ethers.utils.id(subdomain))
+      if (currentLandingPage) {
+        return false
+      }
       const upgradedFrom = await ews.upgradedFrom()
       if (!upgradedFrom || upgradedFrom === ethers.constants.AddressZero) {
         return false
