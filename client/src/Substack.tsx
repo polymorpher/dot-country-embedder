@@ -9,6 +9,7 @@ import { FlexColumn } from './components/Layout'
 import parse from 'html-react-parser'
 import { parsePath } from '../../common/notion-utils'
 import './substack.scss'
+import { SubstackLinkReplacer } from './LinkReplacer'
 const Substack: React.FC = () => {
   const [client] = useState(buildClient())
   const [page, setPage] = useState<string>()
@@ -17,7 +18,7 @@ const Substack: React.FC = () => {
   const [unrestrictedMode, setUnrestrictedMode] = useState<boolean>(true)
   const sld = getSld()
   const subdomain = getSubdomain()
-  const pageIdOverride = parsePath(getPath().slice(1))
+  const pageIdOverride = getPath().slice(1)
 
   const { pending, initializing, tryCatch } = useTryCatch()
 
@@ -95,10 +96,15 @@ const Substack: React.FC = () => {
     return <LoadingScreen/>
   }
 
-  const parsedPage = parse(page)
+  const parsedPage = parse(page) as JSX.Element
+  return <>
 
+    <SubstackLinkReplacer substackHost={pageId} subdomain={subdomain} sld={sld}>
+      {parsedPage}
+    </SubstackLinkReplacer>
+  </>
   // return <>{parsedPage}</>
-  return <div dangerouslySetInnerHTML={{ __html: page }}></div>
+  // return <div dangerouslySetInnerHTML={{ __html: page }}></div>
 }
 
 export default Substack
