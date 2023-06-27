@@ -16,13 +16,14 @@ router.get('/health', async (req, res) => {
   res.send('OK').end()
 })
 
-router.get('/substack/api/v1/archive',
+router.get('/substack/api/v1/:endpoint',
   limiter(),
   substack,
   async (req, res) => {
     const { substackDomain } = res.locals
+    const { endpoint } = req.params
     try {
-      const { headers, data } = await axiosBase.get(`https://${substackDomain}/api/v1/archive`, { params: req.query })
+      const { headers, data } = await axiosBase.get(`https://${substackDomain}/api/v1/${endpoint}`, { params: req.query })
       res.status(200).set(headers).send(data)
     } catch (ex: any) {
       console.error(ex)

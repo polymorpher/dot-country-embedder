@@ -32,23 +32,17 @@ const Substack: React.FC = () => {
 
       if (substackScripts.length === 0) {
         const newDiv = document.createElement('div')
-
         newDiv.innerHTML = page
-
         const scripts = Array.from(newDiv.querySelectorAll('script'))
-
         for (const script of scripts) {
           const newScript = document.createElement('script')
           newScript.src = script.src
           newScript.type = script.type
           newScript.innerHTML = script.innerHTML
           newScript.setAttribute('created-from', 'substack')
-          console.log(newScript)
           document.body.appendChild(newScript)
         }
-
         newDiv.remove()
-        // newDiv.addEventListener('load', () => { setLoaded(true); console.log('loaded') })
       }
       setPage(page)
     })
@@ -98,7 +92,7 @@ const Substack: React.FC = () => {
   const parsedPage = parse(page)
 
   return <>
-    {parse(page)}
+    {parsedPage}
   </>
 }
 

@@ -30,7 +30,7 @@ export default {
         target: 'https://localhost:8446/',
         secure: false
       },
-      '/api/v1': {
+      '/api/v1/*': {
         target: 'https://localhost:8446/',
         pathRewrite: { '^/api/v1': '/substack/api/v1' },
         secure: false
