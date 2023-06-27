@@ -8,7 +8,7 @@ import { LinkWrarpper } from './components/Controls'
 import { FlexColumn } from './components/Layout'
 import parse from 'html-react-parser'
 import { parsePath } from '../../common/notion-utils'
-
+import './substack.scss'
 const Substack: React.FC = () => {
   const [client] = useState(buildClient())
   const [page, setPage] = useState<string>()
@@ -36,9 +36,15 @@ const Substack: React.FC = () => {
         const scripts = Array.from(newDiv.querySelectorAll('script'))
         for (const script of scripts) {
           const newScript = document.createElement('script')
-          newScript.src = script.src
-          newScript.type = script.type
-          newScript.innerHTML = script.innerHTML
+          if (newScript.src) {
+            newScript.src = script.src
+          }
+          if (newScript.type) {
+            newScript.type = script.type
+          }
+          if (newScript.innerHTML) {
+            newScript.innerHTML = script.innerHTML
+          }
           newScript.setAttribute('created-from', 'substack')
           document.body.appendChild(newScript)
         }
@@ -91,9 +97,8 @@ const Substack: React.FC = () => {
 
   const parsedPage = parse(page)
 
-  return <>
-    {parsedPage}
-  </>
+  // return <>{parsedPage}</>
+  return <div dangerouslySetInnerHTML={{ __html: page }}></div>
 }
 
 export default Substack
