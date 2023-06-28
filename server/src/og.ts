@@ -4,12 +4,14 @@ import EWSAbi from '../../contract/abi/EWS.json' assert {
       integrity: 'sha384-ABC123'
 }
 import config from '../config.ts'
-import { type OpenGraphData } from './types.ts'
+import { EWSTypes, type OpenGraphData } from './types.ts'
 import { type EWS } from '../../contract/typechain-types'
 import { getOGDataFromPage, getPage } from './notion.ts'
 import { encode } from 'html-entities'
 import { type ExtendedRecordMap } from 'notion-types'
-import { isValidNotionPageId } from '../../common/notion-utils.ts'
+import { isValidNotionPageId, parsePath } from '../../common/notion-utils.ts'
+import axios from 'axios'
+import { parseSubstackUrl } from '../../common/substack-utils.ts'
 
 const escape = (s: string): string => {
   return s.replaceAll('"', '%22')
@@ -38,12 +40,13 @@ export const renderOpenGraphTemplate = (data: OpenGraphData): string => {
 
 const provider = new ethers.providers.StaticJsonRpcProvider(config.provider)
 
-export const getOGPage = async (sld: string, subdomain: string, path?: string, ua?: string): Promise<string> => {
-  console.log('[-getOGPage]', { sld, subdomain, path })
-  const c = new ethers.Contract(config.ewsContract, EWSAbi, provider) as EWS
-  const node = ethers.utils.id(sld)
-  const label = ethers.utils.id(subdomain)
-  const [landingPageSetting, allowedPages] = await Promise.all([c.getLandingPage(node, label), c.getAllowedPages(node, label)])
+const getOGPageNotion = async (subdomain: string, sld: string,
+  landingPageSetting: string, allowedPages: string[], path?: string, ua?: string): Promise<string> => {
+  const rawPath = path
+  path = parsePath(path)
+  if (rawPath && !isValidNotionPageId(path)) {
+    return EMPTY_PAGE
+  }
   const [landingPage, mode] = landingPageSetting.split(':')
   const unrestrictedMode = mode !== 'strict'
   let page: ExtendedRecordMap
@@ -55,4 +58,34 @@ export const getOGPage = async (sld: string, subdomain: string, path?: string, u
   const ogData = getOGDataFromPage(page, ua)
   const url = `https://${subdomain}${subdomain ? '.' : ''}${sld}.${config.TLD}`
   return renderOpenGraphTemplate({ url, ...ogData })
+}
+
+const EMPTY_PAGE = '<html></html>'
+
+const substackAxiosBase = axios.create({ timeout: 15000 })
+const getOGPageSubstack = async (subdomain: string, sld: string, substackHost: string, path?: string): Promise<string> => {
+  const url = parseSubstackUrl(substackHost)
+  if (!url) {
+    return EMPTY_PAGE
+  }
+  const { data } = await substackAxiosBase.get(`https://${substackHost}/${path}`)
+  return data
+}
+export const getOGPage = async (sld: string, subdomain: string, path?: string, ua?: string): Promise<string> => {
+  console.log('[-getOGPage]', { sld, subdomain, path })
+  const c = new ethers.Contract(config.ewsContract, EWSAbi, provider) as EWS
+  const node = ethers.utils.id(sld)
+  const label = ethers.utils.id(subdomain)
+  const [landingPageSetting, allowedPages, ewsType] = await Promise.all([
+    c.getLandingPage(node, label),
+    c.getAllowedPages(node, label),
+    c.getEwsType(node, label)
+  ])
+  if (ewsType === EWSTypes.EWS_NOTION || ewsType === EWSTypes.EWS_NOTION) {
+    return await getOGPageNotion(subdomain, sld, landingPageSetting, allowedPages, path, ua)
+  }
+  if (ewsType === EWSTypes.EWS_SUBSTACK) {
+    return await getOGPageSubstack(subdomain, sld, landingPageSetting, path)
+  }
+  return EMPTY_PAGE
 }

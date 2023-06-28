@@ -95,7 +95,7 @@ export const isValidNotionPageId = (id: string): boolean => {
     return true
 }
 
-export const parsePath = (path: string): string => {
+export const parsePath = (path?: string): string => {
     if(!path){
         return ''
     }

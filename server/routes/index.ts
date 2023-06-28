@@ -138,14 +138,9 @@ router.get(['/*'], limiter(), cached(), async (req, res) => {
       return
     }
     console.log('[/*]', req.hostname, req.path, 'ua:', req.header('user-agent'))
-    const parsedPath = parsePath(path)
-    if (path && !isValidNotionPageId(parsedPath)) {
-      res.status(StatusCodes.BAD_REQUEST).json({})
-      return
-    }
     const subdomain = getSubdomain(parts)
     const sld = getSld(parts)
-    const page = await getOGPage(sld, subdomain, parsedPath, req.get('user-agent'))
+    const page = await getOGPage(sld, subdomain, path, req.get('user-agent'))
     res.header('content-type', 'text/html; charset=utf-8').send(page)
   } catch (ex: any) {
     console.error(ex)
