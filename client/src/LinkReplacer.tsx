@@ -71,8 +71,8 @@ export const SubstackLinkReplacer = ({ children, sld, subdomain, substackHost }:
         if (node.type !== 'tag' || !(node instanceof ParserElement)) {
           return
         }
-        // const replacementHost = `${subdomain}.${sld}.${config.tld}`
-        const replacementHost = `${subdomain}.${sld}.localhost:3100`
+        const replacementHost = `${subdomain}.${sld}.${config.tld}`
+        // const replacementHost = `${subdomain}.${sld}.localhost:3100`
 
         if (node.name === 'a') {
           const h = node.attribs.href
