@@ -141,14 +141,14 @@ const ManageNotion = ({ footer = <></> }): JSX.Element => {
   }, [])
 
   useEffect(() => {
-    if (!provider || !signer) {
+    if (!provider || !signer || !address) {
       return
     }
     const c = buildClient(provider, signer)
     setClient(c)
     // @ts-expect-error debugging
     window.client = c
-  }, [provider, signer])
+  }, [provider, signer, address])
 
   useEffect(() => {
     if (!client) {

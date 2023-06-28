@@ -36,7 +36,7 @@ const Tweet = ({ id }: { id: string }): JSX.Element => {
 }
 
 const Notion: React.FC = () => {
-  const [client] = useState(buildClient())
+  const [client] = useState(buildClient(undefined, undefined, true))
   const [page, setPage] = useState<ExtendedRecordMap>()
   const [pageId, setPageId] = useState<string>('')
   const [unrestrictedMode, setUnrestrictedMode] = useState<boolean>(true)
