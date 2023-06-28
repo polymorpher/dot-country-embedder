@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { FlexColumn, Main, Row } from '../components/Layout'
-import { BaseText, Desc, DescLeft, SmallText, Title } from '../components/Text'
+import { Address, BaseText, Desc, DescLeft, SmallText, Title } from '../components/Text'
 import config from '../../config'
 import { Button, Input, LinkWrarpper } from '../components/Controls'
 import { buildClient, EWSTypes } from '../api'
@@ -15,47 +15,9 @@ import { ethers } from 'ethers'
 import detectEthereumProvider from '@metamask/detect-provider'
 import { type ExternalProvider } from '@ethersproject/providers'
 import { EthereumProvider } from '@walletconnect/ethereum-provider'
+import { SuccessWithExplorerLink, SmallTextGrey, SmallTextRed, Container, InputBox, LabelText } from './Common'
 
-const Container = styled(Main)`
-  margin: 0 auto;
-  padding: 0 16px;
-  max-width: 800px;
-  // TODO: responsive
-`
-
-interface SuccessWithExplorerLinkParameters {
-  message: string
-  txHash: string
-}
-
-const SuccessWithExplorerLink = ({ message, txHash }: SuccessWithExplorerLinkParameters): JSX.Element => {
-  return <FlexColumn style={{ gap: 8 }}>
-    <BaseText>{message}</BaseText>
-    <LinkWrarpper target='_blank' href={config.explorer(txHash)}>
-      <BaseText>View transaction</BaseText>
-    </LinkWrarpper>
-  </FlexColumn>
-}
-
-const SmallTextGrey = styled(SmallText)`
-  color: grey;
-`
-
-const InputBox = styled(Input)`
-  border-bottom: none;
-  font-size: 16px;
-  margin: 0;
-  background: #e0e0e0;
-  &:hover{
-    border-bottom: none;
-  }
-`
-
-const LabelText = styled(BaseText)`
-  white-space: nowrap;
-`
-
-const Manage = (): JSX.Element => {
+const ManageSubstack = ({ footer = <></> }): JSX.Element => {
   const [address, setAddress] = useState('')
   const [provider, setProvider] = useState<any>()
   const [signer, setSigner] = useState<any>()
@@ -156,34 +118,40 @@ const Manage = (): JSX.Element => {
   }, [])
 
   useEffect(() => {
-    if (!provider || !signer) {
+    if (!provider || !signer || !address) {
       return
     }
     const c = buildClient(provider, signer)
     setClient(c)
     // @ts-expect-error debugging
     window.client = c
-  }, [provider, signer])
+  }, [provider, signer, address])
 
   useEffect(() => {
-    if (!client) {
+    if (!client || !address) {
       return
     }
     client.hasMaintainerRole(address).then(e => { setIsMaintainer(e) }).catch(console.error)
   }, [address, client])
 
   const save = async (): Promise<void> => {
-    const [parsedId] = debouncedEditingPageId.split(':')
-    if (!isValidSubstackLandingUrl(parsedId) && pageId !== '') {
-      toast.error(`Invalid landing page id: ${pageId}`)
+    let id = debouncedEditingPageId
+    if (!isValidSubstackLandingUrl(id) && id !== '') {
+      toast.error(`Invalid landing page id: ${id}`)
       return
+    }
+    if (id.endsWith('/')) {
+      id = id.slice(0, id.length - 1)
+    }
+    if (id.startsWith('https://')) {
+      id = id.slice('https://'.length)
     }
 
     tryCatch(async () => {
-      const tx = await client.update(sld, subdomain, EWSTypes.EWS_SUBSTACK, pageId, [], false)
+      const tx = await client.update(sld, subdomain, EWSTypes.EWS_SUBSTACK, id, [], false)
       toast.success(SuccessWithExplorerLink({
         txHash: tx.hash,
-        message: 'Update complete!'
+        message: 'Update complete! Please refresh page to see results'
       }))
     }).catch(e => { console.error(e) })
   }
@@ -220,16 +188,19 @@ const Manage = (): JSX.Element => {
         <SmallTextGrey>Connect your .country with substack pages</SmallTextGrey>
         {owner && <SmallTextGrey>Owner: {owner}</SmallTextGrey>}
       </FlexColumn>
-      <Desc>
+      {!address && <Desc>
         <Button onClick={connect} style={{ width: 'auto' }}> CONNECT METAMASK</Button>
         <Button onClick={wcConnect} style={{ width: 'auto' }}> CONNECT WALLET CONNECT</Button>
         {address && <SmallTextGrey style={{ wordBreak: 'break-word', userSelect: 'all' }}>connected: {address}</SmallTextGrey>}
-      </Desc>
+      </Desc>}
+      {address && <Desc>
+        <Address>Connected to {address}</Address>
+      </Desc>}
       {address && (allowAccess()) &&
         <DescLeft>
           <Row>
             <LabelText>Main page url</LabelText>
-            <InputBox $width={'100%'} value={pageId} placeholder={'https://polymorpher.substack.com'} onChange={({ target: { value } }) => { setPageId(value); setEditingPageId(value) }}/>
+            <InputBox $width={'100%'} value={pageId} placeholder={'polymorpher.substack.com'} onChange={({ target: { value } }) => { setPageId(value); setEditingPageId(value) }}/>
           </Row>
           <SmallTextGrey>This is the landing page when people visit {subdomain}{subdomain ? '.' : ''}{sld}.{config.tld} </SmallTextGrey>
           <Row style={{ marginTop: 32, justifyContent: 'space-between' }}>
@@ -243,9 +214,9 @@ const Manage = (): JSX.Element => {
         </DescLeft>
       }
 
-      <div style={{ height: 320 }}/>
       <Feedback/>
+      {footer}
     </Container>)
 }
 
-export default Manage
+export default ManageSubstack

@@ -14,8 +14,8 @@ export const Loading = ({ size = 16 }: { size?: number }): JSX.Element => {
   return <TailSpin stroke='grey' width={size} height={size} />
 }
 
-export const LoadingScreen = ({ children }: { children?: JSX.Element | JSX.Element[] }): JSX.Element => {
-  return <Main style={{ justifyContent: 'center' }}>
+export const LoadingScreen = ({ children, containerStyle }: { children?: JSX.Element | JSX.Element[], containerStyle?: any }): JSX.Element => {
+  return <Main style={{ justifyContent: 'center', ...containerStyle }}>
     <FlexRow>
       <Loading size={64}/>
     </FlexRow>

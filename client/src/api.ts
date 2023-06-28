@@ -7,6 +7,7 @@ import { type ExtendedRecordMap } from 'notion-types'
 import { type EWS, type IDC } from '../../contract/typechain-types'
 import { isValidNotionPageId } from '../../common/notion-utils'
 const base = axios.create({ baseURL: config.server, timeout: 10000 })
+const substackBase = axios.create({ baseURL: config.substackServer, timeout: 10000 })
 
 // interface APIResponse {
 //   success?: boolean
@@ -41,7 +42,7 @@ export const apis = {
     return id
   },
   getSubstackPage: async (url: string) => {
-    const { data } = await base.get('/substack', { params: { url } })
+    const { data } = await substackBase.get('/substack', { params: { url } })
     return data
   }
 }
@@ -68,11 +69,13 @@ export interface Client {
   getLandingPage: (sld: string, subdomain: string) => Promise<string>
   getAllowedPages: (sld: string, subdomain: string) => Promise<string[]>
   getEwsType: (sld: string, subdomain: string) => Promise<number>
+  canRestore: (sld: string, subdomain: string) => Promise<boolean>
   update: (sld: string, subdomain: string, ewsType: EWSType, page: string, pages: string[], landingPageOnly: boolean) => Promise<ContractTransaction>
   appendAllowedPages: (sld: string, subdomain: string, pages: string[]) => Promise<ContractTransaction>
   remove: (sld: string, subdomain: string) => Promise<ContractTransaction>
+  restore: (sld: string, subdomain: string, ewsType: EWSType) => Promise<ContractTransaction>
 }
-export const buildClient = (provider?, signer?): Client => {
+export const buildClient = (provider?, signer?, failover = false): Client => {
   const etherProvider = provider ?? new ethers.providers.StaticJsonRpcProvider(config.defaultRpc)
   let ews = new ethers.Contract(config.embedderContract, EWSAbi, etherProvider) as EWS
   let _dc: IDC
@@ -113,13 +116,31 @@ export const buildClient = (provider?, signer?): Client => {
       return await ews.perSubdomainFee()
     },
     getLandingPage: async (sld: string, subdomain: string): Promise<string> => {
-      return await ews.getLandingPage(ethers.utils.id(sld), ethers.utils.id(subdomain))
+      const l = await ews.getLandingPage(ethers.utils.id(sld), ethers.utils.id(subdomain))
+      if (!l && failover) {
+        const upgradedFrom = await ews.upgradedFrom()
+        if (!upgradedFrom) {
+          return l
+        }
+        const c = new ethers.Contract(upgradedFrom, EWSAbi, etherProvider) as EWS
+        return await c.getLandingPage(ethers.utils.id(sld), ethers.utils.id(subdomain))
+      }
+      return l
     },
     getEwsType: async (sld: string, subdomain: string): Promise<number> => {
       return await ews.getEwsType(ethers.utils.id(sld), ethers.utils.id(subdomain))
     },
     getAllowedPages: async (sld: string, subdomain: string): Promise<string[]> => {
-      return await ews.getAllowedPages(ethers.utils.id(sld), ethers.utils.id(subdomain))
+      const pages = await ews.getAllowedPages(ethers.utils.id(sld), ethers.utils.id(subdomain))
+      if (pages.length === 0 && failover) {
+        const upgradedFrom = await ews.upgradedFrom()
+        if (!upgradedFrom) {
+          return []
+        }
+        const c = new ethers.Contract(upgradedFrom, EWSAbi, etherProvider) as EWS
+        return await c.getAllowedPages(ethers.utils.id(sld), ethers.utils.id(subdomain))
+      }
+      return pages
     },
     getAllowMaintainerAccess: async (sld: string): Promise<boolean> => {
       return await ews.getAllowMaintainerAccess(ethers.utils.id(sld))
@@ -134,6 +155,22 @@ export const buildClient = (provider?, signer?): Client => {
     },
     remove: async (sld: string, subdomain: string): Promise<ContractTransaction> => {
       return await ews.remove(sld, subdomain)
+    },
+    restore: async (sld: string, subdomain: string, ewsType: EWSType): Promise<ContractTransaction> => {
+      return ews.restore(sld, subdomain, ewsType)
+    },
+    canRestore: async (sld: string, subdomain: string): Promise<boolean> => {
+      const currentLandingPage = await ews.getLandingPage(ethers.utils.id(sld), ethers.utils.id(subdomain))
+      if (currentLandingPage) {
+        return false
+      }
+      const upgradedFrom = await ews.upgradedFrom()
+      if (!upgradedFrom || upgradedFrom === ethers.constants.AddressZero) {
+        return false
+      }
+      const c = new ethers.Contract(upgradedFrom, EWSAbi, etherProvider) as EWS
+      const landingPage = await c.getLandingPage(ethers.utils.id(sld), ethers.utils.id(subdomain))
+      return !!landingPage
     },
     hasMaintainerRole: async (address: string): Promise<boolean> => {
       if (!address) {

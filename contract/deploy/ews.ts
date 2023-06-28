@@ -20,7 +20,7 @@ const f = async function (hre: HardhatRuntimeEnvironment) {
       DC_CONTRACT,
       ethers.utils.parseEther(LANDING_PAGE_FEE),
       ethers.utils.parseEther(PER_PAGE_FEE),
-      ethers.utils.parseEther(PER_SUBDOMAIN_FEE),
+      ethers.utils.parseEther(PER_SUBDOMAIN_FEE)
     ]
   })
   const ews: EWS = await ethers.getContractAt('EWS', ewsDeploy.address)

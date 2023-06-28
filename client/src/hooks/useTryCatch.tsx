@@ -22,7 +22,7 @@ export const useTryCatch = (): TryCatchState => {
       }
       await f()
     } catch (ex) {
-      console.error(ex)
+      console.error(ex, f)
       // @ts-expect-error catch error in response
       if (ex?.response?.error) {
         // @ts-expect-error catch error in response

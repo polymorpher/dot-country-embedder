@@ -51,6 +51,7 @@ export interface EWSInterface extends utils.Interface {
     "perSubdomainFee()": FunctionFragment;
     "remove(string,string)": FunctionFragment;
     "renounceRole(bytes32,address)": FunctionFragment;
+    "restore(string,string,uint8)": FunctionFragment;
     "revenueAccount()": FunctionFragment;
     "revokeRole(bytes32,address)": FunctionFragment;
     "setDc(address)": FunctionFragment;
@@ -58,9 +59,11 @@ export interface EWSInterface extends utils.Interface {
     "setPerAdditionalPageFee(uint256)": FunctionFragment;
     "setPerSubdomainFee(uint256)": FunctionFragment;
     "setRevenueAccount(address)": FunctionFragment;
+    "setUpgradedFrom(address)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "toggleMaintainerAccess(string)": FunctionFragment;
     "update(string,string,uint8,string,string[],bool)": FunctionFragment;
+    "upgradedFrom()": FunctionFragment;
     "withdraw()": FunctionFragment;
   };
 
@@ -87,6 +90,7 @@ export interface EWSInterface extends utils.Interface {
       | "perSubdomainFee"
       | "remove"
       | "renounceRole"
+      | "restore"
       | "revenueAccount"
       | "revokeRole"
       | "setDc"
@@ -94,9 +98,11 @@ export interface EWSInterface extends utils.Interface {
       | "setPerAdditionalPageFee"
       | "setPerSubdomainFee"
       | "setRevenueAccount"
+      | "setUpgradedFrom"
       | "supportsInterface"
       | "toggleMaintainerAccess"
       | "update"
+      | "upgradedFrom"
       | "withdraw"
   ): FunctionFragment;
 
@@ -195,6 +201,14 @@ export interface EWSInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
+    functionFragment: "restore",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "revenueAccount",
     values?: undefined
   ): string;
@@ -223,6 +237,10 @@ export interface EWSInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
+    functionFragment: "setUpgradedFrom",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "supportsInterface",
     values: [PromiseOrValue<BytesLike>]
   ): string;
@@ -240,6 +258,10 @@ export interface EWSInterface extends utils.Interface {
       PromiseOrValue<string>[],
       PromiseOrValue<boolean>
     ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "upgradedFrom",
+    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "withdraw", values?: undefined): string;
 
@@ -306,6 +328,7 @@ export interface EWSInterface extends utils.Interface {
     functionFragment: "renounceRole",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "restore", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "revenueAccount",
     data: BytesLike
@@ -329,6 +352,10 @@ export interface EWSInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "setUpgradedFrom",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "supportsInterface",
     data: BytesLike
   ): Result;
@@ -337,6 +364,10 @@ export interface EWSInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "update", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "upgradedFrom",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {
@@ -351,6 +382,7 @@ export interface EWSInterface extends utils.Interface {
     "EWSSubdomainRemoved(string,bytes32,string,bytes32)": EventFragment;
     "EWSTypeUpdate(bytes32,bytes32,uint8,uint8)": EventFragment;
     "EWSUpdate(bytes32,bytes32,string,string)": EventFragment;
+    "EWSUpgradedFromContractChanged(address,address)": EventFragment;
     "RevenueAccountChanged(address,address)": EventFragment;
     "RevenueWithdrawn(address,uint256)": EventFragment;
     "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
@@ -373,6 +405,9 @@ export interface EWSInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "EWSSubdomainRemoved"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "EWSTypeUpdate"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "EWSUpdate"): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "EWSUpgradedFromContractChanged"
+  ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RevenueAccountChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RevenueWithdrawn"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleAdminChanged"): EventFragment;
@@ -519,6 +554,18 @@ export type EWSUpdateEvent = TypedEvent<
 >;
 
 export type EWSUpdateEventFilter = TypedEventFilter<EWSUpdateEvent>;
+
+export interface EWSUpgradedFromContractChangedEventObject {
+  from: string;
+  to: string;
+}
+export type EWSUpgradedFromContractChangedEvent = TypedEvent<
+  [string, string],
+  EWSUpgradedFromContractChangedEventObject
+>;
+
+export type EWSUpgradedFromContractChangedEventFilter =
+  TypedEventFilter<EWSUpgradedFromContractChangedEvent>;
 
 export interface RevenueAccountChangedEventObject {
   from: string;
@@ -710,6 +757,13 @@ export interface EWS extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    restore(
+      name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
+      ewsType: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     revenueAccount(overrides?: CallOverrides): Promise<[string]>;
 
     revokeRole(
@@ -743,6 +797,11 @@ export interface EWS extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    setUpgradedFrom(
+      _upgradedFrom: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -762,6 +821,8 @@ export interface EWS extends BaseContract {
       landingPageOnly: PromiseOrValue<boolean>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    upgradedFrom(overrides?: CallOverrides): Promise<[string]>;
 
     withdraw(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -870,6 +931,13 @@ export interface EWS extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  restore(
+    name: PromiseOrValue<string>,
+    subdomain: PromiseOrValue<string>,
+    ewsType: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   revenueAccount(overrides?: CallOverrides): Promise<string>;
 
   revokeRole(
@@ -903,6 +971,11 @@ export interface EWS extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  setUpgradedFrom(
+    _upgradedFrom: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   supportsInterface(
     interfaceId: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
@@ -922,6 +995,8 @@ export interface EWS extends BaseContract {
     landingPageOnly: PromiseOrValue<boolean>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
+
+  upgradedFrom(overrides?: CallOverrides): Promise<string>;
 
   withdraw(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1030,6 +1105,13 @@ export interface EWS extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    restore(
+      name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
+      ewsType: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     revenueAccount(overrides?: CallOverrides): Promise<string>;
 
     revokeRole(
@@ -1063,6 +1145,11 @@ export interface EWS extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    setUpgradedFrom(
+      _upgradedFrom: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -1082,6 +1169,8 @@ export interface EWS extends BaseContract {
       landingPageOnly: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    upgradedFrom(overrides?: CallOverrides): Promise<string>;
 
     withdraw(overrides?: CallOverrides): Promise<void>;
   };
@@ -1207,6 +1296,15 @@ export interface EWS extends BaseContract {
       landingPageFrom?: null,
       landingPageTo?: null
     ): EWSUpdateEventFilter;
+
+    "EWSUpgradedFromContractChanged(address,address)"(
+      from?: PromiseOrValue<string> | null,
+      to?: PromiseOrValue<string> | null
+    ): EWSUpgradedFromContractChangedEventFilter;
+    EWSUpgradedFromContractChanged(
+      from?: PromiseOrValue<string> | null,
+      to?: PromiseOrValue<string> | null
+    ): EWSUpgradedFromContractChangedEventFilter;
 
     "RevenueAccountChanged(address,address)"(
       from?: PromiseOrValue<string> | null,
@@ -1363,6 +1461,13 @@ export interface EWS extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    restore(
+      name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
+      ewsType: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     revenueAccount(overrides?: CallOverrides): Promise<BigNumber>;
 
     revokeRole(
@@ -1396,6 +1501,11 @@ export interface EWS extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    setUpgradedFrom(
+      _upgradedFrom: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -1415,6 +1525,8 @@ export interface EWS extends BaseContract {
       landingPageOnly: PromiseOrValue<boolean>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+
+    upgradedFrom(overrides?: CallOverrides): Promise<BigNumber>;
 
     withdraw(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1528,6 +1640,13 @@ export interface EWS extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    restore(
+      name: PromiseOrValue<string>,
+      subdomain: PromiseOrValue<string>,
+      ewsType: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     revenueAccount(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     revokeRole(
@@ -1561,6 +1680,11 @@ export interface EWS extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    setUpgradedFrom(
+      _upgradedFrom: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -1580,6 +1704,8 @@ export interface EWS extends BaseContract {
       landingPageOnly: PromiseOrValue<boolean>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
+
+    upgradedFrom(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     withdraw(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
