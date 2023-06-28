@@ -38,7 +38,7 @@ export const renderOpenGraphTemplate = (data: OpenGraphData): string => {
 
 const provider = new ethers.providers.StaticJsonRpcProvider(config.provider)
 
-export const getOGPage = async (sld: string, subdomain: string, path?: string): Promise<string> => {
+export const getOGPage = async (sld: string, subdomain: string, path?: string, ua?: string): Promise<string> => {
   console.log('[-getOGPage]', { sld, subdomain, path })
   const c = new ethers.Contract(config.ewsContract, EWSAbi, provider) as EWS
   const node = ethers.utils.id(sld)
@@ -52,7 +52,7 @@ export const getOGPage = async (sld: string, subdomain: string, path?: string): 
   } else {
     page = await getPage(landingPage)
   }
-  const ogData = getOGDataFromPage(page)
-  const url = `https://${subdomain}${subdomain ? '.' : ''}.${sld}.${config.TLD}`
+  const ogData = getOGDataFromPage(page, ua)
+  const url = `https://${subdomain}${subdomain ? '.' : ''}${sld}.${config.TLD}`
   return renderOpenGraphTemplate({ url, ...ogData })
 }

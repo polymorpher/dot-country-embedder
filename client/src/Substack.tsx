@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { BaseText } from './components/Text'
 import { apis, buildClient } from './api'
 import { getPath, getSld, getSubdomain } from './utils'
@@ -8,8 +8,9 @@ import { LinkWrarpper } from './components/Controls'
 import { FlexColumn } from './components/Layout'
 import parse from 'html-react-parser'
 import { parsePath } from '../../common/notion-utils'
-
-const Notion: React.FC = () => {
+import './substack.scss'
+import { SubstackLinkReplacer } from './LinkReplacer'
+const Substack: React.FC = () => {
   const [client] = useState(buildClient())
   const [page, setPage] = useState<string>()
   // set "https://polymorpher.substack.com" to `pageId` for test purpose
@@ -17,9 +18,9 @@ const Notion: React.FC = () => {
   const [unrestrictedMode, setUnrestrictedMode] = useState<boolean>(true)
   const sld = getSld()
   const subdomain = getSubdomain()
-  const pageIdOverride = parsePath(getPath().slice(1))
+  const pageIdOverride = getPath().slice(1)
 
-  const { pending, tryCatch } = useTryCatch()
+  const { pending, initializing, tryCatch } = useTryCatch()
 
   useEffect(() => {
     if (!pageId) {
@@ -27,34 +28,29 @@ const Notion: React.FC = () => {
     }
 
     void tryCatch(async function f () {
-      const page = await apis.getSubstackPage(`${pageId}/${pageIdOverride}`) as string
+      const page = await apis.getSubstackPage(pageIdOverride) as string
       const substackScripts = Array.from(window.document.querySelectorAll('script[created-from=substack]'))
 
       if (substackScripts.length === 0) {
         const newDiv = document.createElement('div')
-
         newDiv.innerHTML = page
-
         const scripts = Array.from(newDiv.querySelectorAll('script'))
-
         for (const script of scripts) {
           const newScript = document.createElement('script')
-
-          if (script.src) {
+          if (newScript.src) {
             newScript.src = script.src
           }
-
-          if (script.innerHTML) {
+          if (newScript.type) {
+            newScript.type = script.type
+          }
+          if (newScript.innerHTML) {
             newScript.innerHTML = script.innerHTML
           }
-
           newScript.setAttribute('created-from', 'substack')
           document.body.appendChild(newScript)
         }
-
         newDiv.remove()
       }
-
       setPage(page)
     })
   }, [pageId, pageIdOverride, tryCatch, unrestrictedMode])
@@ -75,7 +71,11 @@ const Notion: React.FC = () => {
         })
       ])
     }, true).catch(e => { console.error(e) })
-  }, [tryCatch])
+  }, [client, sld, subdomain, tryCatch])
+
+  if (initializing) {
+    return <LoadingScreen/>
+  }
 
   if (!pageId) {
     return <BlankPage>
@@ -96,7 +96,15 @@ const Notion: React.FC = () => {
     return <LoadingScreen/>
   }
 
-  return <>{parse(page)}</>
+  const parsedPage = parse(page) as JSX.Element
+  return <>
+
+    <SubstackLinkReplacer substackHost={pageId} subdomain={subdomain} sld={sld}>
+      {parsedPage}
+    </SubstackLinkReplacer>
+  </>
+  // return <>{parsedPage}</>
+  // return <div dangerouslySetInnerHTML={{ __html: page }}></div>
 }
 
-export default Notion
+export default Substack

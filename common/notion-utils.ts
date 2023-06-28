@@ -5,7 +5,8 @@ interface BlockEntry{
     value: Block
 }
 export const extractTitle = (blocks: BlockEntry[]): string => {
-    return blocks[0].value.properties?.title?.flat().join(' ')
+    // return blocks[0].value.properties?.title?.flat().join(' ')
+    return blocks[0].value.properties?.title?.map(e=>e[0]).join('')
 }
 
 export const extractPageEmoji = (blocks: BlockEntry[]): string | undefined => {
@@ -29,9 +30,13 @@ export const extractPageImagePreview = (page: ExtendedRecordMap): string | undef
     return page.signed_urls[blocks[0].value.id] || extractPageCover(blocks)
 }
 
-export  const extractTextFromBlock = (block: BlockEntry): string => {
-    if (block.value.type === 'text') {
-        return block?.value?.properties?.title?.flat().join(' ') as string
+export const extractTextFromBlock = (block: BlockEntry): string => {
+    if (block?.value?.type === 'text') {
+        const tentative = block?.value?.properties?.title?.map(e=>e[0]).join('') as string
+        if(!tentative || tentative.trim().length < 4){
+            return ''
+        }
+        return tentative
     }
     return ''
 }
@@ -51,13 +56,14 @@ export const extractDescription = (page: ExtendedRecordMap): string => {
         return desc
     }
     while (!desc) {
-        if (currentBlock.value?.content) {
+        if (currentBlock?.value?.content) {
             blockPaths.push(...(currentBlock.value.content.reverse()))
         }
         if (blockPaths.length === 0) {
             return ''
         }
         currentBlock = page.block[blockPaths.pop() as string]
+
         desc = extractTextFromBlock(currentBlock)
         if (desc) {
             return desc

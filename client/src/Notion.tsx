@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react'
-import { renderToString } from 'react-dom/server'
 import { BaseText } from './components/Text'
 import { apis, buildClient } from './api'
 import { NotionRenderer } from 'react-notion-x'
 import { Code } from 'react-notion-x/build/third-party/code'
 import TweetEmbed from 'react-tweet-embed'
 import { Collection } from 'react-notion-x/build/third-party/collection'
-// import { Equation } from 'react-notion-x/build/third-party/equation'
 import { Modal } from 'react-notion-x/build/third-party/modal'
+// too large, to be enabled later when lazy loading is guaranteed to work
 // import { Pdf } from 'react-notion-x/build/third-party/pdf'
+// import { Equation } from 'react-notion-x/build/third-party/equation'
 import {
   extractTitle,
   extractDescription,
@@ -21,7 +21,6 @@ import {
   urlNormalize
 } from '../../common/notion-utils'
 import { type ExtendedRecordMap } from 'notion-types'
-import htmlReactParser, { Element as ParserElement } from 'html-react-parser'
 import { getPath, getSld, getSubdomain, titleEmbeddedMapPageUrl } from './utils'
 import { useTryCatch } from './hooks/useTryCatch'
 import { Navigate } from 'react-router-dom'
@@ -32,60 +31,12 @@ import { Helmet } from 'react-helmet'
 import config from '../config'
 import './notion.scss'
 
-interface LinkReplacerConfig {
-  children: JSX.Element
-  pageId: string
-  allowedPageIds: string[]
-}
-
-// DEPRECATED: TODO: this doesn't work with pages that have iframe, which is needed by tweets. We probably don't need this anymore, since we now have recursive crawler which can set allowed-pages correctly in the first place.
-const LinkReplacer = ({ children, pageId, allowedPageIds = [] }: LinkReplacerConfig): JSX.Element => {
-  const [element, setElement] = useState<JSX.Element>(<></>)
-  useEffect(() => {
-    const str = renderToString(children)
-    setElement(htmlReactParser(str, {
-      replace: (node) => {
-        if (node.type !== 'tag' || !(node instanceof ParserElement)) {
-          return
-        }
-
-        if (node.name === 'a') {
-          if (node.attribs.href.startsWith('http://') || node.attribs.href.startsWith('https://')) {
-            return
-          }
-          let replaced = false
-          for (const attr of node.attributes) {
-            if (attr.name !== 'href') {
-              continue
-            }
-            if (attr.value.startsWith('/' + pageId)) {
-              // console.log('replacing', attr.value, attr.value.slice(`/${pageId}`.length))
-              node.attribs[attr.name] = attr.value.slice(`/${pageId}`.length)
-              replaced = true
-            } else {
-              const matchedPageIds = allowedPageIds.filter(e => attr.value.startsWith(`/${e}`))
-              if (attr.value.startsWith('/') && matchedPageIds.length === 0) {
-                node.attribs[attr.name] = `https://notion.so/${attr.value.slice(1)}`
-                replaced = true
-              }
-            }
-          }
-          if (replaced) {
-            return node.cloneNode()
-          }
-        }
-      }
-    }) as JSX.Element)
-  }, [children, pageId, allowedPageIds])
-  return element
-}
-
 const Tweet = ({ id }: { id: string }): JSX.Element => {
   return <TweetEmbed tweetId={id} />
 }
 
 const Notion: React.FC = () => {
-  const [client] = useState(buildClient())
+  const [client] = useState(buildClient(undefined, undefined, true))
   const [page, setPage] = useState<ExtendedRecordMap>()
   const [pageId, setPageId] = useState<string>('')
   const [unrestrictedMode, setUnrestrictedMode] = useState<boolean>(true)
@@ -113,12 +64,19 @@ const Notion: React.FC = () => {
         const stub = urlNormalize(title)
         if (pageIdOverride && pageIdOverride !== pageId) {
           // console.log(pageIdOverride, pageId)
-          history.pushState({}, '', `${stub}-${renderedPageId}`)
+          history.pushState({}, '', `${config.titleUrlPrefix}${stub}-${renderedPageId}`)
         }
       }
       setPage(records)
     })
-  }, [pageId, pageIdOverride, allowedPageIds, tryCatch])
+  }, [pageId, pageIdOverride, allowedPageIds, tryCatch, unrestrictedMode])
+  useEffect(() => {
+    if (!page) {
+      return
+    }
+    const el = document.querySelector('.notion-page-cover')
+    el?.setAttribute('fetchpriority', 'high')
+  }, [page])
 
   useEffect(() => {
     // @ts-expect-error debugging
@@ -152,9 +110,8 @@ const Notion: React.FC = () => {
     return <BlankPage>
       <FlexColumn style={{ textAlign: 'center' }}>
         <BaseText>
-          This site has not connected with any notion page          <br/><br/>
-          If you are the owner, please visit <LinkWrarpper href={'/manage'}>here</LinkWrarpper> to configure the site
-
+          This site has not connected with any page <br/><br/>
+          If you are the owner, please visit <LinkWrarpper href={'/manage'}>here</LinkWrarpper> to configure or restore the site
         </BaseText>
       </FlexColumn>
     </BlankPage>

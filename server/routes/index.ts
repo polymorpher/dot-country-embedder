@@ -1,137 +1,72 @@
-import { type NextFunction, type Request, type Response } from 'express'
 import express from 'express'
 import axios from 'axios'
 import { StatusCodes } from 'http-status-codes'
-import rateLimit from 'express-rate-limit'
 import { getAllPageIds, getNotionPageId, getPage } from '../src/notion.ts'
 import { getOGPage } from '../src/og.ts'
 import { isValidNotionPageId, parsePath } from '../../common/notion-utils.ts'
-import { isValidSubstackUrl } from '../../common/substack-utils.ts'
 import { getSld, getSubdomain } from '../../common/domain-utils.ts'
-import { LRUCache } from 'lru-cache'
-import { buildClient } from '../src/client.ts'
+import limiter from '../middlewares/limiter.ts'
+import cached from '../middlewares/cache.ts'
+import substack from '../middlewares/substack.ts'
 
 const router = express.Router()
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-const limiter = (args?) => rateLimit({
-  windowMs: 1000 * 60,
-  max: 60,
-  keyGenerator: req => req.fingerprint?.hash ?? '',
-  ...args
-})
-
-const cache = new LRUCache({
-  max: 5000,
-  maxSize: 50000,
-  sizeCalculation: (value, key) => {
-    return 1
-  },
-  ttl: 1000 * 60
-
-})
-
-const abbrv = (s: string | object, len: number = 10): string => {
-  let printout = ''
-  if (typeof s !== 'string') {
-    printout = JSON.stringify(s)
-  } else {
-    printout = s
-  }
-  if (printout.length > len) {
-    printout = printout.slice(0, len) + '...' + printout.slice(printout.length - 5)
-  }
-  return printout
-}
-const cached = (ttl?: number) => (req: Request, res: Response, next: NextFunction): void => {
-  const key = `${req.method}|${req.path}|${JSON.stringify(req.query)}|${JSON.stringify(req.body)}`
-  const keyContentType = key + '|header|content-type'
-  const v = cache.get(key)
-  if (v) {
-    const contentType = cache.get(keyContentType)
-    if (contentType) {
-      console.log(`Cache header hit key=[${keyContentType}] value=`, contentType)
-      res.header('content-type', contentType as string)
-    }
-    console.log(`Cache hit key=[${key}] value=`, abbrv(v), typeof v)
-    res.send(v)
-    return
-  } else {
-    // @ts-expect-error wrapper
-    res.__send = res.send
-    res.send = (r) => {
-      console.log(`Cache set key=[${key}] value=`, abbrv(r), typeof r)
-      cache.set(key, r, { ttl: ttl ?? 60 * 1000 })
-      if (res.hasHeader('content-type')) {
-        const h = res.getHeader('content-type')
-        console.log(`Cache header set key=[${keyContentType}] value=`, h)
-        cache.set(keyContentType, h, { ttl: ttl ?? 60 * 1000 })
-      }
-      // @ts-expect-error wrapper
-      return res.__send(r)
-    }
-  }
-  next()
-}
 
 router.get('/health', async (req, res) => {
   console.log('[/health]', JSON.stringify(req.fingerprint))
   res.send('OK').end()
 })
 
-const substackDomainCache = {
-  // uncomment the below for test purpose
-  'localhost:3100': 'polymorpher.substack.com'
-}
-
-const client = buildClient()
-
-router.get('/substack/api/v1/archive',
+router.get('/substack/api/v1/:endpoint',
   limiter(),
+  substack,
   async (req, res) => {
-    const host = req.get('host')
-
-    if (!host) {
-      return
-    }
-
-    let substackDomain = substackDomainCache[host]
-
-    if (!substackDomain) {
-      const [subdomain, sld] = host?.split('.')
-
-      substackDomain = await client.getLandingPage(sld, subdomain)
-
-      if (!substackDomain.endsWith('.substack.com')) {
-        throw new Error('Not substack page')
+    const { substackDomain } = res.locals
+    const { endpoint } = req.params
+    try {
+      const { headers, data } = await axiosBase.get(`https://${substackDomain}/api/v1/${endpoint}`, { params: req.query })
+      if (headers['transfer-encoding'] === 'chunked') {
+        delete headers['transfer-encoding']
       }
-
-      substackDomainCache[host] = substackDomain
+      res.set(headers).send(data)
+    } catch (ex: any) {
+      console.error(ex)
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
     }
-
-    const { data } = await axiosBase.get(`https://${substackDomain}/api/v1/archive`, { params: req.query })
-
-    res.status(200).send(data)
   }
 )
+
+// router.post('/substack/api/v1/:endpoint',
+//   limiter(),
+//   substack,
+//   async (req, res) => {
+//     const { substackDomain } = res.locals
+//     const { endpoint } = req.params
+//     try {
+//       const { headers, data } = await axiosBase.post(`https://${substackDomain}/api/v1/${endpoint}`, { ...req.body })
+//       if (headers['transfer-encoding'] === 'chunked') {
+//         delete headers['transfer-encoding']
+//       }
+//       res.set(headers).send(data)
+//     } catch (ex: any) {
+//       console.error(ex)
+//       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
+//     }
+//   }
+// )
 
 const axiosBase = axios.create({ timeout: 15000 })
 
 router.get('/substack',
   limiter(),
+  substack,
   async (req, res) => {
     try {
-      if (!req.query.url) {
-        throw new Error('URL query param is not specified')
+      const { substackDomain } = res.locals
+      const { headers, data } = await axiosBase.get(`https://${substackDomain}/${req.query.url}`)
+      if (headers['transfer-encoding'] === 'chunked') {
+        delete headers['transfer-encoding']
       }
-
-      const url = decodeURI(req.query.url as string)
-
-      if (!isValidSubstackUrl(url)) {
-        throw new Error('Not substack url')
-      }
-
-      const { data } = await axiosBase.get(url)
-      res.status(200).send(data)
+      res.set(headers).send(data)
     } catch (ex: any) {
       console.error(ex)
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
@@ -210,7 +145,7 @@ router.get(['/*'], limiter(), cached(), async (req, res) => {
     }
     const subdomain = getSubdomain(parts)
     const sld = getSld(parts)
-    const page = await getOGPage(sld, subdomain, parsedPath)
+    const page = await getOGPage(sld, subdomain, parsedPath, req.get('user-agent'))
     res.header('content-type', 'text/html; charset=utf-8').send(page)
   } catch (ex: any) {
     console.error(ex)

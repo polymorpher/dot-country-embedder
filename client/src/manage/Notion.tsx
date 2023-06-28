@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { FlexColumn, Main, Row } from '../components/Layout'
-import { BaseText, Desc, DescLeft, SmallText, Title } from '../components/Text'
+import { Address, BaseText, Desc, DescLeft, SmallText, Title } from '../components/Text'
 import config from '../../config'
 import { Button, Input, LinkWrarpper } from '../components/Controls'
 import { apis, buildClient, EWSTypes } from '../api'
@@ -15,53 +15,7 @@ import { ethers } from 'ethers'
 import detectEthereumProvider from '@metamask/detect-provider'
 import { type ExternalProvider } from '@ethersproject/providers'
 import { EthereumProvider } from '@walletconnect/ethereum-provider'
-
-const Container = styled(Main)`
-  margin: 0 auto;
-  padding: 0 16px;
-  max-width: 800px;
-  // TODO: responsive
-`
-
-interface SuccessWithExplorerLinkParameters {
-  message: string
-  txHash: string
-}
-
-const SuccessWithExplorerLink = ({ message, txHash }: SuccessWithExplorerLinkParameters): JSX.Element => {
-  return <FlexColumn style={{ gap: 8 }}>
-    <BaseText>{message}</BaseText>
-    <LinkWrarpper target='_blank' href={config.explorer(txHash)}>
-      <BaseText>View transaction</BaseText>
-    </LinkWrarpper>
-  </FlexColumn>
-}
-
-const SmallTextGrey = styled(SmallText)`
-  color: grey;
-`
-
-const SmallTextRed = styled(SmallText)`
-  color: indianred;
-`
-
-const SmallTextGreen = styled(SmallText)`
-  color: limegreen;
-`
-
-const InputBox = styled(Input)`
-  border-bottom: none;
-  font-size: 16px;
-  margin: 0;
-  background: #e0e0e0;
-  &:hover{
-    border-bottom: none;
-  }
-`
-
-const LabelText = styled(BaseText)`
-  white-space: nowrap;
-`
+import { SmallTextGrey, SmallTextRed, Container, SuccessWithExplorerLink, InputBox, LabelText } from './Common'
 
 interface SuggestedPageIdConfig {
   id: string | undefined | null | Error
@@ -80,7 +34,7 @@ const SuggestedPageId = ({ id, applyId }: SuggestedPageIdConfig): JSX.Element =>
   return <SmallTextGrey>Extracted notion page id from url: <span style={{ color: 'black', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => { applyId?.(id) }}>{id.toString()}</span></SmallTextGrey>
 }
 
-const Manage = (): JSX.Element => {
+const ManageNotion = ({ footer = <></> }): JSX.Element => {
   const [address, setAddress] = useState('')
   const [provider, setProvider] = useState<any>()
   const [signer, setSigner] = useState<any>()
@@ -94,6 +48,7 @@ const Manage = (): JSX.Element => {
   const [allowedPageIds, setAllowedPageIds] = useState<string[]>([])
   const [allowMaintainerAccess, setAllowMaintainerAccess] = useState<boolean>(true)
   const [isMaintainer, setIsMaintainer] = useState<boolean>(true)
+  const [canRestore, setCanRestore] = useState<boolean>(false)
   const [suggestedPageId, setSuggestedPageId] = useState<string | undefined | null | Error>()
   const [baseFees, setBaseFees] = useState(ethers.BigNumber.from(0))
   const [perPageFees, setPerPageFees] = useState(ethers.BigNumber.from(0))
@@ -186,14 +141,14 @@ const Manage = (): JSX.Element => {
   }, [])
 
   useEffect(() => {
-    if (!provider || !signer) {
+    if (!provider || !signer || !address) {
       return
     }
     const c = buildClient(provider, signer)
     setClient(c)
     // @ts-expect-error debugging
     window.client = c
-  }, [provider, signer])
+  }, [provider, signer, address])
 
   useEffect(() => {
     if (!client) {
@@ -240,6 +195,21 @@ const Manage = (): JSX.Element => {
     }).catch(e => { console.error(e) })
   }
 
+  const restore = async (): Promise<void> => {
+    if (!canRestore) {
+      return
+    }
+    tryCatch(async () => {
+      const tx = await client.restore(sld, subdomain, EWSTypes.EWS_NOTION)
+      toast.success(SuccessWithExplorerLink({
+        txHash: tx.hash,
+        message: 'Update complete! Please refresh the page to see results'
+      }))
+    }).catch(e => {
+      console.error(e)
+    })
+  }
+
   const collect = async (): Promise<void> => {
     tryCatch(async () => {
       const ids = await apis.getSameSitePageIds(pageId, depth)
@@ -259,7 +229,8 @@ const Manage = (): JSX.Element => {
         client.getBaseFees().then(e => { setBaseFees(e) }),
         client.getPerPageFees().then(e => { setPerPageFees(e) }),
         client.getPerSubdomainFees().then(e => { setPerSubdomainFees(e) }),
-        client.getOwner(sld).then(e => { setOwner(e) })
+        client.getOwner(sld).then(e => { setOwner(e) }),
+        client.canRestore(sld, subdomain).then(e => { setCanRestore(e) })
       ])
     }, true).catch(e => { console.error(e) })
   }, [client, subdomain, sld, tryCatch])
@@ -291,11 +262,14 @@ const Manage = (): JSX.Element => {
         <SmallTextGrey>Connect your .country with notion pages</SmallTextGrey>
         {owner && <SmallTextGrey>Owner: {owner}</SmallTextGrey>}
       </FlexColumn>
-      <Desc>
+      {!address && <Desc>
         <Button onClick={connect} style={{ width: 'auto' }}> CONNECT METAMASK</Button>
         <Button onClick={wcConnect} style={{ width: 'auto' }}> CONNECT WALLET CONNECT</Button>
         {address && <SmallTextGrey style={{ wordBreak: 'break-word', userSelect: 'all' }}>connected: {address}</SmallTextGrey>}
-      </Desc>
+      </Desc>}
+      {address && <Desc>
+        <Address>Connected to {address}</Address>
+      </Desc>}
       {address && (allowAccess()) &&
         <DescLeft>
           <Row>
@@ -337,12 +311,19 @@ const Manage = (): JSX.Element => {
               <BaseText>Total fees: {ethers.utils.formatEther(totalFees)} ONE (base fees {ethers.utils.formatEther(baseFees)} ONE, plus per {ethers.utils.formatEther(perPageFees)} page, plus {ethers.utils.formatEther(perSubdomainFees)} per subdomain)</BaseText>
             </Row>
             : <></>}
+          {canRestore && <>
+            <LabelText style={{ marginTop: 32 }}>Lost your page?</LabelText>
+            <SmallTextGrey>Some pages are lost when we were upgrading the service. We detected that you had a page before. You can use the button below to restore your settings</SmallTextGrey>
+            <Row style={{ marginTop: 32, justifyContent: 'space-between' }}>
+              <Button disabled={initializing || pending} $width={'auto'} onClick={restore}>{pending ? <Loading/> : 'RESTORE' }</Button>
+            </Row>
+          </>}
         </DescLeft>
       }
 
-      <div style={{ height: 320 }}/>
       <Feedback/>
+      {footer}
     </Container>)
 }
 
-export default Manage
+export default ManageNotion
