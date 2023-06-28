@@ -68,6 +68,10 @@ contract EWS is AccessControl {
         return !configs[node].disallowMaintainer;
     }
 
+    function getEwsType(bytes32 node, bytes32 label) public view returns (EWSType) {
+        return configs[node].subdomainConfigs[label].ewsType;
+    }
+
     function getLandingPage(bytes32 node, bytes32 label) public view returns (string memory){
         return configs[node].subdomainConfigs[label].landingPage;
     }
