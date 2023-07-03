@@ -30,6 +30,7 @@ import { FlexColumn } from './components/Layout'
 import { Helmet } from 'react-helmet'
 import config from '../config'
 import './notion.scss'
+import { toast } from 'react-toastify'
 
 const Tweet = ({ id }: { id: string }): JSX.Element => {
   return <TweetEmbed tweetId={id} />
@@ -58,7 +59,14 @@ const Notion: React.FC = () => {
     const renderedPageId = pageIdOverride || pageId
 
     void tryCatch(async function f () {
-      const records = await apis.getNotionPage(renderedPageId)
+      let records: ExtendedRecordMap
+      try {
+        records = await apis.getNotionPage(renderedPageId)
+      } catch (ex: any) {
+        console.error(ex)
+        toast.error('Cannot retrieve notion page. Please make sure it is published')
+        return
+      }
       const title = extractTitle(Object.values(records.block))
       if (title) {
         const stub = urlNormalize(title)
