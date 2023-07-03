@@ -3,7 +3,6 @@ import axios from 'axios'
 import { StatusCodes } from 'http-status-codes'
 import { getAllPageIds, getNotionPageId, getPage } from '../src/notion.ts'
 import { getOGPage } from '../src/og.ts'
-import { isValidNotionPageId, parsePath } from '../../common/notion-utils.ts'
 import { getSld, getSubdomain } from '../../common/domain-utils.ts'
 import limiter from '../middlewares/limiter.ts'
 import cached from '../middlewares/cache.ts'
@@ -16,6 +15,9 @@ router.get('/health', async (req, res) => {
   res.send('OK').end()
 })
 
+const substackCache: Record<string, { cacheTime: number, headers: unknown, data: unknown }> = {}
+const cacheLife = 1000 * 60
+
 router.get('/substack/api/v1/:endpoint',
   limiter(),
   substack,
@@ -23,7 +25,26 @@ router.get('/substack/api/v1/:endpoint',
     const { substackDomain } = res.locals
     const { endpoint } = req.params
     try {
-      const { headers, data } = await axiosBase.get(`https://${substackDomain}/api/v1/${endpoint}`, { params: req.query })
+      const url = `https://${substackDomain}/api/v1/${endpoint}`
+      const cacheKey = `${url}-${JSON.stringify(req.query)}`
+
+      let headers, data
+
+      if (substackCache[cacheKey]?.cacheTime !== undefined && substackCache[cacheKey].cacheTime + cacheLife > Date.now()) {
+        headers = substackCache[cacheKey].headers
+        data = substackCache[cacheKey].data
+      } else {
+        const response = await axiosBase.get(url, { params: req.query })
+        headers = response.headers
+        data = response.data
+
+        substackCache[cacheKey] = {
+          cacheTime: Date.now(),
+          headers,
+          data
+        }
+      }
+
       if (headers['transfer-encoding'] === 'chunked') {
         delete headers['transfer-encoding']
       }
@@ -35,25 +56,6 @@ router.get('/substack/api/v1/:endpoint',
   }
 )
 
-// router.post('/substack/api/v1/:endpoint',
-//   limiter(),
-//   substack,
-//   async (req, res) => {
-//     const { substackDomain } = res.locals
-//     const { endpoint } = req.params
-//     try {
-//       const { headers, data } = await axiosBase.post(`https://${substackDomain}/api/v1/${endpoint}`, { ...req.body })
-//       if (headers['transfer-encoding'] === 'chunked') {
-//         delete headers['transfer-encoding']
-//       }
-//       res.set(headers).send(data)
-//     } catch (ex: any) {
-//       console.error(ex)
-//       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
-//     }
-//   }
-// )
-
 const axiosBase = axios.create({ timeout: 15000 })
 
 router.get('/substack',
@@ -62,7 +64,25 @@ router.get('/substack',
   async (req, res) => {
     try {
       const { substackDomain } = res.locals
-      const { headers, data } = await axiosBase.get(`https://${substackDomain}/${req.query.url}`)
+      const url = `https://${substackDomain}/${req.query.url}`
+
+      let headers, data
+
+      if (substackCache[url]?.cacheTime !== undefined && substackCache[url].cacheTime + cacheLife > Date.now()) {
+        headers = substackCache[url].headers
+        data = substackCache[url].data
+      } else {
+        const response = await axiosBase.get(url)
+        headers = response.headers
+        data = response.data
+
+        substackCache[url] = {
+          cacheTime: Date.now(),
+          headers,
+          data
+        }
+      }
+      
       if (headers['transfer-encoding'] === 'chunked') {
         delete headers['transfer-encoding']
       }
