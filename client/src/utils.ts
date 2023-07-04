@@ -1,26 +1,30 @@
 import { getSubdomain as _getSubdomain, getSld as _getSld } from '../../common/domain-utils'
 import { type ExtendedRecordMap } from 'notion-types'
 import { urlNormalize } from '../../common/notion-utils'
-import config from "../config";
+import config from '../config'
+
 export const getSld = (): string => {
   if (!window) {
     return ''
   }
-  return _getSld(window.location.host)
+
+  return _getSld(config.debug ? config.debugDomain : window.location.host)
 }
 
 export const getSubdomain = (): string => {
   if (!window) {
     return ''
   }
-  return _getSubdomain(window.location.host)
+
+  return _getSubdomain(config.debug ? config.debugDomain : window.location.host)
 }
 
 export const getPath = (): string => {
   if (!window) {
     return ''
   }
-  return window.location.pathname
+
+  return config.debug ? config.debugPath : window.location.pathname
 }
 
 export const titleEmbeddedMapPageUrl = (rootId: string, blockMap: ExtendedRecordMap) => {

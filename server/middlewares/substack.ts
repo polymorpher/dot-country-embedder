@@ -2,11 +2,13 @@ import { type NextFunction, type Request, type Response } from 'express'
 import { getSld, getSubdomain } from '../../common/domain-utils.ts'
 import { buildClient } from '../src/client.ts'
 import { parseSubstackUrl } from '../../common/substack-utils.ts'
+import config from '../config.ts'
 
 const client = buildClient()
 
 const substack = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const host = req.get('host')
+  const host = config.debug ? config.debugDomain : req.get('host')
+
   if (!host) {
     return
   }

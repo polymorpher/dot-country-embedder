@@ -56,10 +56,17 @@ export const NotionLinkReplacer = ({ children, pageId, allowedPageIds = [] }: No
 }
 
 export interface SubstackLinkReplacerConfig {
-  children: JSX.Element
+  children?: JSX.Element
   sld: string
   subdomain: string
   substackHost: string
+}
+
+export const replaceSubstackLink = (html: string, { sld, subdomain, substackHost }: SubstackLinkReplacerConfig): string => {
+  const replacementHost = `${subdomain}.${sld}.${config.tld}`
+  return html.replaceAll(`http://${substackHost}`, `http://${replacementHost}`)
+    .replaceAll(`https://${substackHost}`, `https://${replacementHost}`)
+    .replaceAll('https://substack.com/profile', `https://${sld}.${config.tld}`)
 }
 
 export const SubstackLinkReplacer = ({ children, sld, subdomain, substackHost }: SubstackLinkReplacerConfig): JSX.Element => {
