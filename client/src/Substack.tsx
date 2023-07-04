@@ -27,6 +27,9 @@ const Substack: React.FC = () => {
       const page = await apis.getSubstackPage(pageIdOverride) as string
       const html = document.createElement('html')
 
+      html.style.visibility = 'hidden'
+      html.style.overflow = 'hidden'
+
       html.innerHTML = replaceSubstackLink(page, { substackHost: pageId, subdomain, sld })
       document.replaceChild(html, document.documentElement)
 
@@ -59,6 +62,23 @@ const Substack: React.FC = () => {
         const newIcon = icon.cloneNode()
         icon.remove()
         document.head.appendChild(newIcon)
+      }
+
+      const styles = Array.from(document.querySelectorAll("link[href$='.css']"))
+      let loadedStyleCount = 0
+
+      for (const style of styles) {
+        const newStyle = style.cloneNode() as HTMLLinkElement
+        style.remove()
+        newStyle.onload = () => {
+          loadedStyleCount += 1
+
+          if (loadedStyleCount === styles.length) {
+            html.style.visibility = 'visible'
+            html.style.overflow = 'auto'
+          }
+        }
+        document.head.appendChild(newStyle)
       }
     })
   }, [pageId, pageIdOverride, sld, subdomain, tryCatch, unrestrictedMode])
