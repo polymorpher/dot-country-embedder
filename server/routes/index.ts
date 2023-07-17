@@ -1,6 +1,5 @@
-import express, { type Request, type Response } from 'express'
+import express from 'express'
 import axios from 'axios'
-import lodash from 'lodash-es'
 import { StatusCodes } from 'http-status-codes'
 import { getAllPageIds, getNotionPageId, getPage } from '../src/notion.ts'
 import { getOGPage } from '../src/og.ts'
@@ -12,63 +11,83 @@ import { printError } from '../src/util.ts'
 
 const router = express.Router()
 
-const axiosBase = axios.create({ timeout: 15000 })
+const AxiosBase = axios.create({ timeout: 15000 })
 router.get('/health', async (req, res) => {
   console.log('[/health]', JSON.stringify(req.fingerprint))
   res.send('OK').end()
 })
 
-const substackCache: Record<string, { cacheTime: number, headers: unknown, data: unknown }> = {}
-const cacheLife = 1000 * 60
+const SubstackCache: Record<string, { cacheTime: number, headers: unknown, data: unknown }> = {}
+const CacheLife = 1000 * 60
 
-const endpointHandler = (method: string) => async (req: Request, res: Response): Promise<void> => {
-  const { substackDomain } = res.locals
-  const { endpoint, 0: subEndpoint } = req.params
-  const { accept, cookie } = req.headers
-  try {
-    const url = `https://${substackDomain}/api/v1/${endpoint}${subEndpoint ? '/' + subEndpoint : ''}`
-    // console.log(req.params)
-    // console.log(url)
-    const cacheKey = `${url}-${JSON.stringify(req.query)}`
-
-    let headers, data
-
-    if (substackCache[cacheKey]?.cacheTime !== undefined && substackCache[cacheKey].cacheTime + cacheLife > Date.now()) {
-      headers = substackCache[cacheKey].headers
-      data = substackCache[cacheKey].data
-    } else {
-      const response = method === 'post'
-        ? await axiosBase.post(url, req.body, { params: req.query, headers: { accept, cookie } })
-        : await axiosBase.get(url, { params: req.query, headers: { accept, cookie } })
-      headers = response.headers
-      data = response.data
-
-      substackCache[cacheKey] = {
-        cacheTime: Date.now(),
-        headers,
-        data
-      }
-    }
-
-    if (headers['transfer-encoding'] === 'chunked') {
-      delete headers['transfer-encoding']
-    }
-    res.set(headers).send(data)
-  } catch (ex: any) {
-    printError(ex)
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'cannot process request' })
-  }
-}
 router.post('/substack/api/v1/:endpoint*',
   limiter(),
   substack,
-  endpointHandler('post')
+  async (req, res) => {
+    const { substackDomain } = res.locals
+    const { endpoint, 0: subEndpoint } = req.params
+    const { accept, cookie } = req.headers
+    try {
+      const url = `https://${substackDomain}/api/v1/${endpoint}${subEndpoint ? '/' + subEndpoint : ''}`
+      const { headers, data, status } = await AxiosBase.post(url, req.body, { params: req.query, headers: { accept, cookie }, validateStatus: () => true })
+      if (headers['transfer-encoding'] === 'chunked') {
+        delete headers['transfer-encoding']
+      }
+      res.status(status ?? 200).set(headers).send(data)
+    } catch (ex: any) {
+      printError(ex)
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'cannot process request' })
+    }
+  }
 )
 
 router.get('/substack/api/v1/:endpoint*',
   limiter(),
   substack,
-  endpointHandler('get')
+  async (req, res) => {
+    const { substackDomain } = res.locals
+    const { endpoint, 0: subEndpoint } = req.params
+    const { accept, cookie } = req.headers
+    try {
+      const url = `https://${substackDomain}/api/v1/${endpoint}${subEndpoint ? '/' + subEndpoint : ''}`
+      const cacheKey = `${url}-${JSON.stringify(req.query)}`
+      let headers, data, status
+      if (SubstackCache[cacheKey]?.cacheTime !== undefined && SubstackCache[cacheKey].cacheTime + CacheLife > Date.now()) {
+        headers = SubstackCache[cacheKey].headers
+        data = SubstackCache[cacheKey].data
+      } else {
+        ({ headers, data, status } = await AxiosBase.get(url, { params: req.query, headers: { accept, cookie }, validateStatus: () => true }))
+        SubstackCache[cacheKey] = { cacheTime: Date.now(), headers, data }
+      }
+      if (headers['transfer-encoding'] === 'chunked') {
+        delete headers['transfer-encoding']
+      }
+      res.status(status ?? 200).set(headers).send(data)
+    } catch (ex: any) {
+      printError(ex)
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'cannot process request' })
+    }
+  }
+)
+
+router.get('/substack/subscribe',
+  limiter(),
+  substack,
+  async (req, res) => {
+    const { substackDomain } = res.locals
+    const { accept, cookie } = req.headers
+    try {
+      const url = `https://${substackDomain}/subscribe`
+      const { headers, data, status } = await AxiosBase.get(url, { params: req.query, headers: { accept, cookie }, validateStatus: () => true })
+      if (headers['transfer-encoding'] === 'chunked') {
+        delete headers['transfer-encoding']
+      }
+      res.status(status).set(headers).send(data)
+    } catch (ex: any) {
+      printError(ex)
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'cannot process request' })
+    }
+  }
 )
 
 router.get('/substack',
@@ -78,22 +97,15 @@ router.get('/substack',
     try {
       const { substackDomain } = res.locals
       const url = `https://${substackDomain}/${req.query.url}`
-
       let headers, data
-
-      if (substackCache[url]?.cacheTime !== undefined && substackCache[url].cacheTime + cacheLife > Date.now()) {
-        headers = substackCache[url].headers
-        data = substackCache[url].data
+      if (SubstackCache[url]?.cacheTime !== undefined && SubstackCache[url].cacheTime + CacheLife > Date.now()) {
+        headers = SubstackCache[url].headers
+        data = SubstackCache[url].data
       } else {
-        const response = await axiosBase.get(url)
+        const response = await AxiosBase.get(url)
         headers = response.headers
         data = response.data
-
-        substackCache[url] = {
-          cacheTime: Date.now(),
-          headers,
-          data
-        }
+        SubstackCache[url] = { cacheTime: Date.now(), headers, data }
       }
 
       if (headers['transfer-encoding'] === 'chunked') {

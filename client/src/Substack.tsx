@@ -6,7 +6,7 @@ import { useTryCatch } from './hooks/useTryCatch'
 import { BlankPage, LoadingScreen } from './components/Misc'
 import { LinkWrarpper } from './components/Controls'
 import { FlexColumn } from './components/Layout'
-import { replaceSubstackLink } from './LinkReplacer'
+import { replaceSubscribeWidget, replaceSubstackLink } from './LinkReplacer'
 import './substack.scss'
 
 const Substack: React.FC = () => {
@@ -16,6 +16,7 @@ const Substack: React.FC = () => {
   const sld = getSld()
   const subdomain = getSubdomain()
   const pageIdOverride = getPath().slice(1)
+  const [loaded, setLoaded] = useState(false)
 
   const { initializing, tryCatch } = useTryCatch()
 
@@ -28,34 +29,24 @@ const Substack: React.FC = () => {
       const page = await apis.getSubstackPage(pageIdOverride) as string
       const html = document.createElement('html')
       const initialStyles = Array.from(document.querySelectorAll('style'))
-      // console.log(initialStyles.map(e => e.innerHTML))
-
       html.style.visibility = 'hidden'
       html.style.overflow = 'hidden'
-
       html.innerHTML = replaceSubstackLink(page, { substackHost: pageId, subdomain, sld })
       document.replaceChild(html, document.documentElement)
-
       const scripts = Array.from(document.querySelectorAll('script'))
-
       for (const script of scripts) {
         const newScript = document.createElement('script')
-
         if (script.src) {
           newScript.src = script.src
         }
-
         if (script.type) {
           newScript.type = script.type
         }
-
         if (script.innerHTML) {
           newScript.innerHTML = script.innerHTML
         }
-
         const parent = script.parentNode
         script.remove()
-
         parent?.appendChild(newScript)
       }
 
@@ -78,14 +69,13 @@ const Substack: React.FC = () => {
           if (loadedStyleCount === styles.length) {
             html.style.visibility = 'visible'
             html.style.overflow = 'auto'
+            setLoaded(true)
           }
         }
         document.head.appendChild(newStyle)
       }
-      // console.log('initialStyles', initialStyles)
       for (const style of initialStyles) {
         const newStyle = style.cloneNode(true) as HTMLStyleElement
-        console.log(newStyle.innerHTML)
         style.remove()
         document.head.appendChild(newStyle)
       }
@@ -109,6 +99,21 @@ const Substack: React.FC = () => {
       ])
     }, true).catch(e => { console.error(e) })
   }, [client, sld, subdomain, tryCatch])
+
+  useEffect(() => {
+    if (!loaded || !pageId) {
+      return
+    }
+    setTimeout(() => {
+      const root = document.createElement('div')
+      const widgets = document.querySelectorAll('.subscribe-widget')
+      widgets.forEach((w) => {
+        console.log(w)
+        root.innerHTML = replaceSubscribeWidget(w.outerHTML, pageId ?? '')
+        w.parentNode?.replaceChild(root, w)
+      })
+    }, 3000)
+  }, [loaded, pageId])
 
   if (initializing) {
     return <LoadingScreen/>
