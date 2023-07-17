@@ -16,8 +16,6 @@ const Substack: React.FC = () => {
   const sld = getSld()
   const subdomain = getSubdomain()
   const pageIdOverride = getPath().slice(1)
-  const [loaded, setLoaded] = useState(false)
-
   const { initializing, tryCatch } = useTryCatch()
 
   useEffect(() => {
@@ -87,7 +85,6 @@ const Substack: React.FC = () => {
           if (loadedStyleCount === styles.length) {
             html.style.visibility = 'visible'
             html.style.overflow = 'auto'
-            setLoaded(true)
           }
         }
         document.head.appendChild(newStyle)
@@ -117,15 +114,6 @@ const Substack: React.FC = () => {
       ])
     }, true).catch(e => { console.error(e) })
   }, [client, sld, subdomain, tryCatch])
-
-  useEffect(() => {
-    if (!loaded || !pageId) {
-      return
-    }
-    setTimeout(() => {
-
-    }, 3000)
-  }, [loaded, pageId])
 
   if (initializing) {
     return <LoadingScreen/>
