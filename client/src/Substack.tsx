@@ -7,6 +7,7 @@ import { BlankPage, LoadingScreen } from './components/Misc'
 import { LinkWrarpper } from './components/Controls'
 import { FlexColumn } from './components/Layout'
 import { replaceSubstackLink } from './LinkReplacer'
+import './substack.scss'
 
 const Substack: React.FC = () => {
   const [client] = useState(buildClient())
@@ -26,6 +27,8 @@ const Substack: React.FC = () => {
     void tryCatch(async function f () {
       const page = await apis.getSubstackPage(pageIdOverride) as string
       const html = document.createElement('html')
+      const initialStyles = Array.from(document.querySelectorAll('style'))
+      // console.log(initialStyles.map(e => e.innerHTML))
 
       html.style.visibility = 'hidden'
       html.style.overflow = 'hidden'
@@ -72,12 +75,18 @@ const Substack: React.FC = () => {
         style.remove()
         newStyle.onload = () => {
           loadedStyleCount += 1
-
           if (loadedStyleCount === styles.length) {
             html.style.visibility = 'visible'
             html.style.overflow = 'auto'
           }
         }
+        document.head.appendChild(newStyle)
+      }
+      // console.log('initialStyles', initialStyles)
+      for (const style of initialStyles) {
+        const newStyle = style.cloneNode(true) as HTMLStyleElement
+        console.log(newStyle.innerHTML)
+        style.remove()
         document.head.appendChild(newStyle)
       }
     })

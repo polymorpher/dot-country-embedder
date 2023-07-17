@@ -62,13 +62,13 @@ const endpointHandler = (method: string) => async (req: Request, res: Response):
 router.post('/substack/api/v1/:endpoint*',
   limiter(),
   substack,
-  endpointHandler
+  endpointHandler('post')
 )
 
 router.get('/substack/api/v1/:endpoint*',
   limiter(),
   substack,
-  endpointHandler
+  endpointHandler('get')
 )
 
 router.get('/substack',
