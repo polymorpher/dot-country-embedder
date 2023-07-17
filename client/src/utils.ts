@@ -1,11 +1,13 @@
 import { getSubdomain as _getSubdomain, getSld as _getSld } from '../../common/domain-utils'
 import { type ExtendedRecordMap } from 'notion-types'
 import { urlNormalize } from '../../common/notion-utils'
-import config from "../config";
+import config from '../config'
+
 export const getSld = (): string => {
   if (!window) {
     return ''
   }
+
   return _getSld(window.location.host)
 }
 
@@ -13,6 +15,7 @@ export const getSubdomain = (): string => {
   if (!window) {
     return ''
   }
+
   return _getSubdomain(window.location.host)
 }
 
@@ -20,6 +23,7 @@ export const getPath = (): string => {
   if (!window) {
     return ''
   }
+
   return window.location.pathname
 }
 

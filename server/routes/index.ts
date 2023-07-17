@@ -3,58 +3,92 @@ import axios from 'axios'
 import { StatusCodes } from 'http-status-codes'
 import { getAllPageIds, getNotionPageId, getPage } from '../src/notion.ts'
 import { getOGPage } from '../src/og.ts'
-import { isValidNotionPageId, parsePath } from '../../common/notion-utils.ts'
 import { getSld, getSubdomain } from '../../common/domain-utils.ts'
 import limiter from '../middlewares/limiter.ts'
 import cached from '../middlewares/cache.ts'
 import substack from '../middlewares/substack.ts'
+import { printError } from '../src/util.ts'
 
 const router = express.Router()
 
+const AxiosBase = axios.create({ timeout: 15000 })
 router.get('/health', async (req, res) => {
   console.log('[/health]', JSON.stringify(req.fingerprint))
   res.send('OK').end()
 })
 
-router.get('/substack/api/v1/:endpoint',
+const SubstackCache: Record<string, { cacheTime: number, headers: unknown, data: unknown }> = {}
+const CacheLife = 1000 * 60
+
+router.post('/substack/api/v1/:endpoint*',
   limiter(),
   substack,
   async (req, res) => {
     const { substackDomain } = res.locals
-    const { endpoint } = req.params
+    const { endpoint, 0: subEndpoint } = req.params
+    const { accept, cookie } = req.headers
     try {
-      const { headers, data } = await axiosBase.get(`https://${substackDomain}/api/v1/${endpoint}`, { params: req.query })
+      const url = `https://${substackDomain}/api/v1/${endpoint}${subEndpoint ? '/' + subEndpoint : ''}`
+      const { headers, data, status } = await AxiosBase.post(url, req.body, { params: req.query, headers: { accept, cookie }, validateStatus: () => true })
       if (headers['transfer-encoding'] === 'chunked') {
         delete headers['transfer-encoding']
       }
-      res.set(headers).send(data)
+      res.status(status ?? 200).set(headers).send(data)
     } catch (ex: any) {
-      console.error(ex)
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
+      printError(ex)
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'cannot process request' })
     }
   }
 )
 
-// router.post('/substack/api/v1/:endpoint',
-//   limiter(),
-//   substack,
-//   async (req, res) => {
-//     const { substackDomain } = res.locals
-//     const { endpoint } = req.params
-//     try {
-//       const { headers, data } = await axiosBase.post(`https://${substackDomain}/api/v1/${endpoint}`, { ...req.body })
-//       if (headers['transfer-encoding'] === 'chunked') {
-//         delete headers['transfer-encoding']
-//       }
-//       res.set(headers).send(data)
-//     } catch (ex: any) {
-//       console.error(ex)
-//       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
-//     }
-//   }
-// )
+router.get('/substack/api/v1/:endpoint*',
+  limiter(),
+  substack,
+  async (req, res) => {
+    const { substackDomain } = res.locals
+    const { endpoint, 0: subEndpoint } = req.params
+    const { accept, cookie } = req.headers
+    try {
+      const url = `https://${substackDomain}/api/v1/${endpoint}${subEndpoint ? '/' + subEndpoint : ''}`
+      const cacheKey = `${url}-${JSON.stringify(req.query)}`
+      let headers, data, status
+      if (SubstackCache[cacheKey]?.cacheTime !== undefined && SubstackCache[cacheKey].cacheTime + CacheLife > Date.now()) {
+        headers = SubstackCache[cacheKey].headers
+        data = SubstackCache[cacheKey].data
+      } else {
+        ({ headers, data, status } = await AxiosBase.get(url, { params: req.query, headers: { accept, cookie }, validateStatus: () => true }))
+        SubstackCache[cacheKey] = { cacheTime: Date.now(), headers, data }
+      }
+      if (headers['transfer-encoding'] === 'chunked') {
+        delete headers['transfer-encoding']
+      }
+      res.status(status ?? 200).set(headers).send(data)
+    } catch (ex: any) {
+      printError(ex)
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'cannot process request' })
+    }
+  }
+)
 
-const axiosBase = axios.create({ timeout: 15000 })
+router.get('/substack/subscribe',
+  limiter(),
+  substack,
+  async (req, res) => {
+    const { substackDomain } = res.locals
+    const { accept, cookie } = req.headers
+    try {
+      const url = `https://${substackDomain}/subscribe`
+      const { headers, data, status } = await AxiosBase.get(url, { params: req.query, headers: { accept, cookie }, validateStatus: () => true })
+      if (headers['transfer-encoding'] === 'chunked') {
+        delete headers['transfer-encoding']
+      }
+      res.status(status).set(headers).send(data)
+    } catch (ex: any) {
+      printError(ex)
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'cannot process request' })
+    }
+  }
+)
 
 router.get('/substack',
   limiter(),
@@ -62,14 +96,25 @@ router.get('/substack',
   async (req, res) => {
     try {
       const { substackDomain } = res.locals
-      const { headers, data } = await axiosBase.get(`https://${substackDomain}/${req.query.url}`)
+      const url = `https://${substackDomain}/${req.query.url}`
+      let headers, data
+      if (SubstackCache[url]?.cacheTime !== undefined && SubstackCache[url].cacheTime + CacheLife > Date.now()) {
+        headers = SubstackCache[url].headers
+        data = SubstackCache[url].data
+      } else {
+        const response = await AxiosBase.get(url)
+        headers = response.headers
+        data = response.data
+        SubstackCache[url] = { cacheTime: Date.now(), headers, data }
+      }
+
       if (headers['transfer-encoding'] === 'chunked') {
         delete headers['transfer-encoding']
       }
       res.set(headers).send(data)
     } catch (ex: any) {
-      console.error(ex)
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
+      printError(ex)
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'cannot process request' })
     }
   })
 
@@ -86,7 +131,7 @@ router.get('/notion',
       const ret = await getPage(id)
       res.json(ret || {})
     } catch (ex: any) {
-      console.error(ex)
+      printError(ex)
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
     }
   })
@@ -103,9 +148,8 @@ router.post('/parse',
       const id = await getNotionPageId(url)
       res.json({ id })
     } catch (ex: any) {
-      console.error(ex)
-      const error = ex?.response?.data || ex.toString()
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error })
+      printError(ex)
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ })
     }
   })
 
@@ -123,8 +167,8 @@ router.get('/links',
       const ret = await getAllPageIds(id, depth)
       res.json(ret || {})
     } catch (ex: any) {
-      console.error(ex)
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
+      printError(ex)
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ })
     }
   })
 
@@ -143,8 +187,8 @@ router.get(['/*'], limiter(), cached(), async (req, res) => {
     const page = await getOGPage(sld, subdomain, path, req.get('user-agent'))
     res.header('content-type', 'text/html; charset=utf-8').send(page)
   } catch (ex: any) {
-    console.error(ex)
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
+    printError(ex)
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ })
   }
 })
 export default router

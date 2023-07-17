@@ -26,6 +26,11 @@ export default {
       progress: true
     },
     proxy: {
+      '/subscribe': {
+        target: 'https://localhost:8446/',
+        pathRewrite: { '^/subscribe': '/substack/subscribe' },
+        secure: false
+      },
       '/substack': {
         target: 'https://localhost:8446/',
         secure: false

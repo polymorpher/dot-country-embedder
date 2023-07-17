@@ -13,12 +13,15 @@
 .home-sitemap{
   display: none!important;
 }
-.poll-embed{
-  display: none!important;
-}
+//.poll-embed{
+//  display: none!important;
+//}
 .subscribe-footer{
   display: none!important;
 }
 .portable-archive.empty-list{
   display: none!important;
+}
+.subscribe-iframe{
+  height: 100px;
 }

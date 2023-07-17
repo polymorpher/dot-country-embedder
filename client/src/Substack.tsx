@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { BaseText } from './components/Text'
 import { apis, buildClient } from './api'
 import { getPath, getSld, getSubdomain } from './utils'
@@ -6,21 +6,19 @@ import { useTryCatch } from './hooks/useTryCatch'
 import { BlankPage, LoadingScreen } from './components/Misc'
 import { LinkWrarpper } from './components/Controls'
 import { FlexColumn } from './components/Layout'
-import parse from 'html-react-parser'
-import { parsePath } from '../../common/notion-utils'
+import { replaceSubscribeWidget, replaceSubstackLink } from './LinkReplacer'
 import './substack.scss'
-import { SubstackLinkReplacer } from './LinkReplacer'
+
 const Substack: React.FC = () => {
   const [client] = useState(buildClient())
-  const [page, setPage] = useState<string>()
-  // set "https://polymorpher.substack.com" to `pageId` for test purpose
   const [pageId, setPageId] = useState<string>()
   const [unrestrictedMode, setUnrestrictedMode] = useState<boolean>(true)
   const sld = getSld()
   const subdomain = getSubdomain()
   const pageIdOverride = getPath().slice(1)
+  const [loaded, setLoaded] = useState(false)
 
-  const { pending, initializing, tryCatch } = useTryCatch()
+  const { initializing, tryCatch } = useTryCatch()
 
   useEffect(() => {
     if (!pageId) {
@@ -29,31 +27,75 @@ const Substack: React.FC = () => {
 
     void tryCatch(async function f () {
       const page = await apis.getSubstackPage(pageIdOverride) as string
-      const substackScripts = Array.from(window.document.querySelectorAll('script[created-from=substack]'))
-
-      if (substackScripts.length === 0) {
-        const newDiv = document.createElement('div')
-        newDiv.innerHTML = page
-        const scripts = Array.from(newDiv.querySelectorAll('script'))
-        for (const script of scripts) {
-          const newScript = document.createElement('script')
-          if (newScript.src) {
-            newScript.src = script.src
-          }
-          if (newScript.type) {
-            newScript.type = script.type
-          }
-          if (newScript.innerHTML) {
-            newScript.innerHTML = script.innerHTML
-          }
-          newScript.setAttribute('created-from', 'substack')
-          document.body.appendChild(newScript)
+      const html = document.createElement('html')
+      const initialStyles = Array.from(document.querySelectorAll('style'))
+      html.style.visibility = 'hidden'
+      html.style.overflow = 'hidden'
+      html.innerHTML = replaceSubstackLink(page, { substackHost: pageId, subdomain, sld })
+      document.replaceChild(html, document.documentElement)
+      const scripts = Array.from(document.querySelectorAll('script'))
+      let loaded = false
+      for (const script of scripts) {
+        const newScript = document.createElement('script')
+        if (script.src) {
+          newScript.src = script.src
         }
-        newDiv.remove()
+        if (script.type) {
+          newScript.type = script.type
+        }
+        if (script.innerHTML) {
+          newScript.innerHTML = script.innerHTML
+        }
+        const parent = script.parentNode
+        script.remove()
+        parent?.appendChild(newScript)
+        newScript.addEventListener('load', () => {
+          if (loaded) {
+            return
+          }
+          loaded = true
+          const root = document.createElement('div')
+          const widgets = document.querySelectorAll('.subscribe-widget')
+          widgets.forEach((w) => {
+            console.log(w)
+            root.innerHTML = replaceSubscribeWidget(w.outerHTML, pageId ?? '')
+            w.parentNode?.replaceChild(root, w)
+          })
+          console.log('loaded')
+        })
       }
-      setPage(page)
+
+      const icons = Array.from(document.querySelectorAll("link[rel$='icon']"))
+
+      for (const icon of icons) {
+        const newIcon = icon.cloneNode()
+        icon.remove()
+        document.head.appendChild(newIcon)
+      }
+
+      const styles = Array.from(document.querySelectorAll("link[href$='.css']"))
+      let loadedStyleCount = 0
+
+      for (const style of styles) {
+        const newStyle = style.cloneNode() as HTMLLinkElement
+        style.remove()
+        newStyle.onload = () => {
+          loadedStyleCount += 1
+          if (loadedStyleCount === styles.length) {
+            html.style.visibility = 'visible'
+            html.style.overflow = 'auto'
+            setLoaded(true)
+          }
+        }
+        document.head.appendChild(newStyle)
+      }
+      for (const style of initialStyles) {
+        const newStyle = style.cloneNode(true) as HTMLStyleElement
+        style.remove()
+        document.head.appendChild(newStyle)
+      }
     })
-  }, [pageId, pageIdOverride, tryCatch, unrestrictedMode])
+  }, [pageId, pageIdOverride, sld, subdomain, tryCatch, unrestrictedMode])
 
   useEffect(() => {
     if (!client || !sld) {
@@ -73,6 +115,15 @@ const Substack: React.FC = () => {
     }, true).catch(e => { console.error(e) })
   }, [client, sld, subdomain, tryCatch])
 
+  useEffect(() => {
+    if (!loaded || !pageId) {
+      return
+    }
+    setTimeout(() => {
+
+    }, 3000)
+  }, [loaded, pageId])
+
   if (initializing) {
     return <LoadingScreen/>
   }
@@ -82,29 +133,15 @@ const Substack: React.FC = () => {
       <FlexColumn style={{ textAlign: 'center' }}>
         <BaseText>
           This site has not connected with any substack page<br/><br/>
-          If you are the owner, please visit <LinkWrarpper href={'/manage'}>here</LinkWrarpper> to configure the site
+          If you are the owner, please visit
+          <LinkWrarpper href={'/manage'}>here</LinkWrarpper>
+          to configure the site
         </BaseText>
       </FlexColumn>
     </BlankPage>
   }
 
-  if (pending) {
-    return <LoadingScreen/>
-  }
-
-  if (!page) {
-    return <LoadingScreen/>
-  }
-
-  const parsedPage = parse(page) as JSX.Element
-  return <>
-
-    <SubstackLinkReplacer substackHost={pageId} subdomain={subdomain} sld={sld}>
-      {parsedPage}
-    </SubstackLinkReplacer>
-  </>
-  // return <>{parsedPage}</>
-  // return <div dangerouslySetInnerHTML={{ __html: page }}></div>
+  return <LoadingScreen/>
 }
 
 export default Substack

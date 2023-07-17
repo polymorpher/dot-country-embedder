@@ -3,6 +3,9 @@ import { renderToString } from 'react-dom/server'
 import htmlReactParser, { Element as ParserElement } from 'html-react-parser'
 import { LoadingScreen } from './components/Misc'
 import config from '../config'
+import { parseDocument } from 'htmlparser2'
+import { findAll, replaceElement } from 'domutils'
+import render from 'dom-serializer'
 
 export interface NotionLinkReplacerConfig {
   children: JSX.Element
@@ -56,10 +59,27 @@ export const NotionLinkReplacer = ({ children, pageId, allowedPageIds = [] }: No
 }
 
 export interface SubstackLinkReplacerConfig {
-  children: JSX.Element
+  children?: JSX.Element
   sld: string
   subdomain: string
   substackHost: string
+}
+
+export const replaceSubstackLink = (html: string, { sld, subdomain, substackHost }: SubstackLinkReplacerConfig): string => {
+  const replacementHost = `${subdomain}.${sld}.${config.tld}`
+  return html.replaceAll(`http://${substackHost}`, `http://${replacementHost}`)
+    .replaceAll(`https://${substackHost}`, `https://${replacementHost}`)
+    .replaceAll('https://substack.com/profile', `https://${sld}.${config.tld}`)
+}
+
+export const replaceSubscribeWidget = (html: string, substackHost: string) => {
+  const dom = parseDocument(html, {})
+  const targets = findAll(e => e.attribs?.class === 'subscribe-widget', dom.children)
+  for (const target of targets) {
+    const iframe = parseDocument(`<iframe class="subscribe-iframe" src="https://${substackHost}/embed" scrolling="no" frameBorder="0"></iframe>`)
+    replaceElement(target, iframe.children[0])
+  }
+  return render(dom)
 }
 
 export const SubstackLinkReplacer = ({ children, sld, subdomain, substackHost }: SubstackLinkReplacerConfig): JSX.Element => {

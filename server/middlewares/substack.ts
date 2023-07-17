@@ -7,6 +7,7 @@ const client = buildClient()
 
 const substack = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const host = req.get('host')
+
   if (!host) {
     return
   }
