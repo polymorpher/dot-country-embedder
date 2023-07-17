@@ -76,7 +76,7 @@ export const replaceSubscribeWidget = (html: string, substackHost: string) => {
   const dom = parseDocument(html, {})
   const targets = findAll(e => e.attribs?.class === 'subscribe-widget', dom.children)
   for (const target of targets) {
-    const iframe = parseDocument(`<iframe class="subscribe-iframe" src="https://${substackHost}/embed?123" scrolling="no" frameBorder="0"></iframe>`)
+    const iframe = parseDocument(`<iframe class="subscribe-iframe" src="https://${substackHost}/embed" scrolling="no" frameBorder="0"></iframe>`)
     replaceElement(target, iframe.children[0])
   }
   return render(dom)

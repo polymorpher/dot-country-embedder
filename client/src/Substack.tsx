@@ -34,6 +34,7 @@ const Substack: React.FC = () => {
       html.innerHTML = replaceSubstackLink(page, { substackHost: pageId, subdomain, sld })
       document.replaceChild(html, document.documentElement)
       const scripts = Array.from(document.querySelectorAll('script'))
+      let loaded = false
       for (const script of scripts) {
         const newScript = document.createElement('script')
         if (script.src) {
@@ -48,6 +49,20 @@ const Substack: React.FC = () => {
         const parent = script.parentNode
         script.remove()
         parent?.appendChild(newScript)
+        newScript.addEventListener('load', () => {
+          if (loaded) {
+            return
+          }
+          loaded = true
+          const root = document.createElement('div')
+          const widgets = document.querySelectorAll('.subscribe-widget')
+          widgets.forEach((w) => {
+            console.log(w)
+            root.innerHTML = replaceSubscribeWidget(w.outerHTML, pageId ?? '')
+            w.parentNode?.replaceChild(root, w)
+          })
+          console.log('loaded')
+        })
       }
 
       const icons = Array.from(document.querySelectorAll("link[rel$='icon']"))
@@ -105,13 +120,7 @@ const Substack: React.FC = () => {
       return
     }
     setTimeout(() => {
-      const root = document.createElement('div')
-      const widgets = document.querySelectorAll('.subscribe-widget')
-      widgets.forEach((w) => {
-        console.log(w)
-        root.innerHTML = replaceSubscribeWidget(w.outerHTML, pageId ?? '')
-        w.parentNode?.replaceChild(root, w)
-      })
+
     }, 3000)
   }, [loaded, pageId])
 
