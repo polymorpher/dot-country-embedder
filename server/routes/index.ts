@@ -8,6 +8,7 @@ import limiter from '../middlewares/limiter.ts'
 import cached from '../middlewares/cache.ts'
 import substack from '../middlewares/substack.ts'
 import { printError } from '../src/util.ts'
+import { pickBy } from 'lodash-es'
 
 const router = express.Router()
 
@@ -29,7 +30,11 @@ router.post('/substack/api/v1/:endpoint*',
     const { accept, cookie } = req.headers
     try {
       const url = `https://${substackDomain}/api/v1/${endpoint}${subEndpoint ? '/' + subEndpoint : ''}`
-      const { headers, data, status } = await AxiosBase.post(url, req.body, { params: req.query, headers: { accept, cookie }, validateStatus: () => true })
+      const { headers, data, status } = await AxiosBase.post(url, req.body, {
+        params: req.query,
+        headers: pickBy({ accept, cookie }, e => e),
+        validateStatus: () => true
+      })
       if (headers['transfer-encoding'] === 'chunked') {
         delete headers['transfer-encoding']
       }
@@ -56,7 +61,11 @@ router.get('/substack/api/v1/:endpoint*',
         headers = SubstackCache[cacheKey].headers
         data = SubstackCache[cacheKey].data
       } else {
-        ({ headers, data, status } = await AxiosBase.get(url, { params: req.query, headers: { accept, cookie }, validateStatus: () => true }))
+        ({ headers, data, status } = await AxiosBase.get(url, {
+          params: req.query,
+          headers: pickBy({ accept, cookie }, e => e),
+          validateStatus: () => true
+        }))
         SubstackCache[cacheKey] = { cacheTime: Date.now(), headers, data }
       }
       if (headers['transfer-encoding'] === 'chunked') {
@@ -78,7 +87,11 @@ router.get('/substack/subscribe',
     const { accept, cookie } = req.headers
     try {
       const url = `https://${substackDomain}/subscribe`
-      const { headers, data, status } = await AxiosBase.get(url, { params: req.query, headers: { accept, cookie }, validateStatus: () => true })
+      const { headers, data, status } = await AxiosBase.get(url, {
+        params: req.query,
+        headers: pickBy({ accept, cookie }, e => e),
+        validateStatus: () => true
+      })
       if (headers['transfer-encoding'] === 'chunked') {
         delete headers['transfer-encoding']
       }
