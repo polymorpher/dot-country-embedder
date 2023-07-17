@@ -8,7 +8,7 @@ export const getSld = (): string => {
     return ''
   }
 
-  return _getSld(config.debug ? config.debugDomain : window.location.host)
+  return _getSld(window.location.host)
 }
 
 export const getSubdomain = (): string => {
@@ -16,7 +16,7 @@ export const getSubdomain = (): string => {
     return ''
   }
 
-  return _getSubdomain(config.debug ? config.debugDomain : window.location.host)
+  return _getSubdomain(window.location.host)
 }
 
 export const getPath = (): string => {
@@ -24,7 +24,7 @@ export const getPath = (): string => {
     return ''
   }
 
-  return config.debug ? config.debugPath : window.location.pathname
+  return window.location.pathname
 }
 
 export const titleEmbeddedMapPageUrl = (rootId: string, blockMap: ExtendedRecordMap) => {

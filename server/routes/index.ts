@@ -1,5 +1,6 @@
-import express from 'express'
+import express, { type Request, type Response } from 'express'
 import axios from 'axios'
+import lodash from 'lodash-es'
 import { StatusCodes } from 'http-status-codes'
 import { getAllPageIds, getNotionPageId, getPage } from '../src/notion.ts'
 import { getOGPage } from '../src/og.ts'
@@ -7,9 +8,11 @@ import { getSld, getSubdomain } from '../../common/domain-utils.ts'
 import limiter from '../middlewares/limiter.ts'
 import cached from '../middlewares/cache.ts'
 import substack from '../middlewares/substack.ts'
+import { printError } from '../src/util.ts'
 
 const router = express.Router()
 
+const axiosBase = axios.create({ timeout: 15000 })
 router.get('/health', async (req, res) => {
   console.log('[/health]', JSON.stringify(req.fingerprint))
   res.send('OK').end()
@@ -18,45 +21,55 @@ router.get('/health', async (req, res) => {
 const substackCache: Record<string, { cacheTime: number, headers: unknown, data: unknown }> = {}
 const cacheLife = 1000 * 60
 
-router.get('/substack/api/v1/:endpoint',
+const endpointHandler = (method: string) => async (req: Request, res: Response): Promise<void> => {
+  const { substackDomain } = res.locals
+  const { endpoint, 0: subEndpoint } = req.params
+  const { accept, cookie } = req.headers
+  try {
+    const url = `https://${substackDomain}/api/v1/${endpoint}${subEndpoint ? '/' + subEndpoint : ''}`
+    // console.log(req.params)
+    // console.log(url)
+    const cacheKey = `${url}-${JSON.stringify(req.query)}`
+
+    let headers, data
+
+    if (substackCache[cacheKey]?.cacheTime !== undefined && substackCache[cacheKey].cacheTime + cacheLife > Date.now()) {
+      headers = substackCache[cacheKey].headers
+      data = substackCache[cacheKey].data
+    } else {
+      const response = method === 'post'
+        ? await axiosBase.post(url, req.body, { params: req.query, headers: { accept, cookie } })
+        : await axiosBase.get(url, { params: req.query, headers: { accept, cookie } })
+      headers = response.headers
+      data = response.data
+
+      substackCache[cacheKey] = {
+        cacheTime: Date.now(),
+        headers,
+        data
+      }
+    }
+
+    if (headers['transfer-encoding'] === 'chunked') {
+      delete headers['transfer-encoding']
+    }
+    res.set(headers).send(data)
+  } catch (ex: any) {
+    printError(ex)
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'cannot process request' })
+  }
+}
+router.post('/substack/api/v1/:endpoint*',
   limiter(),
   substack,
-  async (req, res) => {
-    const { substackDomain } = res.locals
-    const { endpoint } = req.params
-    try {
-      const url = `https://${substackDomain}/api/v1/${endpoint}`
-      const cacheKey = `${url}-${JSON.stringify(req.query)}`
-
-      let headers, data
-
-      if (substackCache[cacheKey]?.cacheTime !== undefined && substackCache[cacheKey].cacheTime + cacheLife > Date.now()) {
-        headers = substackCache[cacheKey].headers
-        data = substackCache[cacheKey].data
-      } else {
-        const response = await axiosBase.get(url, { params: req.query })
-        headers = response.headers
-        data = response.data
-
-        substackCache[cacheKey] = {
-          cacheTime: Date.now(),
-          headers,
-          data
-        }
-      }
-
-      if (headers['transfer-encoding'] === 'chunked') {
-        delete headers['transfer-encoding']
-      }
-      res.set(headers).send(data)
-    } catch (ex: any) {
-      console.error(ex)
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
-    }
-  }
+  endpointHandler
 )
 
-const axiosBase = axios.create({ timeout: 15000 })
+router.get('/substack/api/v1/:endpoint*',
+  limiter(),
+  substack,
+  endpointHandler
+)
 
 router.get('/substack',
   limiter(),
@@ -82,14 +95,14 @@ router.get('/substack',
           data
         }
       }
-      
+
       if (headers['transfer-encoding'] === 'chunked') {
         delete headers['transfer-encoding']
       }
       res.set(headers).send(data)
     } catch (ex: any) {
-      console.error(ex)
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
+      printError(ex)
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'cannot process request' })
     }
   })
 
@@ -106,7 +119,7 @@ router.get('/notion',
       const ret = await getPage(id)
       res.json(ret || {})
     } catch (ex: any) {
-      console.error(ex)
+      printError(ex)
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
     }
   })
@@ -123,9 +136,8 @@ router.post('/parse',
       const id = await getNotionPageId(url)
       res.json({ id })
     } catch (ex: any) {
-      console.error(ex)
-      const error = ex?.response?.data || ex.toString()
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error })
+      printError(ex)
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ })
     }
   })
 
@@ -143,8 +155,8 @@ router.get('/links',
       const ret = await getAllPageIds(id, depth)
       res.json(ret || {})
     } catch (ex: any) {
-      console.error(ex)
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
+      printError(ex)
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ })
     }
   })
 
@@ -163,8 +175,8 @@ router.get(['/*'], limiter(), cached(), async (req, res) => {
     const page = await getOGPage(sld, subdomain, path, req.get('user-agent'))
     res.header('content-type', 'text/html; charset=utf-8').send(page)
   } catch (ex: any) {
-    console.error(ex)
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: ex.toString() })
+    printError(ex)
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ })
   }
 })
 export default router
