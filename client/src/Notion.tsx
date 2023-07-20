@@ -18,7 +18,7 @@ import {
   extractEmoji,
   isValidNotionPageId,
   parsePath,
-  urlNormalize
+  urlNormalize, segment
 } from '../../common/notion-utils'
 import { type ExtendedRecordMap } from 'notion-types'
 import { getPath, getSld, getSubdomain, titleEmbeddedMapPageUrl } from './utils'
@@ -99,7 +99,7 @@ const Notion: React.FC = () => {
     tryCatch(async () => {
       return await Promise.all([
         client.getLandingPage(sld, subdomain).then(e => {
-          const [id, mode] = e.split(':')
+          const [id, mode] = segment(e)
           if (mode === 'strict') {
             setUnrestrictedMode(false)
           }

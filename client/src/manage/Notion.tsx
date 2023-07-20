@@ -5,7 +5,7 @@ import config from '../../config'
 import { Button, Input, LinkWrarpper } from '../components/Controls'
 import { apis, buildClient, EWSTypes } from '../api'
 import { getSld, getSubdomain } from '../utils'
-import { isValidNotionPageId } from '../../../common/notion-utils'
+import { isValidNotionPageId, segment } from '../../../common/notion-utils'
 import { Feedback, Loading } from '../components/Misc'
 import useDebounce from '../hooks/useDebounce'
 import styled from 'styled-components'
@@ -161,7 +161,7 @@ const ManageNotion = ({ footer = <></> }): JSX.Element => {
     if (!debouncedEditingPageId) {
       return
     }
-    const [parsedId] = debouncedEditingPageId.split(':')
+    const [parsedId] = segment(debouncedEditingPageId)
     if (isValidNotionPageId(parsedId)) {
       setSuggestedPageId(undefined)
       return
@@ -175,7 +175,7 @@ const ManageNotion = ({ footer = <></> }): JSX.Element => {
   }, [debouncedEditingPageId])
 
   const save = async (): Promise<void> => {
-    const [parsedId] = debouncedEditingPageId.split(':')
+    const [parsedId] = segment(debouncedEditingPageId)
     if (!isValidNotionPageId(parsedId) && pageId !== '') {
       toast.error(`Invalid landing page id: ${pageId}`)
       return

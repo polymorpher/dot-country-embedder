@@ -8,6 +8,7 @@ import { LinkWrarpper } from './components/Controls'
 import { FlexColumn } from './components/Layout'
 import { replaceSubscribeWidget, replaceSubstackLink } from './LinkReplacer'
 import './substack.scss'
+import {segment} from "../../common/notion-utils";
 
 const Substack: React.FC = () => {
   const [client] = useState(buildClient())
@@ -105,7 +106,7 @@ const Substack: React.FC = () => {
     tryCatch(async () => {
       return await Promise.all([
         client.getLandingPage(sld, subdomain).then(e => {
-          const [id, mode] = e.split(':')
+          const [id, mode] = segment(e)
           if (mode === 'strict') {
             setUnrestrictedMode(false)
           }

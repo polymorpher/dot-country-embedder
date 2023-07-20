@@ -9,7 +9,7 @@ import { type EWS } from '../../contract/typechain-types'
 import { getOGDataFromPage, getPage } from './notion.ts'
 import { encode } from 'html-entities'
 import { type ExtendedRecordMap } from 'notion-types'
-import { isValidNotionPageId, parsePath } from '../../common/notion-utils.ts'
+import {isValidNotionPageId, parsePath, segment} from '../../common/notion-utils.ts'
 import axios from 'axios'
 import { parseSubstackUrl } from '../../common/substack-utils.ts'
 
@@ -47,7 +47,7 @@ const getOGPageNotion = async (subdomain: string, sld: string,
   if (rawPath && !isValidNotionPageId(path)) {
     return EMPTY_PAGE
   }
-  const [landingPage, mode] = landingPageSetting.split(':')
+  const [landingPage, mode] = segment(landingPageSetting)
   const unrestrictedMode = mode !== 'strict'
   let page: ExtendedRecordMap
   if (path && isValidNotionPageId(path) && (unrestrictedMode || allowedPages.includes(path))) {
