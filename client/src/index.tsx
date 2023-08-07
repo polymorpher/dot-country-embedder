@@ -15,3 +15,15 @@ if (container != null) {
       <ToastContainer position='top-left'/>
     </>)
 }
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.ready.then(registration => {
+    registration.unregister().catch(console.error)
+    if (caches) {
+      // Service worker cache should be cleared with caches.delete()
+      caches.keys().then(async (names) => {
+        await Promise.all(names.map(async name => await caches.delete(name)))
+      }).catch(console.error)
+    }
+  }).catch(console.error)
+}
