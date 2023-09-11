@@ -67,6 +67,7 @@ const ManageNotion = ({ footer = <></> }): JSX.Element => {
         rpcMap: { [Number(config.chainParameters.chainId)]: config.defaultRpc } // OPTIONAL rpc urls for each chain
       }
       // console.log(options)
+      // @ts-expect-error compatibility
       const provider = await EthereumProvider.init(options)
       const [address] = await provider.enable()
       setAddress(address)

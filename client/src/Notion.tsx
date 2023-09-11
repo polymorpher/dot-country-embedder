@@ -31,6 +31,7 @@ import { Helmet } from 'react-helmet'
 import config from '../config'
 import './notion.scss'
 import { toast } from 'react-toastify'
+import TagManager from 'react-gtm-module'
 
 const Tweet = ({ id }: { id: string }): JSX.Element => {
   return <TweetEmbed tweetId={id} />
@@ -40,6 +41,8 @@ const Notion: React.FC = () => {
   const [client] = useState(buildClient(undefined, undefined, true))
   const [page, setPage] = useState<ExtendedRecordMap>()
   const [pageId, setPageId] = useState<string>('')
+  const [gtag, setGtag] = useState<string>('')
+  const [css, setCss] = useState<string>('')
   const [unrestrictedMode, setUnrestrictedMode] = useState<boolean>(true)
   const [allowedPageIds, setAllowedPageIds] = useState<string[]>([])
   const sld = getSld()
@@ -99,16 +102,33 @@ const Notion: React.FC = () => {
     tryCatch(async () => {
       return await Promise.all([
         client.getLandingPage(sld, subdomain).then(e => {
-          const [id, mode] = segment(e)
+          const [id, mode, ...settings] = segment(e)
           if (mode === 'strict') {
             setUnrestrictedMode(false)
           }
           setPageId(id)
+          if (settings?.length >= 1) {
+            for (const s of settings) {
+              const [k, v] = s.split('=')
+              if (k === 'gtag') {
+                setGtag(v)
+              }
+              if (k === 'css') {
+                setCss(v)
+              }
+            }
+          }
         }),
         client.getAllowedPages(sld, subdomain).then(e => { setAllowedPageIds(e) })
       ])
     }, true).catch(e => { console.error(e) })
   }, [client, sld, subdomain, tryCatch])
+
+  useEffect(() => {
+    if (gtag) {
+      TagManager.initialize({ gtmId: gtag })
+    }
+  }, [gtag])
 
   if (initializing) {
     return <LoadingScreen/>
@@ -166,6 +186,7 @@ const Notion: React.FC = () => {
       <meta property="og:url" content={`https://${sld}.${config.tld}/${pageIdOverride}`}/>
       <meta property="og:title" content={title}/>
       <meta property="og:description" content={desc}/>
+      {css ? <style>{css}</style> : '' }
     </Helmet>
     <NotionRenderer
       recordMap={page}

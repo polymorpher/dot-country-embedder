@@ -101,6 +101,7 @@
   },
   "dependencies": {
     "@walletconnect/ethereum-provider": "^2.7.4",
+    "@walletconnect/modal": "^2.6.1",
     "@web3modal/standalone": "^2.4.1",
     "axios": "^0.21.1",
     "bn.js": "^5.2.1",
@@ -117,6 +118,7 @@
     "query-string": "^7.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-gtm-module": "^2.0.11",
     "react-helmet": "^6.1.0",
     "react-loading-icons": "^1.1.0",
     "react-notion-x": "^6.16.0",

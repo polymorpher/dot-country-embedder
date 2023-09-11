@@ -17,7 +17,7 @@ import { type ExternalProvider } from '@ethersproject/providers'
 import { EthereumProvider } from '@walletconnect/ethereum-provider'
 import { SuccessWithExplorerLink, SmallTextGrey, SmallTextRed, Container, InputBox, LabelText } from './Common'
 
-const ManageSubstack = ({ footer = <></> }): JSX.Element => {
+const ManageSubstack = ({ footer = <></> }): React.JSX.Element => {
   const [address, setAddress] = useState('')
   const [provider, setProvider] = useState<any>()
   const [signer, setSigner] = useState<any>()
@@ -44,6 +44,7 @@ const ManageSubstack = ({ footer = <></> }): JSX.Element => {
         rpcMap: { [Number(config.chainParameters.chainId)]: config.defaultRpc } // OPTIONAL rpc urls for each chain
       }
       // console.log(options)
+      // @ts-expect-error compatibility
       const provider = await EthereumProvider.init(options)
       const [address] = await provider.enable()
       setAddress(address)
