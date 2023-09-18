@@ -32,6 +32,7 @@ import config from '../config'
 import './notion.scss'
 import { toast } from 'react-toastify'
 import TagManager from 'react-gtm-module'
+import { hotjar } from 'react-hotjar'
 
 const Tweet = ({ id }: { id: string }): JSX.Element => {
   return <TweetEmbed tweetId={id} />
@@ -115,6 +116,12 @@ const Notion: React.FC = () => {
               }
               if (k === 'css') {
                 setCss(v)
+              }
+              if (k === 'hotjar') {
+                const [hjid, hjsv] = v.split(',').map(parseInt)
+                if (hjid && hjsv) {
+                  hotjar.initialize(hjid, hjsv)
+                }
               }
             }
           }
