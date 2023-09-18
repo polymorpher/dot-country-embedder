@@ -118,7 +118,7 @@ const Notion: React.FC = () => {
                 setCss(v)
               }
               if (k === 'hotjar') {
-                const [hjid, hjsv] = v.split(',').map(parseInt)
+                const [hjid, hjsv] = v.split(',').map(e => parseInt(e))
                 if (hjid && hjsv) {
                   hotjar.initialize(hjid, hjsv)
                 }
