@@ -33,3 +33,7 @@ body{
 .notion-text:empty:after{
   content:' ';
 }
+
+.notion-asset-wrapper > div {
+  //min-height: 640px;
+}
