@@ -3,7 +3,8 @@ import { BaseText } from './components/Text'
 import { apis, buildClient } from './api'
 import { NotionRenderer } from 'react-notion-x'
 import { Code } from 'react-notion-x/build/third-party/code'
-import { Tweet as ReactTweet } from 'react-tweet'
+// import { Tweet as ReactTweet } from 'react-tweet'
+import { Tweet as ReactTweet } from 'react-twitter-widgets'
 import { Collection } from 'react-notion-x/build/third-party/collection'
 import { Modal } from 'react-notion-x/build/third-party/modal'
 // too large, to be enabled later when lazy loading is guaranteed to work
@@ -35,7 +36,7 @@ import TagManager from 'react-gtm-module'
 import { hotjar } from 'react-hotjar'
 
 const Tweet = ({ id }: { id: string }): JSX.Element => {
-  return <ReactTweet id={id} />
+  return <ReactTweet tweetId={id} />
 }
 
 const Notion: React.FC = () => {
