@@ -8,7 +8,8 @@ import { LinkWrarpper } from './components/Controls'
 import { FlexColumn } from './components/Layout'
 import { replaceSubscribeWidget, replaceSubstackLink } from './LinkReplacer'
 import './substack.scss'
-import {segment} from "../../common/notion-utils";
+import { segment } from '../../common/notion-utils'
+import config from '../config'
 
 const Substack: React.FC = () => {
   const [client] = useState(buildClient())
@@ -31,10 +32,12 @@ const Substack: React.FC = () => {
       html.style.visibility = 'hidden'
       html.style.overflow = 'hidden'
       html.innerHTML = replaceSubstackLink(page, { substackHost: pageId, subdomain, sld })
+      // console.log(html.innerHTML)
       document.replaceChild(html, document.documentElement)
       const scripts = Array.from(document.querySelectorAll('script'))
       let loaded = 0
       const targetNumLoaded = scripts.filter(e => e.src?.includes('substack')).length
+      // const targetNumLoaded = scripts.length
       for (const script of scripts) {
         const newScript = document.createElement('script')
         if (script.src) {
@@ -57,13 +60,19 @@ const Substack: React.FC = () => {
           if (loaded < targetNumLoaded) {
             return
           }
+
           const root = document.createElement('div')
           const widgets = document.querySelectorAll('.subscribe-widget')
           widgets.forEach((w) => {
-            console.log(w)
+            // console.log(w)
             root.innerHTML = replaceSubscribeWidget(w.outerHTML, pageId ?? '')
             w.parentNode?.replaceChild(root, w)
           })
+          console.log('loaded')
+          setTimeout(() => {
+            document.body.innerHTML = replaceSubstackLink(document.body.innerHTML, { sld, subdomain, substackHost: pageId })
+          }, 2000)
+          //
         })
       }
 
