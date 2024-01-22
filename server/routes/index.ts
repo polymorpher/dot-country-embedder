@@ -66,6 +66,22 @@ router.get('/substack/api/v1/:endpoint*',
           headers: pickBy({ accept, cookie }, e => e),
           validateStatus: () => true
         }))
+
+        if (endpoint === 'archive') {
+          const domain = '.substack.com'
+
+          data = data.map(item => {
+            const index = item.canonical_url.indexOf(domain) as number
+            if (index >= 0) {
+              return {
+                ...item,
+                canonical_url: item.canonical_url.slice(index + domain.length)
+              }
+            }
+            return item
+          })
+        }
+
         SubstackCache[cacheKey] = { cacheTime: Date.now(), headers, data }
       }
       if (headers['transfer-encoding'] === 'chunked') {
