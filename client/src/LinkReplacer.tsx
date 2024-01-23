@@ -70,11 +70,6 @@ export const replaceSubstackLink = (html: string, { sld, subdomain, substackHost
   return html.replaceAll(`http://${substackHost}`, `http://${replacementHost}`)
     .replaceAll(`https://${substackHost}`, `https://${replacementHost}`)
     .replaceAll('https://substack.com/profile', `https://${sld}.${config.tld}`)
-    // .replaceAll('\\"customDomain\\":null', `\\"customDomain\\":\\"${replacementHost}\\"`)
-    // .replaceAll('\\"custom_domain\\":null', `\\"custom_domain\\":\\"${replacementHost}\\"`)
-    // .replaceAll(`\\"hostname\\":\\"${substackHost}\\"`, `\\"hostname\\":\\"${replacementHost}\\"`)
-    // .replaceAll('\\"isSubstack\\":true', '\\"isSubstack\\":false')
-    // .replaceAll(`\\"${substackHost}\\"`, `\\"${replacementHost}\\"`)
 }
 
 export const replaceSubscribeWidget = (html: string, substackHost: string) => {

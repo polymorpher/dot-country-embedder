@@ -73,7 +73,7 @@ const getOGPageSubstack = async (subdomain: string, sld: string, substackHost: s
 }
 export const getOGPage = async (sld: string, subdomain: string, path?: string, ua?: string): Promise<string> => {
   console.log('[-getOGPage]', { sld, subdomain, path })
-  const c = new ethers.Contract(config.ewsContract, EWSAbi, provider) as EWS
+  const c = new ethers.Contract(config.ewsContract, EWSAbi, provider) as unknown as EWS
   const node = ethers.utils.id(sld)
   const label = ethers.utils.id(subdomain)
   const [landingPageSetting, allowedPages, ewsType] = await Promise.all([

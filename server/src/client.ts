@@ -11,7 +11,7 @@ export interface Client {
 
 export const buildClient = (provider?): Client => {
   const etherProvider = provider ?? new ethers.providers.StaticJsonRpcProvider(config.provider)
-  const ews = new ethers.Contract(config.ewsContract, EWSAbi, etherProvider) as EWS
+  const ews = new ethers.Contract(config.ewsContract, EWSAbi, etherProvider) as unknown as EWS
 
   return {
     getLandingPage: async (sld: string, subdomain: string): Promise<string> => {

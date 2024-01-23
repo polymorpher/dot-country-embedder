@@ -69,10 +69,6 @@ const Substack: React.FC = () => {
             w.parentNode?.replaceChild(root, w)
           })
           console.log('loaded')
-          setTimeout(() => {
-            document.body.innerHTML = replaceSubstackLink(document.body.innerHTML, { sld, subdomain, substackHost: pageId })
-          }, 2000)
-          //
         })
       }
 
