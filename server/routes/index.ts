@@ -124,8 +124,8 @@ router.get('/substack',
   substack,
   async (req, res) => {
     try {
-      const { substackDomain } = res.locals
-      const url = `https://${substackDomain}/${req.query.url}`
+      const { substackDomain, substackUrl } = res.locals
+      const url = substackUrl || `https://${substackDomain}/${req.query.url}`
       let headers, data
       if (SubstackCache[url]?.cacheTime !== undefined && SubstackCache[url].cacheTime + CacheLife > Date.now()) {
         headers = SubstackCache[url].headers
