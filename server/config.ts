@@ -1,4 +1,5 @@
 import * as dotenv from 'dotenv'
+import * as process from "process";
 dotenv.config()
 
 const DEBUG = process.env.DEBUG === 'true' || process.env.DEBUG === '1'
@@ -14,6 +15,7 @@ const config = {
     key: DEBUG ? './certs/test.key' : './certs/privkey.pem',
     cert: DEBUG ? './certs/test.cert' : './certs/fullchain.pem'
   },
-  corsOrigins: process.env.CORS ?? ''
+  corsOrigins: process.env.CORS ?? '',
+  unrestrictedProxy: ['true', '1'].includes(process.env.UNRESTRICTED_PROXY ?? '')
 }
 export default config
