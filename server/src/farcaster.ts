@@ -1,4 +1,4 @@
-import { type DomainInfo, type OpenGraphData } from './types.ts'
+import { type DomainInfo } from './types.ts'
 import config from '../config.ts'
 
 const getPostUrl = (sld: string, subdomain?: string): string => {
@@ -7,11 +7,25 @@ const getPostUrl = (sld: string, subdomain?: string): string => {
   }
   return `${config.farcast.postUrlSubdomainPrefix}-${subdomain}.${sld}.${config.TLD}`
 }
-export const renderFarcasterPartialTemplate = (data: OpenGraphData, domainInfo: DomainInfo) => {
+
+const getDefaultTokenName = (domainInfo: DomainInfo): string => {
+  if (domainInfo.farcastDefaultTokenName) {
+    return domainInfo.farcastDefaultTokenName
+  }
+  if (domainInfo.subdomain) {
+    if (domainInfo.subdomain === 'www') {
+      return `$${domainInfo.sld.toUpperCase()}`
+    }
+    return `$${domainInfo.subdomain?.toUpperCase()}.${domainInfo.sld.toUpperCase()}`
+  }
+  return `$${domainInfo.sld.toUpperCase()}`
+}
+
+export const renderFarcasterPartialTemplate = (domainInfo: DomainInfo, image?: string): string => {
   const postUrlHost = getPostUrl(domainInfo.sld, domainInfo.subdomain)
   const postUrl = `https://${postUrlHost}/${config.farcast.postUrlPath}`
   const mintUrl = `https://${postUrlHost}/${config.farcast.postUrlPath}?action=mint`
-  const mintTokenName = `$${domainInfo.sld.toUpperCase()}`
+  const mintTokenName = getDefaultTokenName(domainInfo)
   let customTokenName = ''
   let customTokenAddress = ''
   let customMintUrl = ''
@@ -37,7 +51,7 @@ export const renderFarcasterPartialTemplate = (data: OpenGraphData, domainInfo: 
 
   return `
         <meta property="fc:frame" content="vNext" />
-       ${data.image ? `<meta property="fc:frame:image" content="${data.image}" />` : ''}
+       ${image ? `<meta property="fc:frame:image" content="${image}" />` : ''}
         <meta property="fc:frame:post_url" content="${postUrl}" />
         <meta property="fc:frame:button:1" content="Get .country" />
         <meta property="fc:frame:button:1:action" content="link" />

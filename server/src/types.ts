@@ -19,4 +19,13 @@ export interface DomainInfo {
   subdomain?: string
   farcastEnabled?: boolean
   farcastMintCustomToken?: string
+  farcastDefaultTokenName?: string
+}
+
+export interface PageSetting {
+  landingPage: string
+  unrestrictedMode: boolean
+  farcastEnabled: boolean
+  farcastDefaultTokenName?: string
+  farcastMintCustomToken?: string
 }
