@@ -14,6 +14,10 @@ const config = {
     key: DEBUG ? './certs/test.key' : './certs/privkey.pem',
     cert: DEBUG ? './certs/test.cert' : './certs/fullchain.pem'
   },
-  corsOrigins: process.env.CORS ?? ''
+  corsOrigins: process.env.CORS ?? '',
+  farcast: {
+    postUrlSubdomainPrefix: process.env.FC_POST_SUBDOMAIN_PREFIX ?? 'farcast-api',
+    postUrlPath: process.env.FC_POST_PATH ?? 'farcast',
+  }
 }
 export default config

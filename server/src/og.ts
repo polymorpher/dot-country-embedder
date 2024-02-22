@@ -4,21 +4,21 @@ import EWSAbi from '../../contract/abi/EWS.json' assert {
       integrity: 'sha384-ABC123'
 }
 import config from '../config.ts'
-import { EWSTypes, type OpenGraphData } from './types.ts'
+import { type DomainInfo, EWSTypes, type OpenGraphData } from './types.ts'
 import { type EWS } from '../../contract/typechain-types'
 import { getOGDataFromPage, getPage } from './notion.ts'
 import { encode } from 'html-entities'
 import { type ExtendedRecordMap } from 'notion-types'
-import {isValidNotionPageId, parsePath, segment} from '../../common/notion-utils.ts'
+import { isValidNotionPageId, parsePath, segment } from '../../common/notion-utils.ts'
 import axios from 'axios'
 import { parseSubstackUrl } from '../../common/substack-utils.ts'
+import { renderFarcasterPartialTemplate } from 'src/farcaster.ts.ts'
 
 const escape = (s: string): string => {
   return s.replaceAll('"', '%22')
 }
-export const renderOpenGraphTemplate = (data: OpenGraphData): string => {
-  return `<html>
-<head>
+const renderOpenGrapPartialTemplate = (data: OpenGraphData): string => {
+  return `
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${encode(data.title)}</title>
@@ -32,10 +32,21 @@ export const renderOpenGraphTemplate = (data: OpenGraphData): string => {
     ${data.image ? `<meta name="twitter:image" content="${data.image}"/>` : ''}
     <meta property="og:type" content="article">
     <meta property="og:locale" content="en_US">
-    
-</head>
-<body>Hello, bot!</body>
-</html>`
+   `
+}
+
+const renderOpenGraphTemplate = (data: OpenGraphData, domain: DomainInfo): string => {
+  const fcEnabled = domain?.farcastEnabled
+  const partial = renderOpenGrapPartialTemplate(data)
+  return `
+  <html>
+    <head>
+    ${partial}
+    ${fcEnabled ? renderFarcasterPartialTemplate(data, domain) : ''}
+    </head>
+    <body>Hello, bot!</body>
+    </html>
+  `
 }
 
 const provider = new ethers.providers.StaticJsonRpcProvider(config.provider)
@@ -47,7 +58,7 @@ const getOGPageNotion = async (subdomain: string, sld: string,
   if (rawPath && !isValidNotionPageId(path)) {
     return EMPTY_PAGE
   }
-  const [landingPage, mode] = segment(landingPageSetting)
+  const [landingPage, mode, ...extensions] = segment(landingPageSetting)
   const unrestrictedMode = mode !== 'strict'
   let page: ExtendedRecordMap
   if (path && isValidNotionPageId(path) && (unrestrictedMode || allowedPages.includes(path))) {
@@ -55,9 +66,12 @@ const getOGPageNotion = async (subdomain: string, sld: string,
   } else {
     page = await getPage(landingPage)
   }
+  const farcastEnabled = extensions.includes('farcast')
+  const farcastMintCustomToken = extensions.find(e => e.startsWith('farcastmint='))?.substring('farcastmint='.length)
   const ogData = getOGDataFromPage(page, ua)
   const url = `https://${subdomain}${subdomain ? '.' : ''}${sld}.${config.TLD}`
-  return renderOpenGraphTemplate({ url, ...ogData })
+  const domainInfo: DomainInfo = { sld, subdomain, farcastEnabled, farcastMintCustomToken }
+  return renderOpenGraphTemplate({ url, ...ogData }, domainInfo)
 }
 
 const EMPTY_PAGE = '<html></html>'
