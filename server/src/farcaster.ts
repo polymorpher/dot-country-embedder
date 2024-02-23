@@ -4,7 +4,7 @@ import axios from 'axios'
 
 const getPostUrl = (sld: string, subdomain?: string): string => {
   if (!config.farcast.postUrlSubdomainPrefix) {
-    return subdomain ? `${sld}.${config.TLD}` : `${subdomain}.${sld}.${config.TLD}`
+    return subdomain ? `${subdomain}.${sld}.${config.TLD}` : `${sld}.${config.TLD}`
   }
 
   if (!subdomain) {
