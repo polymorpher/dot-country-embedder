@@ -1,5 +1,6 @@
 import { type DomainInfo } from './types.ts'
 import config from '../config.ts'
+import axios from 'axios'
 
 const getPostUrl = (sld: string, subdomain?: string): string => {
   if (!subdomain) {
@@ -96,8 +97,23 @@ export const renderMintFailed = (restartTarget: string): string => {
         <meta property="fc:frame:button:1" content="Restart" />
         <meta property="fc:frame:button:1:action" content="post" />
         <meta property="fc:frame:button:1:target" content="${restartTarget}"/>
+        <meta property="fc:frame:input:text" content="Send feedback to us"/>
+        
       </head>
       <body>Hello, bot!</body>
     </html>
 `
+}
+
+export interface FarcastUserInfo {
+  fid: number
+  owner: string
+  username: string
+  timestamp: number
+}
+
+export const lookupFid = async (fid: number): Promise<FarcastUserInfo> => {
+  const { data } = await axios.get(`https://fnames.farcaster.xyz/transfers/current?fid=${fid}`)
+  const { owner, username, timestamp }: { owner: string, username: string, timestamp: number } = data
+  return { fid, owner, username, timestamp: timestamp * 1000 }
 }

@@ -2,7 +2,7 @@ import express from 'express'
 import { getSSLHubRpcClient, Message } from '@farcaster/hub-nodejs'
 import config from '../config.ts'
 import { HttpStatusCode } from 'axios'
-import { renderMintFailed, renderMintSuccess } from '../src/farcaster.ts'
+import { lookupFid, renderMintFailed, renderMintSuccess } from '../src/farcaster.ts'
 
 const client = config.farcast.hubUrl ? getSSLHubRpcClient(config.farcast.hubUrl) : undefined
 
@@ -40,20 +40,33 @@ router.post('/callback', async (req, res): Promise<any> => {
     const urlString = Buffer.from(urlBuffer).toString('utf-8')
     const url = new URL(urlString)
     if (validatedMessage && url.host !== originalHost) {
-      console.error('[/callback] bad url', { originalHost, urlHost: url.host })
+      console.error('[/farcast/callback] bad url', { originalHost, urlHost: url.host })
       return res.status(HttpStatusCode.BadRequest).send(`Invalid frame url: ${urlBuffer}`).end()
     }
   } catch (e) {
     return res.status(HttpStatusCode.BadRequest).send(`Failed to validate message: ${e}`).end()
   }
+
+  // console.log('[/farcast/callback] validatedMessage', validatedMessage)
+  const restartTarget = `${req.protocol}://${host}/${config.farcast.postUrlPath}/redirect`
+  if (!validatedMessage) {
+    return res.send(renderMintFailed(restartTarget)).end()
+  }
+  const fid = validatedMessage.data?.fid
+  if (!fid) {
+    console.error('[/farcast/callback] No fid found in validatedMessage')
+    return res.send(renderMintFailed(restartTarget)).end()
+  }
   // TODO: mint stuff
-  console.log('validatedMessage', validatedMessage)
+  const { owner } = await lookupFid(fid)
+
   // res.send(renderMintFailed(`${req.protocol}://${host}/${config.farcast.postUrlPath}/redirect`)).end()
   res.send(renderMintSuccess()).end()
   // respond a new frame
 })
 
 router.post('/callback/redirect', async (req, res) => {
+  console.log('[/callback/redirect] body', JSON.stringify(req.body))
   const host = getOriginalHost(req.get('host') ?? '')
   const target = `https://${host}/`
   console.log(`[/callback/redirect] Redirecting to ${target}`)
