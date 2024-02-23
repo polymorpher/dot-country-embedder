@@ -23,8 +23,8 @@ const getDefaultTokenName = (domainInfo: DomainInfo): string => {
 
 export const renderFarcasterPartialTemplate = (domainInfo: DomainInfo, image?: string): string => {
   const postUrlHost = getPostUrl(domainInfo.sld, domainInfo.subdomain)
-  const postUrl = `https://${postUrlHost}/${config.farcast.postUrlPath}`
-  const mintUrl = `https://${postUrlHost}/${config.farcast.postUrlPath}?action=mint`
+  const postUrl = `http://${postUrlHost}/${config.farcast.postUrlPath}`
+  const mintUrl = `http://${postUrlHost}/${config.farcast.postUrlPath}?action=mint`
   const mintTokenName = getDefaultTokenName(domainInfo)
   let customTokenName = ''
   let customTokenAddress = ''
@@ -51,7 +51,7 @@ export const renderFarcasterPartialTemplate = (domainInfo: DomainInfo, image?: s
 
   return `
         <meta property="fc:frame" content="vNext" />
-       ${image ? `<meta property="fc:frame:image" content="${image}" />` : ''}
+        <meta property="fc:frame:image" content="${image ?? config.farcast.defaultImageUrl}" />
         <meta property="fc:frame:post_url" content="${postUrl}" />
         <meta property="fc:frame:button:1" content="Get .country" />
         <meta property="fc:frame:button:1:action" content="link" />
@@ -77,7 +77,7 @@ export const renderMintSuccess = (): string => {
     <html>
       <head>
         <meta property="fc:frame" content="vNext" />
-        <meta property="fc:image" content="https://storage.googleapis.com/dotcountry-farcaster/mint-success.png" />
+        <meta property="fc:frame:image" content="https://storage.googleapis.com/dotcountry-farcaster/mint-success.png" />
         <meta property="og:image" content="https://storage.googleapis.com/dotcountry-farcaster/mint-success.png" />
       </head>
       <body>Hello, bot!</body>
@@ -90,7 +90,7 @@ export const renderMintFailed = (restartTarget: string): string => {
     <html>
       <head>
         <meta property="fc:frame" content="vNext" />
-        <meta property="fc:image" content="https://storage.googleapis.com/dotcountry-farcaster/mint-fail.png" />
+        <meta property="fc:frame:image" content="https://storage.googleapis.com/dotcountry-farcaster/mint-fail.png" />
         <meta property="og:image" content="https://storage.googleapis.com/dotcountry-farcaster/mint-fail.png" />
         <meta property="fc:frame:button:1" content="Restart" />
         <meta property="fc:frame:button:1:action" content="post" />

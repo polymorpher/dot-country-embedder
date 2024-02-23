@@ -80,8 +80,8 @@ if (config.corsOrigins !== '') {
 app.options('*', async (_req, res) => {
   res.end()
 })
-app.use('/', _index)
 app.use('/farcast', _farcast)
+app.use('/', _index)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
