@@ -1,5 +1,5 @@
 import { type NextFunction, type Request, type Response } from 'express'
-import { getSld, getSubdomain } from '../../common/domain-utils.ts'
+import { getSld, getSubdomain, parseSettings } from '../../common/domain-utils.ts'
 import { buildClient } from '../src/client.ts'
 import { parseSubstackUrl } from '../../common/substack-utils.ts'
 
@@ -14,7 +14,9 @@ const substack = async (req: Request, res: Response, next: NextFunction): Promis
   const subdomain = getSubdomain(host)
   const sld = getSld(host)
   const landing = await client.getLandingPage(sld, subdomain)
-  const url = parseSubstackUrl(landing)
+  const settings = parseSettings(landing)
+  const url = parseSubstackUrl(settings.landingPage)
+  console.log(landing, url)
   if (!url) {
     res.status(401).json({ error: 'Not substack page' })
     return

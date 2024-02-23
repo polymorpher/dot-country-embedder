@@ -17,7 +17,8 @@ const config = {
   corsOrigins: process.env.CORS ?? '',
   farcast: {
     postUrlSubdomainPrefix: process.env.FC_POST_SUBDOMAIN_PREFIX ?? 'farcast-api',
-    postUrlPath: process.env.FC_POST_PATH ?? 'farcast',
+    postUrlPath: process.env.FC_POST_PATH ?? 'farcast/callback',
+    hubUrl: process.env.HUB_URL ?? 'hub.pinata.cloud'
   }
 }
 export default config
