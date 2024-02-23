@@ -19,7 +19,7 @@ const config = {
     postUrlSubdomainPrefix: process.env.FC_POST_SUBDOMAIN_PREFIX ?? 'farcast-api',
     postUrlPath: process.env.FC_POST_PATH ?? 'farcast/callback',
     postProtocol: process.env.FC_POST_PROTOCOL ?? 'https',
-    hubUrl: process.env.FC_HUB_URL ?? 'hub.pinata.cloud',
+    hubUrl: process.env.FC_HUB_URL ?? 'hub-grpc.pinata.cloud',
     defaultImageUrl: process.env.FC_DEFAULT_IMAGE_URL ?? 'https://storage.googleapis.com/dotcountry-farcaster/fc-default.png'
   }
 }
