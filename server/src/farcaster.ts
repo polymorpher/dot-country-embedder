@@ -90,6 +90,7 @@ export const renderMintFailed = (restartTarget: string): string => {
     <html>
       <head>
         <meta property="fc:frame" content="vNext" />
+        <meta property="fc:frame:post_url" content="${restartTarget}" />
         <meta property="fc:frame:image" content="https://storage.googleapis.com/dotcountry-farcaster/mint-fail.png" />
         <meta property="og:image" content="https://storage.googleapis.com/dotcountry-farcaster/mint-fail.png" />
         <meta property="fc:frame:button:1" content="Restart" />
