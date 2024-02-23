@@ -23,8 +23,8 @@ const getDefaultTokenName = (domainInfo: DomainInfo): string => {
 
 export const renderFarcasterPartialTemplate = (domainInfo: DomainInfo, image?: string): string => {
   const postUrlHost = getPostUrl(domainInfo.sld, domainInfo.subdomain)
-  const postUrl = `http://${postUrlHost}/${config.farcast.postUrlPath}`
-  const mintUrl = `http://${postUrlHost}/${config.farcast.postUrlPath}?action=mint`
+  const postUrl = `${config.farcast.postProtocol}://${postUrlHost}/${config.farcast.postUrlPath}`
+  const mintUrl = `${config.farcast.postProtocol}://${postUrlHost}/${config.farcast.postUrlPath}?action=mint`
   const mintTokenName = getDefaultTokenName(domainInfo)
   let customTokenName = ''
   let customTokenAddress = ''
