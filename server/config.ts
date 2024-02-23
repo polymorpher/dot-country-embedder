@@ -16,7 +16,8 @@ const config = {
   },
   corsOrigins: process.env.CORS ?? '',
   farcast: {
-    postUrlSubdomainPrefix: process.env.FC_POST_SUBDOMAIN_PREFIX ?? 'farcast-api',
+    // postUrlSubdomainPrefix: process.env.FC_POST_SUBDOMAIN_PREFIX ?? 'farcast-api',
+    postUrlSubdomainPrefix: process.env.FC_POST_SUBDOMAIN_PREFIX ?? '',
     postUrlPath: process.env.FC_POST_PATH ?? 'farcast/callback',
     postProtocol: process.env.FC_POST_PROTOCOL ?? 'https',
     hubUrl: process.env.FC_HUB_URL ?? 'hub-grpc.pinata.cloud',
