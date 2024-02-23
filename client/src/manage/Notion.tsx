@@ -5,7 +5,7 @@ import config from '../../config'
 import { Button, Input, LinkWrarpper } from '../components/Controls'
 import { apis, buildClient, EWSTypes } from '../api'
 import { getSld, getSubdomain } from '../utils'
-import { isValidNotionPageId, segment } from '../../../common/notion-utils'
+import { isValidNotionPageId } from '../../../common/notion-utils'
 import { Feedback, Loading } from '../components/Misc'
 import useDebounce from '../hooks/useDebounce'
 import styled from 'styled-components'
@@ -16,6 +16,7 @@ import detectEthereumProvider from '@metamask/detect-provider'
 import { type ExternalProvider } from '@ethersproject/providers'
 import { EthereumProvider } from '@walletconnect/ethereum-provider'
 import { SmallTextGrey, SmallTextRed, Container, SuccessWithExplorerLink, InputBox, LabelText } from './Common'
+import { segment } from '../../../common/domain-utils'
 
 interface SuggestedPageIdConfig {
   id: string | undefined | null | Error

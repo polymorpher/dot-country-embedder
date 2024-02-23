@@ -19,7 +19,7 @@ import {
   extractEmoji,
   isValidNotionPageId,
   parsePath,
-  urlNormalize, segment
+  urlNormalize
 } from '../../common/notion-utils'
 import { type ExtendedRecordMap } from 'notion-types'
 import { getPath, getSld, getSubdomain, titleEmbeddedMapPageUrl } from './utils'
@@ -34,6 +34,7 @@ import './notion.scss'
 import { toast } from 'react-toastify'
 import TagManager from 'react-gtm-module'
 import { hotjar } from 'react-hotjar'
+import { segment } from '../../common/domain-utils'
 
 const Tweet = ({ id }: { id: string }): JSX.Element => {
   return <ReactTweet tweetId={id} />

@@ -4,16 +4,17 @@ import EWSAbi from '../../contract/abi/EWS.json' assert {
       integrity: 'sha384-ABC123'
 }
 import config from '../config.ts'
-import { type DomainInfo, EWSTypes, type OpenGraphData, type PageSetting } from './types.ts'
+import { type DomainInfo, EWSTypes, type OpenGraphData } from './types.ts'
 import { type EWS } from '../../contract/typechain-types'
 import { getOGDataFromPage, getPage } from './notion.ts'
 import { encode } from 'html-entities'
 import { type ExtendedRecordMap } from 'notion-types'
-import { isValidNotionPageId, parsePath, segment } from '../../common/notion-utils.ts'
+import { isValidNotionPageId, parsePath } from '../../common/notion-utils.ts'
 import axios from 'axios'
 import { parseSubstackUrl } from '../../common/substack-utils.ts'
 import { renderFarcasterPartialTemplate } from './farcaster.ts'
 import { JSDOM } from 'jsdom'
+import { parseSettings } from '../../common/domain-utils.ts'
 // const escape = (s: string): string => {
 //   return s.replaceAll('"', '%22')
 // }
@@ -50,16 +51,6 @@ const renderOpenGraphTemplate = (data: OpenGraphData, domain: DomainInfo): strin
 }
 
 const provider = new ethers.providers.StaticJsonRpcProvider(config.provider)
-
-const parseSettings = (setting: string): PageSetting => {
-  setting = setting.replaceAll('https://', 'https%3A%2F%2F').replaceAll('http://', 'http%3A%2F%2F')
-  const [landingPage, mode, ...extensions] = segment(setting)
-  const unrestrictedMode = mode !== 'strict'
-  const farcastEnabled = extensions.includes('farcast')
-  const farcastDefaultTokenName = extensions.find(e => e.startsWith('farcast-default-token-name='))?.substring('farcast-default-token-name='.length)
-  const farcastMintCustomToken = extensions.find(e => e.startsWith('farcast-custom-mint='))?.substring('farcast-custom-mint='.length)
-  return { landingPage, unrestrictedMode, farcastEnabled, farcastMintCustomToken, farcastDefaultTokenName }
-}
 
 const getOGPageNotion = async (subdomain: string, sld: string, landingPageSetting: string, allowedPages: string[], path?: string, ua?: string): Promise<string> => {
   const rawPath = path

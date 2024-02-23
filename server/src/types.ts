@@ -22,10 +22,3 @@ export interface DomainInfo {
   farcastDefaultTokenName?: string
 }
 
-export interface PageSetting {
-  landingPage: string
-  unrestrictedMode: boolean
-  farcastEnabled: boolean
-  farcastDefaultTokenName?: string
-  farcastMintCustomToken?: string
-}
