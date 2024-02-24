@@ -1,13 +1,22 @@
-import express from 'express'
+import express, { type Request, type Response, type NextFunction } from 'express'
 import { getSSLHubRpcClient, Message } from '@farcaster/hub-nodejs'
 import config from '../config.ts'
-import { HttpStatusCode } from 'axios'
-import { lookupFid, renderMintFailed, renderMintSuccess } from '../src/farcaster.ts'
-
+import axios, { HttpStatusCode } from 'axios'
+import {
+  lookupFid,
+  renderImageResponse,
+  renderMintFailed,
+  renderMintSuccess
+} from '../src/farcaster.ts'
+import { LRUCache } from 'lru-cache'
+import { v4 as uuidv4 } from 'uuid'
+import { Storage } from '@google-cloud/storage'
+import { parsePageSetting } from 'src/util.ts.ts'
 const client = config.farcast.hubUrl ? getSSLHubRpcClient(config.farcast.hubUrl) : undefined
 
 const router = express.Router()
 
+const base = axios.create({ timeout: 5000 })
 const getOriginalHost = (s: string): string => {
   s = s.substring(config.farcast.postUrlSubdomainPrefix.length)
   if (s.startsWith('-')) {
@@ -16,10 +25,26 @@ const getOriginalHost = (s: string): string => {
   return s
 }
 
-router.post('/callback', async (req, res): Promise<any> => {
+export const getMapUrl = (location?: string, suffix?: string): string => {
+  location = location ?? config.google.map.defaultLocation
+  suffix = suffix ?? config.google.map.defaultLocationSuffix
+  const url = new URL('https://maps.googleapis.com/maps/api/staticmap')
+  url.searchParams.append('center', `${location}${suffix}`)
+  url.searchParams.append('zoom', '13')
+  url.searchParams.append('size', '978x512')
+  url.searchParams.append('key', config.google.map.key)
+  url.searchParams.append('markers', `${location}${suffix}`)
+  url.searchParams.append('style', 'feature:all|saturation:0|hue:0xe7ecf0')
+  url.searchParams.append('style', 'feature:road|saturation:-70')
+  url.searchParams.append('style', 'feature:feature:poi|visibility:off')
+  url.searchParams.append('style', 'feature:road|saturation:-70')
+  url.searchParams.append('style', 'feature:road|saturation:-70')
+  return url.toString()
+}
+const authMessage = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const host = req.get('host')
-  // console.log('[/farcast/callback]', host, req.headers)
-  // console.log('[/farcast/callback] body', JSON.stringify(req.body))
+  // console.log('[authMessage]', host, req.headers)
+  // console.log('[authMessage] body', JSON.stringify(req.body))
   if (!host?.startsWith(config.farcast.postUrlSubdomainPrefix)) {
     return res.status(HttpStatusCode.BadRequest).send(`Invalid host: ${host}`).end()
   }
@@ -40,19 +65,32 @@ router.post('/callback', async (req, res): Promise<any> => {
     const urlString = Buffer.from(urlBuffer).toString('utf-8')
     const url = new URL(urlString)
     if (validatedMessage && url.host !== originalHost) {
-      console.error('[/farcast/callback] bad url', { originalHost, urlHost: url.host })
+      console.error('[authMessage] bad url', { originalHost, urlHost: url.host })
       return res.status(HttpStatusCode.BadRequest).send(`Invalid frame url: ${urlBuffer}`).end()
     }
   } catch (e) {
     return res.status(HttpStatusCode.BadRequest).send(`Failed to validate message: ${e}`).end()
   }
+  req.validatedMessage = validatedMessage
+}
 
+const getPageSetting = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    req.domainInfo = await parsePageSetting(req.hostname)
+    next()
+  } catch (ex: any) {
+    console.error('[getPageSetting] ', ex)
+    res.status(HttpStatusCode.InternalServerError).send('Cannot retrieve domain info based on hostname').end()
+  }
+}
+router.post('/callback', authMessage, getPageSetting, async (req, res): Promise<any> => {
+  const host = req.get('host')
   // console.log('[/farcast/callback] validatedMessage', validatedMessage)
-  const restartTarget = `${req.protocol}://${host}/${config.farcast.postUrlPath}/redirect`
-  if (!validatedMessage) {
+  const restartTarget = `${req.protocol}://${host}/${config.farcast.apiBase}/callback/redirect`
+  if (!req.validatedMessage) {
     return res.send(renderMintFailed(restartTarget)).end()
   }
-  const fid = validatedMessage.data?.fid
+  const fid = req.validatedMessage.data?.fid
   if (!fid) {
     console.error('[/farcast/callback] No fid found in validatedMessage')
     return res.send(renderMintFailed(restartTarget)).end()
@@ -77,9 +115,88 @@ router.get('/callback', async (req, res) => {
   const host = req.get('host')
   console.log(host, req.protocol)
   if (req.query.fail === '1') {
-    return res.send(renderMintFailed(`${req.protocol}://${host}/${config.farcast.postUrlPath}/redirect`))
+    return res.send(renderMintFailed(`${req.protocol}://${host}/${config.farcast.apiBase}/callback/redirect`))
   }
   res.send(renderMintSuccess()).end()
+})
+
+const tokenCache = new LRUCache<string, string>({
+  max: 5000,
+  maxSize: 50000,
+  sizeCalculation: (value, key) => {
+    return 1
+  },
+  ttl: 1000 * 60
+})
+
+const storage = new Storage()
+const uploadFile = async (buffer, filename, bucketName = config.google.storage.bucket): Promise<any> => {
+  // Upload the buffer to the Google Storage bucket
+  const bucket = storage.bucket(bucketName)
+  const file = bucket.file(filename)
+  return await new Promise((resolve, reject) => {
+    const stream = file.createWriteStream({ resumable: false })
+    stream.on('error', reject)
+    stream.on('finish', resolve)
+    stream.end(buffer)
+  })
+}
+
+const fileExist = async (filename, bucketName = config.google.storage.bucket): Promise<boolean> => {
+  const bucket = storage.bucket(bucketName)
+  const file = bucket.file(filename)
+  const [exist] = await file.exists()
+  return exist
+}
+
+router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
+  const host = req.get('host')
+  // console.log('[/farcast/callback] validatedMessage', validatedMessage)
+  const restartTarget = `${req.protocol}://${host}/${config.farcast.apiBase}/callback/redirect`
+  if (!req.validatedMessage) {
+    return res.send(renderMintFailed(restartTarget)).end()
+  }
+  const input = req.validatedMessage.data?.frameActionBody?.inputText
+  if (!input) {
+    console.error('[/map/callback] Validated data has no user input')
+    return res.send(renderMintFailed(restartTarget)).end()
+  }
+  const location = new TextDecoder().decode(input)
+
+  // TODO: actually mint the token
+
+  const token = uuidv4()
+  const mapUrl = getMapUrl(location, req.domainInfo?.farcastMap)
+  tokenCache.set(token, location)
+  const { data } = await base.get(mapUrl, { responseType: 'arraybuffer' })
+
+  await uploadFile(Buffer.from(data), `${token}.png`)
+  const image = `https://storage.googleapis.com/${config.google.storage.bucket}/${token}.png`
+  const html = renderImageResponse(image, `You just earned $MAP! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
+  res.send(html).end()
+})
+
+// alternative way of generating image - makes frame response faster, generate and cache image later when image is requested
+router.get('/map/image', async (req, res) => {
+  const token = req.query.token?.toString()
+  if (!token) {
+    return res.status(HttpStatusCode.BadRequest).send('No token').end()
+  }
+  const location = tokenCache.get(token)
+  if (!location) {
+    return res.status(HttpStatusCode.BadRequest).send(`Bad token ${token}`).end()
+  }
+  const refresh = !!req.query.r
+  const exist = await fileExist(`${token}.png`)
+  if (exist && !refresh) {
+    res.redirect(`https://storage.googleapis.com/${config.google.storage.bucket}/${token}.png`)
+    return
+  }
+  const mapUrl = getMapUrl(location)
+  const { data } = await base.get(mapUrl, { responseType: 'arraybuffer' })
+  res.type('png')
+  res.send(Buffer.from(data)).end()
+  await uploadFile(Buffer.from(data), `${token}.png`)
 })
 
 export default router

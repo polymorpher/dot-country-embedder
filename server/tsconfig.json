@@ -13,7 +13,8 @@
       "allowImportingTsExtensions": true,
       "paths": {
         "*.ts": ["*"]
-      }
+      },
+      "typeRoots": ["./types"]
     },
     "include": ["./routes", "./", "./src","./script"]
   }

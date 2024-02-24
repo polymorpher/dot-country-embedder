@@ -28,8 +28,8 @@ const getDefaultTokenName = (domainInfo: DomainInfo): string => {
 
 export const renderFarcasterPartialTemplate = (domainInfo: DomainInfo, image?: string): string => {
   const postUrlHost = getPostUrl(domainInfo.sld, domainInfo.subdomain)
-  const postUrl = `${config.farcast.postProtocol}://${postUrlHost}/${config.farcast.postUrlPath}`
-  const mintUrl = `${config.farcast.postProtocol}://${postUrlHost}/${config.farcast.postUrlPath}?action=mint`
+  const postUrl = `${config.farcast.postProtocol}://${postUrlHost}/${config.farcast.apiBase}/callback`
+  const mintUrl = `${config.farcast.postProtocol}://${postUrlHost}/${config.farcast.apiBase}/callback?action=mint`
   const mintTokenName = getDefaultTokenName(domainInfo)
   let customTokenName = ''
   let customTokenAddress = ''
@@ -50,7 +50,7 @@ export const renderFarcasterPartialTemplate = (domainInfo: DomainInfo, image?: s
         customTokenName = name
         customTokenAddress = address
       }
-      customMintUrl = `https://${postUrlHost}/${config.farcast.postUrlPath}?action=mint&name=${customTokenName}&address=${customTokenAddress}`
+      customMintUrl = `https://${postUrlHost}/${config.farcast.apiBase}/callback?action=mint&name=${customTokenName}&address=${customTokenAddress}`
     }
   }
 
@@ -120,4 +120,62 @@ export const lookupFid = async (fid: number): Promise<FarcastUserInfo> => {
   const { data } = await axios.get(`https://fnames.farcaster.xyz/transfers/current?fid=${fid}`)
   const { owner, username, timestamp }: { owner: string, username: string, timestamp: number } = data
   return { fid, owner, username, timestamp: timestamp * 1000 }
+}
+
+export interface RenderTextOptions {
+  color: string
+  fontFamily: string
+  fontSize: number
+}
+
+export const renderTextSvg = (text: string, options?: RenderTextOptions): string => {
+  const fontFamily = options?.fontFamily ?? 'Arial, sans-serif'
+  const fontSize = `${(options?.fontSize ?? 60)}px`
+  const color = options?.color ?? '#10b2e3'
+
+  return `
+  <?xml version="1.0" encoding="utf-8"?>
+  <svg viewBox="0 0 978 512" xmlns="http://www.w3.org/2000/svg">
+    <text style="white-space: pre; fill: ${color}; font-family: ${fontFamily}; font-size: ${fontSize};" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">${text}</text>
+  </svg>
+  `
+}
+
+export const renderImageResponse = (image: string, text?: string, nextAction?: string, nextTarget?: string): string => {
+  return `
+    <html>
+      <head>
+        <meta property="fc:frame" content="vNext" />
+        <meta property="fc:frame:image" content="${image}" />
+        <meta property="og:image" content="${image}" />
+        ${text
+? `
+        <meta property="fc:frame:button:1" content="${text}" />
+        <meta property="fc:frame:button:1:action" content="${nextAction}" />
+        <meta property="fc:frame:button:1:target" content="${nextTarget}"/>
+        `
+: ''}
+      </head>
+      <body>Hello, bot!</body>
+    </html>
+`
+}
+
+export const renderFarcasterMapTemplate = (domainInfo: DomainInfo, image?: string): string => {
+  const postUrlHost = getPostUrl(domainInfo.sld, domainInfo.subdomain)
+  const postUrl = `${config.farcast.postProtocol}://${postUrlHost}/${config.farcast.apiBase}/map/callback`
+
+  return `
+        <meta property="fc:frame" content="vNext" />
+        <meta property="fc:frame:image" content="${image ?? config.farcast.defaultImageUrl}" />
+        <meta property="fc:frame:post_url" content="${postUrl}" />
+        <meta property="fc:frame:button:1" content="Get .country" />
+        <meta property="fc:frame:button:1:action" content="link" />
+        <meta property="fc:frame:button:1:target" content="https://1.country"/>
+        
+        <meta property="fc:frame:input:text" content="Enter your location, check in and earn $MAP"/>
+        <meta property="fc:frame:button:2" content="Mint $MAP" />
+        <meta property="fc:frame:button:2:action" content="post" />
+        <meta property="fc:frame:button:2:target" content="${postUrl}"/>
+    `
 }

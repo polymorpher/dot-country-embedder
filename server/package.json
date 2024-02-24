@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@farcaster/hub-nodejs": "^0.11.1",
+    "@google-cloud/storage": "^7.7.0",
     "@types/jsdom": "^21.1.1",
     "axios": "^1.6.7",
     "bn.js": "^5.2.0",
@@ -33,7 +34,8 @@
     "morgan": "^1.10.0",
     "notion-client": "^6.16.0",
     "promise-limit": "^2.7.0",
-    "redis": "^4.5.1"
+    "redis": "^4.5.1",
+    "uuid": "^9.0.1"
   },
   "resolutions": {
     "tar": ">=4.4.15"

@@ -9,9 +9,10 @@ import { type ExtendedRecordMap } from 'notion-types'
 import { isValidNotionPageId, parsePath } from '../../common/notion-utils.ts'
 import axios from 'axios'
 import { parseSubstackUrl } from '../../common/substack-utils.ts'
-import { renderFarcasterPartialTemplate } from './farcaster.ts'
+import { renderFarcasterMapTemplate, renderFarcasterPartialTemplate } from './farcaster.ts'
 import { JSDOM } from 'jsdom'
 import { parseSettings } from '../../common/domain-utils.ts'
+import { settingToDomainInfo } from 'src/util.ts.ts'
 // const escape = (s: string): string => {
 //   return s.replaceAll('"', '%22')
 // }
@@ -55,16 +56,15 @@ const getOGPageNotion = async (subdomain: string, sld: string, landingPageSettin
   if (rawPath && !isValidNotionPageId(path)) {
     return EMPTY_PAGE
   }
-  const { landingPage, unrestrictedMode, farcastEnabled, farcastMintCustomToken, farcastDefaultTokenName } = parseSettings(landingPageSetting)
+  const domainInfo = settingToDomainInfo(sld, subdomain, landingPageSetting)
   let page: ExtendedRecordMap
-  if (path && isValidNotionPageId(path) && (unrestrictedMode || allowedPages.includes(path))) {
+  if (path && isValidNotionPageId(path) && (!!domainInfo.unrestrictedMode || allowedPages.includes(path))) {
     page = await getPage(path)
   } else {
-    page = await getPage(landingPage)
+    page = await getPage(domainInfo.landingPage ?? '')
   }
   const ogData = getOGDataFromPage(page, ua)
   const url = `https://${subdomain}${subdomain ? '.' : ''}${sld}.${config.TLD}`
-  const domainInfo: DomainInfo = { sld, subdomain, farcastEnabled, farcastMintCustomToken, farcastDefaultTokenName }
   return renderOpenGraphTemplate({ url, ...ogData }, domainInfo)
 }
 
@@ -72,17 +72,22 @@ const EMPTY_PAGE = '<html></html>'
 
 const substackAxiosBase = axios.create({ timeout: 15000 })
 const getOGPageSubstack = async (subdomain: string, sld: string, landingPageSetting: string, path?: string): Promise<string> => {
-  const { landingPage, farcastEnabled, farcastMintCustomToken, farcastDefaultTokenName } = parseSettings(landingPageSetting)
-  const url = parseSubstackUrl(decodeURIComponent(landingPage))
+  const domainInfo = settingToDomainInfo(sld, subdomain, landingPageSetting)
+  const url = parseSubstackUrl(decodeURIComponent(domainInfo.landingPage ?? ''))
   if (!url) {
     return EMPTY_PAGE
   }
 
-  const domainInfo: DomainInfo = { sld, subdomain, farcastEnabled, farcastMintCustomToken, farcastDefaultTokenName }
   const { data } = await substackAxiosBase.get(`https://${url.host}/${path}`)
-  if (farcastEnabled) {
+  if (domainInfo.farcastEnabled) {
     const jsdom = new JSDOM(data)
-    const farcasterPartial = renderFarcasterPartialTemplate(domainInfo)
+    const image = jsdom.window.document.querySelector('meta[name="og:image"]')?.getAttribute('content') ?? undefined
+    let farcasterPartial: string | undefined
+    if (domainInfo.farcastMap) {
+      farcasterPartial = renderFarcasterMapTemplate(domainInfo, image)
+    } else {
+      farcasterPartial = renderFarcasterPartialTemplate(domainInfo, image)
+    }
     const partialDom = JSDOM.fragment(farcasterPartial)
     jsdom.window.document.head.append(partialDom)
     return jsdom.serialize()

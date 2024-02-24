@@ -18,10 +18,21 @@ const config = {
   farcast: {
     // postUrlSubdomainPrefix: process.env.FC_POST_SUBDOMAIN_PREFIX ?? 'farcast-api',
     postUrlSubdomainPrefix: process.env.FC_POST_SUBDOMAIN_PREFIX ?? '',
-    postUrlPath: process.env.FC_POST_PATH ?? 'farcast/callback',
+    apiBase: process.env.FC_API_BASE ?? 'farcast',
     postProtocol: process.env.FC_POST_PROTOCOL ?? 'https',
     hubUrl: process.env.FC_HUB_URL ?? 'hub-grpc.pinata.cloud',
     defaultImageUrl: process.env.FC_DEFAULT_IMAGE_URL ?? 'https://storage.googleapis.com/dotcountry-farcaster/fc-default.png'
+  },
+  google: {
+    storage: {
+      bucket: process.env.GOOGLE_STORAGE_BUCKET ?? 'farcaster-cache'
+    },
+    map:
+        {
+          key: process.env.GOOGLE_MAP_KEY ?? '',
+          defaultLocation: process.env.GOOGLE_MAP_DEFAULT_LOCATION ?? 'Salesforce Tower',
+          defaultLocationSuffix: process.env.GOOGLE_MAP_LOCATION_SUFFIX ?? ', San Francisco, CA'
+        }
   }
 }
 export default config

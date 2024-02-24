@@ -17,8 +17,10 @@ export const EWSTypes: Record<string, EWSType> = {
 export interface DomainInfo {
   sld: string
   subdomain?: string
+  unrestrictedMode?: boolean
+  landingPage?: string
   farcastEnabled?: boolean
   farcastMintCustomToken?: string
   farcastDefaultTokenName?: string
+  farcastMap?: string
 }
-
