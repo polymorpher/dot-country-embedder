@@ -1,5 +1,15 @@
 const substackUrlRegExp = /^https:\/\/[a-zA-Z0-9-]+.substack.com(\/|\/[/.a-zA-Z0-9-_#]+)?$/;
 const substackLandingUrlRegExp = /^https:\/\/[a-zA-Z0-9-]+.substack.com(\/?)$/;
+
+export const isSimpleUrl = (s: string): boolean => {
+    try {
+        new URL(s)
+        return true
+    } catch (ex: any) {
+        return false
+    }
+}
+
 export const isValidSubstackLandingUrl = (str: string) => substackLandingUrlRegExp.test(str)
 export const isValidSubstackUrl = (str: string) => substackUrlRegExp.test(str)
 export function parseSubstackUrl (urlStr: string): URL | null {

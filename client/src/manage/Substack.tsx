@@ -5,7 +5,7 @@ import config from '../../config'
 import { Button, Input, LinkWrarpper } from '../components/Controls'
 import { buildClient, EWSTypes } from '../api'
 import { getSld, getSubdomain } from '../utils'
-import { isValidSubstackLandingUrl } from '../../../common/substack-utils'
+import { isSimpleUrl, isValidSubstackLandingUrl } from '../../../common/substack-utils'
 import { Feedback, Loading } from '../components/Misc'
 import useDebounce from '../hooks/useDebounce'
 import styled from 'styled-components'
@@ -16,6 +16,7 @@ import detectEthereumProvider from '@metamask/detect-provider'
 import { type ExternalProvider } from '@ethersproject/providers'
 import { EthereumProvider } from '@walletconnect/ethereum-provider'
 import { SuccessWithExplorerLink, SmallTextGrey, SmallTextRed, Container, InputBox, LabelText } from './Common'
+import { parseSettings } from '../../../common/domain-utils'
 
 const ManageSubstack = ({ footer = <></> }): React.JSX.Element => {
   const [address, setAddress] = useState('')
@@ -137,16 +138,20 @@ const ManageSubstack = ({ footer = <></> }): React.JSX.Element => {
 
   const save = async (): Promise<void> => {
     let id = debouncedEditingPageId
-    if (!isValidSubstackLandingUrl(id) && id !== '') {
-      toast.error(`Invalid landing page id: ${id}`)
+
+    const settings = parseSettings(id)
+    let page = settings.landingPage
+    if (page.endsWith('/')) {
+      page = page.slice(0, page.length - 1)
+    }
+    if (page.startsWith('https://')) {
+      page = page.slice('https://'.length)
+    }
+    if (!page.endsWith('substack.com')) {
+      toast.error(`Invalid Substack landing page: ${page}`)
       return
     }
-    if (id.endsWith('/')) {
-      id = id.slice(0, id.length - 1)
-    }
-    if (id.startsWith('https://')) {
-      id = id.slice('https://'.length)
-    }
+    id = [`${page}:${settings.unrestrictedMode ? 'lax' : 'strict'}`, ...settings.extensions].join(':')
 
     tryCatch(async () => {
       const tx = await client.update(sld, subdomain, EWSTypes.EWS_SUBSTACK, id, [], false)

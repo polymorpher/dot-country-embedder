@@ -7,7 +7,6 @@ import { type OpenGraphData } from './types.ts'
 import {
   extractTitle,
   extractDescription,
-  extractPageCover,
   extractPageEmoji,
   makeEmojiDataUrl,
   extractEmoji,

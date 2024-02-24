@@ -1,24 +1,24 @@
 import ethers from 'ethers'
-import EWSAbi from '../../contract/abi/EWS.json' assert {
-      type: 'json',
-      integrity: 'sha384-ABC123'
-}
+import EWSAbi from '../../contract/abi/EWS.json' assert {type: 'json'}
 import config from '../config.ts'
-import { EWSTypes, type OpenGraphData } from './types.ts'
+import { type DomainInfo, EWSTypes, type OpenGraphData } from './types.ts'
 import { type EWS } from '../../contract/typechain-types'
 import { getOGDataFromPage, getPage } from './notion.ts'
 import { encode } from 'html-entities'
 import { type ExtendedRecordMap } from 'notion-types'
-import {isValidNotionPageId, parsePath, segment} from '../../common/notion-utils.ts'
+import { isValidNotionPageId, parsePath } from '../../common/notion-utils.ts'
 import axios from 'axios'
 import { parseSubstackUrl } from '../../common/substack-utils.ts'
+import { renderFarcasterMapTemplate, renderFarcasterPartialTemplate, renderFarcasterTextTemplate } from './farcaster.ts'
+import { JSDOM } from 'jsdom'
+import { settingToDomainInfo } from './util.ts'
 
-const escape = (s: string): string => {
-  return s.replaceAll('"', '%22')
-}
-export const renderOpenGraphTemplate = (data: OpenGraphData): string => {
-  return `<html>
-<head>
+// const escape = (s: string): string => {
+//   return s.replaceAll('"', '%22')
+// }
+
+const renderOpenGrapPartialTemplate = (data: OpenGraphData): string => {
+  return `
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${encode(data.title)}</title>
@@ -32,43 +32,80 @@ export const renderOpenGraphTemplate = (data: OpenGraphData): string => {
     ${data.image ? `<meta name="twitter:image" content="${data.image}"/>` : ''}
     <meta property="og:type" content="article">
     <meta property="og:locale" content="en_US">
-    
-</head>
-<body>Hello, bot!</body>
-</html>`
+   `
+}
+
+const renderOpenGraphTemplate = (data: OpenGraphData, domain: DomainInfo): string => {
+  // console.log('[renderOpenGraphTemplate] domain', domain)
+  const partial = renderOpenGrapPartialTemplate(data)
+  let fcPartial = ''
+  if (domain?.farcastEnabled) {
+    if (domain.farcastMap) {
+      fcPartial = renderFarcasterMapTemplate(domain, data.image)
+    } else if (domain.farcastText) {
+      fcPartial = renderFarcasterTextTemplate(domain, data.image)
+    } else {
+      fcPartial = renderFarcasterPartialTemplate(domain, data.image)
+    }
+  }
+  return `
+    <html>
+      <head>
+        ${partial}
+        ${fcPartial}
+      </head>
+      <body>Hello, bot!</body>
+    </html>
+  `
 }
 
 const provider = new ethers.providers.StaticJsonRpcProvider(config.provider)
 
-const getOGPageNotion = async (subdomain: string, sld: string,
-  landingPageSetting: string, allowedPages: string[], path?: string, ua?: string): Promise<string> => {
+const getOGPageNotion = async (subdomain: string, sld: string, landingPageSetting: string, allowedPages: string[], path?: string, ua?: string): Promise<string> => {
   const rawPath = path
   path = parsePath(path)
   if (rawPath && !isValidNotionPageId(path)) {
     return EMPTY_PAGE
   }
-  const [landingPage, mode] = segment(landingPageSetting)
-  const unrestrictedMode = mode !== 'strict'
+  const domainInfo = settingToDomainInfo(sld, subdomain, landingPageSetting)
   let page: ExtendedRecordMap
-  if (path && isValidNotionPageId(path) && (unrestrictedMode || allowedPages.includes(path))) {
+  if (path && isValidNotionPageId(path) && (!!domainInfo.unrestrictedMode || allowedPages.includes(path))) {
     page = await getPage(path)
   } else {
-    page = await getPage(landingPage)
+    page = await getPage(domainInfo.landingPage ?? '')
   }
   const ogData = getOGDataFromPage(page, ua)
   const url = `https://${subdomain}${subdomain ? '.' : ''}${sld}.${config.TLD}`
-  return renderOpenGraphTemplate({ url, ...ogData })
+  return renderOpenGraphTemplate({ url, ...ogData }, domainInfo)
 }
 
 const EMPTY_PAGE = '<html></html>'
 
 const substackAxiosBase = axios.create({ timeout: 15000 })
-const getOGPageSubstack = async (subdomain: string, sld: string, substackHost: string, path?: string): Promise<string> => {
-  const url = parseSubstackUrl(substackHost)
+const getOGPageSubstack = async (subdomain: string, sld: string, landingPageSetting: string, path?: string): Promise<string> => {
+  const domainInfo = settingToDomainInfo(sld, subdomain, landingPageSetting)
+  const url = parseSubstackUrl(decodeURIComponent(domainInfo.landingPage ?? ''))
   if (!url) {
     return EMPTY_PAGE
   }
-  const { data } = await substackAxiosBase.get(`https://${substackHost}/${path}`)
+
+  const { data } = await substackAxiosBase.get(`https://${url.host}/${path}`)
+  if (domainInfo.farcastEnabled) {
+    const jsdom = new JSDOM(data)
+    const image = jsdom.window.document.querySelector('meta[name="og:image"]')?.getAttribute('content') ?? undefined
+    let farcasterPartial: string | undefined
+    if (domainInfo.farcastMap) {
+      farcasterPartial = renderFarcasterMapTemplate(domainInfo, image)
+    } else if (domainInfo.farcastText) {
+      farcasterPartial = renderFarcasterTextTemplate(domainInfo, image)
+    } else {
+      farcasterPartial = renderFarcasterPartialTemplate(domainInfo, image)
+    }
+    const partialDom = JSDOM.fragment(farcasterPartial)
+    jsdom.window.document.head.append(partialDom)
+    return jsdom.serialize()
+  }
+
   return data
 }
 export const getOGPage = async (sld: string, subdomain: string, path?: string, ua?: string): Promise<string> => {

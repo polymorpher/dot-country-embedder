@@ -1,3 +1,11 @@
+export const segment = (id: string): string[] => {
+    if (id.startsWith('https://') || id.startsWith('http://')) {
+        const [s1, s2, ...rest] = id.split(':')
+        return [s1 + ':' + s2, ...rest]
+    }
+    return id.split(':')
+}
+
 const specialDomains = [
     'blueapes.com',
     'bluetaverse.com',
@@ -47,4 +55,44 @@ export function getSubdomain (hostname: string | string[] ) : string {
     const parts = hostname instanceof Array ? hostname : hostname.split('.')
     let subdomain = parts.length <= 2 ? '' : parts[parts.length - 3].toLowerCase()
     return subdomain
+}
+
+export const parseSettings = (setting: string): PageSetting => {
+    setting = setting.replaceAll('https://', 'https%3A%2F%2F').replaceAll('http://', 'http%3A%2F%2F')
+    const [landingPageEncoded, mode, ...extensions] = segment(setting)
+    const landingPage = decodeURIComponent(landingPageEncoded)
+    const unrestrictedMode = mode !== 'strict'
+    const farcastEnabled = extensions.includes('farcast')
+    const farcastText = extensions.includes('farcast-text')
+    const farcastDefaultTokenName = extensions.find(e => e.startsWith('farcast-default-token-name='))?.substring('farcast-default-token-name='.length)
+    const farcastMintCustomToken = extensions.find(e => e.startsWith('farcast-custom-mint='))?.substring('farcast-custom-mint='.length)
+    let farcastMap = extensions.find(e => e.startsWith('farcast-map='))?.substring('farcast-map='.length)
+    if (farcastMap){
+        farcastMap = decodeURIComponent(farcastMap)
+    }
+    return {
+        landingPage,
+        unrestrictedMode,
+        farcastEnabled,
+        farcastMintCustomToken: farcastMintCustomToken ? decodeURIComponent(farcastMintCustomToken) : undefined,
+        farcastDefaultTokenName: farcastDefaultTokenName? decodeURIComponent(farcastDefaultTokenName) : undefined,
+        extensions,
+        farcastMap,
+        farcastText
+    }
+}
+
+export const serializeSettings = (setting: PageSetting) =>{
+    //TODO
+}
+
+export interface PageSetting {
+    landingPage: string
+    unrestrictedMode: boolean
+    farcastEnabled: boolean
+    farcastText: boolean
+    farcastDefaultTokenName?: string
+    farcastMintCustomToken?: string
+    farcastMap?: string
+    extensions: string[]
 }

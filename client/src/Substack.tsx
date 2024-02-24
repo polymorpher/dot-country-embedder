@@ -8,8 +8,8 @@ import { LinkWrarpper } from './components/Controls'
 import { FlexColumn } from './components/Layout'
 import { replaceSubscribeWidget, replaceSubstackLink } from './LinkReplacer'
 import './substack.scss'
-import { segment } from '../../common/notion-utils'
 import config from '../config'
+import { segment } from '../../common/domain-utils'
 
 const Substack: React.FC = () => {
   const [client] = useState(buildClient())

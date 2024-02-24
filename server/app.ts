@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser'
 import logger from 'morgan'
 import config from './config.ts'
 import _index from './routes/index.ts'
+import _farcast from './routes/farcast.ts'
 import bodyParser from 'body-parser'
 import https from 'https'
 import http from 'http'
@@ -79,6 +80,7 @@ if (config.corsOrigins !== '') {
 app.options('*', async (_req, res) => {
   res.end()
 })
+app.use('/farcast', _farcast)
 app.use('/', _index)
 
 // catch 404 and forward to error handler

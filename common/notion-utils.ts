@@ -107,11 +107,3 @@ export const parsePath = (path?: string): string => {
 export const urlNormalize = (content: string): string =>{
     return content.replace(/[^a-z0-9_]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()
 }
-
-export const segment = (id: string): string[] => {
-    if (id.startsWith('https://') || id.startsWith('http://')) {
-        const [s1, s2, ...rest] = id.split(':')
-        return [s1 + ':' + s2, ...rest]
-    }
-    return id.split(':')
-}
