@@ -36,13 +36,20 @@ const renderOpenGrapPartialTemplate = (data: OpenGraphData): string => {
 }
 
 const renderOpenGraphTemplate = (data: OpenGraphData, domain: DomainInfo): string => {
-  const fcEnabled = domain?.farcastEnabled
   const partial = renderOpenGrapPartialTemplate(data)
+  let fcPartial = ''
+  if (domain?.farcastEnabled) {
+    if (domain.farcastMap) {
+      fcPartial = renderFarcasterMapTemplate(domain, data.image)
+    } else {
+      renderFarcasterPartialTemplate(domain, data.image)
+    }
+  }
   return `
     <html>
       <head>
         ${partial}
-        ${fcEnabled ? renderFarcasterPartialTemplate(domain, data.image) : ''}
+        ${fcPartial}
       </head>
       <body>Hello, bot!</body>
     </html>

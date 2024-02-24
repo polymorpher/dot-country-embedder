@@ -26,7 +26,7 @@ export const getMapUrl = (location?: string, suffix?: string): string => {
   suffix = suffix ?? config.google.map.defaultLocationSuffix
   const url = new URL('https://maps.googleapis.com/maps/api/staticmap')
   url.searchParams.append('center', `${location}${suffix}`)
-  url.searchParams.append('zoom', '13')
+  url.searchParams.append('zoom', '15')
   url.searchParams.append('size', '978x512')
   url.searchParams.append('key', config.google.map.key)
   url.searchParams.append('markers', `${location}${suffix}`)

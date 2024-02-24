@@ -173,9 +173,9 @@ export const renderFarcasterMapTemplate = (domainInfo: DomainInfo, image?: strin
         <meta property="fc:frame:button:1:action" content="link" />
         <meta property="fc:frame:button:1:target" content="https://1.country"/>
         
-        <meta property="fc:frame:input:text" content="Enter your location, check in and earn $MAP"/>
         <meta property="fc:frame:button:2" content="Mint $MAP" />
         <meta property="fc:frame:button:2:action" content="post" />
         <meta property="fc:frame:button:2:target" content="${postUrl}"/>
+        <meta property="fc:frame:input:text" content="Enter your location, earn $MAP"/>
     `
 }

@@ -56,6 +56,7 @@ const authMessage = async (req: Request, res: Response, next: NextFunction): Pro
     return res.status(HttpStatusCode.BadRequest).send(`Failed to validate message: ${e}`).end()
   }
   req.validatedMessage = validatedMessage
+  next()
 }
 
 const getPageSetting = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -124,6 +125,8 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
     return res.send(renderMintFailed(restartTarget)).end()
   }
   const input = req.validatedMessage.data?.frameActionBody?.inputText
+  console.log('input', input)
+  console.log('req.validatedMessage.data', req.validatedMessage.data)
   if (!input) {
     console.error('[/map/callback] Validated data has no user input')
     return res.send(renderMintFailed(restartTarget)).end()
@@ -134,6 +137,7 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
 
   const token = ethers.utils.id(`${location}${req.domainInfo?.farcastMap}`)
   const exist = await fileExist(`${token}.png`)
+  console.log(`Generated token ${token} for location=${location}, suffix=${req.domainInfo?.farcastMap}`)
   tokenCache.set(token, location)
   if (!exist) {
     const mapUrl = getMapUrl(location, req.domainInfo?.farcastMap)
@@ -141,26 +145,27 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
     await uploadFile(Buffer.from(data), `${token}.png`)
   }
   const image = `https://storage.googleapis.com/${config.google.storage.bucket}/${token}.png`
-  const html = renderImageResponse(image, `You just earned $MAP! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
+  const html = renderImageResponse(image, `You earned $MAP! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
   res.send(html).end()
 })
 
-if (config.debug) {
-  router.get('/map/callback', getPageSetting, async (req, res) => {
-    const host = req.hostname
-    const location = req.query.location as string
-    const token = ethers.utils.id(`${location}${req.domainInfo?.farcastMap}`)
-    const exist = await fileExist(`${token}.png`)
-    if (!exist) {
-      const mapUrl = getMapUrl(location, req.domainInfo?.farcastMap)
-      const { data } = await base.get(mapUrl, { responseType: 'arraybuffer' })
-      await uploadFile(Buffer.from(data), `${token}.png`)
-    }
-    const image = `https://storage.googleapis.com/${config.google.storage.bucket}/${token}.png`
-    const html = renderImageResponse(image, `You just earned $MAP! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
-    res.send(html).end()
-  })
-}
+// if (config.debug) {
+//   router.get('/map/callback', getPageSetting, async (req, res) => {
+//     const host = req.hostname
+//     const location = req.query.location as string
+//     const token = ethers.utils.id(`${location}${req.domainInfo?.farcastMap}`)
+//     console.log(`[DEBUG] token ${token} for location=${location}, suffix=${req.domainInfo?.farcastMap}`)
+//     const exist = await fileExist(`${token}.png`)
+//     if (!exist) {
+//       const mapUrl = getMapUrl(location, req.domainInfo?.farcastMap)
+//       const { data } = await base.get(mapUrl, { responseType: 'arraybuffer' })
+//       await uploadFile(Buffer.from(data), `${token}.png`)
+//     }
+//     const image = `https://storage.googleapis.com/${config.google.storage.bucket}/${token}.png`
+//     const html = renderImageResponse(image, `You just earned $MAP! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
+//     res.send(html).end()
+//   })
+// }
 
 // alternative way of generating image - makes frame response faster, generate and cache image later when image is requested
 router.get('/map/image', async (req, res) => {
