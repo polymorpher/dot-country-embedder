@@ -118,12 +118,13 @@ const tokenCache = new LRUCache<string, string>({
 })
 
 router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
+  // console.log('ip', req.headers['x-forwarded-for'] ?? req.socket.remoteAddress)
   const host = req.get('host')
-  // console.log('[/farcast/callback] validatedMessage', validatedMessage)
   const restartTarget = `${req.protocol}://${host}/${config.farcast.apiBase}/callback/redirect`
   if (!req.validatedMessage) {
     return res.send(renderMintFailed(restartTarget)).end()
   }
+  console.log('[/map/callback] validatedMessage', JSON.stringify(Message.toJSON(req.validatedMessage)))
   const input = req.validatedMessage.data?.frameActionBody?.inputText
   // console.log('input', input)
   // console.log('req.validatedMessage.data', req.validatedMessage.data)

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC-BY-NC-4.0
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 

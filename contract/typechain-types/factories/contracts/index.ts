@@ -2,3 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as ewsSol from "./EWS.sol";
+export { DCReward__factory } from "./DCReward__factory";

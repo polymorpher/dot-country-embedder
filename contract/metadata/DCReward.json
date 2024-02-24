@@ -1,0 +1,9 @@
+{
+  "name": ".country rewards",
+  "description": "Special rewards earned through .country games and activities",
+  "image": "https://storage.googleapis.com/radical-domain-metadata/1country-rewards.jpg",
+  "external_link": "https://1.country",
+  "seller_fee_basis_points": 500,
+  "fee_recipient": "0x306b6FeF4F9890A040FbE1ff708A7b64e4cd04bd",
+  "collaborators": ["0x5Ce1Da1F0bd679669EECa577FE22f24e3CC2D35F"]
+}
