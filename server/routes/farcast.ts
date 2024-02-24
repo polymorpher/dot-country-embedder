@@ -10,8 +10,9 @@ import {
 } from '../src/farcaster.ts'
 import { LRUCache } from 'lru-cache'
 import { v4 as uuidv4 } from 'uuid'
-import { Storage } from '@google-cloud/storage'
-import { parsePageSetting } from 'src/util.ts.ts'
+import { parsePageSetting } from '../src/util.ts'
+import { uploadFile, fileExist, getMapUrl } from '../src/gcp.ts'
+import ethers from 'ethers'
 const client = config.farcast.hubUrl ? getSSLHubRpcClient(config.farcast.hubUrl) : undefined
 
 const router = express.Router()
@@ -25,22 +26,6 @@ const getOriginalHost = (s: string): string => {
   return s
 }
 
-export const getMapUrl = (location?: string, suffix?: string): string => {
-  location = location ?? config.google.map.defaultLocation
-  suffix = suffix ?? config.google.map.defaultLocationSuffix
-  const url = new URL('https://maps.googleapis.com/maps/api/staticmap')
-  url.searchParams.append('center', `${location}${suffix}`)
-  url.searchParams.append('zoom', '13')
-  url.searchParams.append('size', '978x512')
-  url.searchParams.append('key', config.google.map.key)
-  url.searchParams.append('markers', `${location}${suffix}`)
-  url.searchParams.append('style', 'feature:all|saturation:0|hue:0xe7ecf0')
-  url.searchParams.append('style', 'feature:road|saturation:-70')
-  url.searchParams.append('style', 'feature:feature:poi|visibility:off')
-  url.searchParams.append('style', 'feature:road|saturation:-70')
-  url.searchParams.append('style', 'feature:road|saturation:-70')
-  return url.toString()
-}
 const authMessage = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const host = req.get('host')
   // console.log('[authMessage]', host, req.headers)
@@ -111,14 +96,16 @@ router.post('/callback/redirect', async (req, res) => {
   res.redirect(target)
 })
 
-router.get('/callback', async (req, res) => {
-  const host = req.get('host')
-  console.log(host, req.protocol)
-  if (req.query.fail === '1') {
-    return res.send(renderMintFailed(`${req.protocol}://${host}/${config.farcast.apiBase}/callback/redirect`))
-  }
-  res.send(renderMintSuccess()).end()
-})
+if (config.debug) {
+  router.get('/callback', async (req, res) => {
+    const host = req.get('host')
+    console.log(host, req.protocol)
+    if (req.query.fail === '1') {
+      return res.send(renderMintFailed(`${req.protocol}://${host}/${config.farcast.apiBase}/callback/redirect`))
+    }
+    res.send(renderMintSuccess()).end()
+  })
+}
 
 const tokenCache = new LRUCache<string, string>({
   max: 5000,
@@ -128,26 +115,6 @@ const tokenCache = new LRUCache<string, string>({
   },
   ttl: 1000 * 60
 })
-
-const storage = new Storage()
-const uploadFile = async (buffer, filename, bucketName = config.google.storage.bucket): Promise<any> => {
-  // Upload the buffer to the Google Storage bucket
-  const bucket = storage.bucket(bucketName)
-  const file = bucket.file(filename)
-  return await new Promise((resolve, reject) => {
-    const stream = file.createWriteStream({ resumable: false })
-    stream.on('error', reject)
-    stream.on('finish', resolve)
-    stream.end(buffer)
-  })
-}
-
-const fileExist = async (filename, bucketName = config.google.storage.bucket): Promise<boolean> => {
-  const bucket = storage.bucket(bucketName)
-  const file = bucket.file(filename)
-  const [exist] = await file.exists()
-  return exist
-}
 
 router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
   const host = req.get('host')
@@ -165,16 +132,33 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
 
   // TODO: actually mint the token
 
-  const token = uuidv4()
-  const mapUrl = getMapUrl(location, req.domainInfo?.farcastMap)
+  const token = ethers.utils.id(`${location}${req.domainInfo?.farcastMap}`)
+  const exist = await fileExist(`${token}.png`)
   tokenCache.set(token, location)
-  const { data } = await base.get(mapUrl, { responseType: 'arraybuffer' })
-
-  await uploadFile(Buffer.from(data), `${token}.png`)
+  if (!exist) {
+    const mapUrl = getMapUrl(location, req.domainInfo?.farcastMap)
+    const { data } = await base.get(mapUrl, { responseType: 'arraybuffer' })
+    await uploadFile(Buffer.from(data), `${token}.png`)
+  }
   const image = `https://storage.googleapis.com/${config.google.storage.bucket}/${token}.png`
   const html = renderImageResponse(image, `You just earned $MAP! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
   res.send(html).end()
 })
+
+if (config.debug) {
+  router.get('/map/callback', getPageSetting, async (req, res) => {
+    const location = req.query.location as string
+    const token = ethers.utils.id(`${location}${req.domainInfo?.farcastMap}`)
+    const exist = await fileExist(`${token}.png`)
+    if (!exist) {
+      const mapUrl = getMapUrl(location, req.domainInfo?.farcastMap)
+      const { data } = await base.get(mapUrl, { responseType: 'arraybuffer' })
+      await uploadFile(Buffer.from(data), `${token}.png`)
+    }
+    const html = renderImageResponse(image, `You just earned $MAP! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
+    res.send(html).end()
+  })
+}
 
 // alternative way of generating image - makes frame response faster, generate and cache image later when image is requested
 router.get('/map/image', async (req, res) => {
