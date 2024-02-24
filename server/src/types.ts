@@ -23,4 +23,5 @@ export interface DomainInfo {
   farcastMintCustomToken?: string
   farcastDefaultTokenName?: string
   farcastMap?: string
+  farcastText?: boolean
 }

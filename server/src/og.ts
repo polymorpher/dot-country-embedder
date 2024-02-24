@@ -9,7 +9,7 @@ import { type ExtendedRecordMap } from 'notion-types'
 import { isValidNotionPageId, parsePath } from '../../common/notion-utils.ts'
 import axios from 'axios'
 import { parseSubstackUrl } from '../../common/substack-utils.ts'
-import { renderFarcasterMapTemplate, renderFarcasterPartialTemplate } from './farcaster.ts'
+import { renderFarcasterMapTemplate, renderFarcasterPartialTemplate, renderFarcasterTextTemplate } from './farcaster.ts'
 import { JSDOM } from 'jsdom'
 import { settingToDomainInfo } from './util.ts'
 
@@ -41,6 +41,8 @@ const renderOpenGraphTemplate = (data: OpenGraphData, domain: DomainInfo): strin
   if (domain?.farcastEnabled) {
     if (domain.farcastMap) {
       fcPartial = renderFarcasterMapTemplate(domain, data.image)
+    } else if (domain.farcastText) {
+      fcPartial = renderFarcasterTextTemplate(domain, data.image)
     } else {
       renderFarcasterPartialTemplate(domain, data.image)
     }
@@ -93,6 +95,8 @@ const getOGPageSubstack = async (subdomain: string, sld: string, landingPageSett
     let farcasterPartial: string | undefined
     if (domainInfo.farcastMap) {
       farcasterPartial = renderFarcasterMapTemplate(domainInfo, image)
+    } else if (domainInfo.farcastText) {
+      farcasterPartial = renderFarcasterTextTemplate(domainInfo, image)
     } else {
       farcasterPartial = renderFarcasterPartialTemplate(domainInfo, image)
     }

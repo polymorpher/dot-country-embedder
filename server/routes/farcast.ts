@@ -6,7 +6,7 @@ import {
   lookupFid,
   renderImageResponse,
   renderMintFailed,
-  renderMintSuccess
+  renderMintSuccess, renderTextSvg
 } from '../src/farcaster.ts'
 import { LRUCache } from 'lru-cache'
 import { parsePageSetting } from '../src/util.ts'
@@ -125,8 +125,8 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
     return res.send(renderMintFailed(restartTarget)).end()
   }
   const input = req.validatedMessage.data?.frameActionBody?.inputText
-  console.log('input', input)
-  console.log('req.validatedMessage.data', req.validatedMessage.data)
+  // console.log('input', input)
+  // console.log('req.validatedMessage.data', req.validatedMessage.data)
   if (!input) {
     console.error('[/map/callback] Validated data has no user input')
     return res.send(renderMintFailed(restartTarget)).end()
@@ -149,23 +149,23 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
   res.send(html).end()
 })
 
-// if (config.debug) {
-//   router.get('/map/callback', getPageSetting, async (req, res) => {
-//     const host = req.hostname
-//     const location = req.query.location as string
-//     const token = ethers.utils.id(`${location}${req.domainInfo?.farcastMap}`)
-//     console.log(`[DEBUG] token ${token} for location=${location}, suffix=${req.domainInfo?.farcastMap}`)
-//     const exist = await fileExist(`${token}.png`)
-//     if (!exist) {
-//       const mapUrl = getMapUrl(location, req.domainInfo?.farcastMap)
-//       const { data } = await base.get(mapUrl, { responseType: 'arraybuffer' })
-//       await uploadFile(Buffer.from(data), `${token}.png`)
-//     }
-//     const image = `https://storage.googleapis.com/${config.google.storage.bucket}/${token}.png`
-//     const html = renderImageResponse(image, `You just earned $MAP! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
-//     res.send(html).end()
-//   })
-// }
+if (config.debug) {
+  router.get('/map/callback', getPageSetting, async (req, res) => {
+    const host = req.hostname
+    const location = req.query.location as string
+    const token = ethers.utils.id(`${location}${req.domainInfo?.farcastMap}`)
+    console.log(`[DEBUG] token ${token} for location=${location}, suffix=${req.domainInfo?.farcastMap}`)
+    const exist = await fileExist(`${token}.png`)
+    if (!exist) {
+      const mapUrl = getMapUrl(location, req.domainInfo?.farcastMap)
+      const { data } = await base.get(mapUrl, { responseType: 'arraybuffer' })
+      await uploadFile(Buffer.from(data), `${token}.png`)
+    }
+    const image = `https://storage.googleapis.com/${config.google.storage.bucket}/${token}.png`
+    const html = renderImageResponse(image, `You just earned $MAP! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
+    res.send(html).end()
+  })
+}
 
 // alternative way of generating image - makes frame response faster, generate and cache image later when image is requested
 router.get('/map/image', async (req, res) => {
@@ -188,6 +188,55 @@ router.get('/map/image', async (req, res) => {
   res.type('png')
   res.send(Buffer.from(data)).end()
   await uploadFile(Buffer.from(data), `${token}.png`)
+})
+
+router.post('/text/callback', authMessage, getPageSetting, async (req, res) => {
+  const host = req.get('host')
+  // console.log('[/farcast/callback] validatedMessage', validatedMessage)
+  const restartTarget = `${req.protocol}://${host}/${config.farcast.apiBase}/callback/redirect`
+  if (!req.validatedMessage) {
+    return res.send(renderMintFailed(restartTarget)).end()
+  }
+  const input = req.validatedMessage.data?.frameActionBody?.inputText
+  if (!input) {
+    console.error('[/text/callback] Validated data has no user input')
+    return res.send(renderMintFailed(restartTarget)).end()
+  }
+  const text = new TextDecoder().decode(input)
+  const image = `${req.protocol}://${host}/${config.farcast.apiBase}/text/image?t=${encodeURIComponent(text)}`
+  // TODO: actually mint the token for lottery
+  const html = renderImageResponse(image, `You earned $COUNTRY! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
+  res.send(html).end()
+})
+
+if (config.debug) {
+  router.get('/text/callback', async (req, res) => {
+    const host = req.get('host')
+    const text = (req.query.t ?? '') as string
+    const image = `${req.protocol}://${host}/${config.farcast.apiBase}/text/image?t=${encodeURIComponent(text)}`
+    // TODO: actually mint the token for lottery
+    const html = renderImageResponse(image, `You earned $COUNTRY! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
+    res.send(html).end()
+  })
+}
+
+router.get('/text/image', async (req, res) => {
+  const text = (req.query.t ?? '') as string
+  if (!text) {
+    return res.status(HttpStatusCode.BadRequest).send('No text provided').end()
+  }
+  let fontSize = 60
+  if (text.length > 64) {
+    fontSize = 24
+  } else if (text.length > 32) {
+    fontSize = 32
+  } else if (text.length > 16) {
+    fontSize = 48
+  }
+
+  const data = renderTextSvg(text, { fontSize })
+  res.type('svg')
+  res.send(data).end()
 })
 
 export default router
