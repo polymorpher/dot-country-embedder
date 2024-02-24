@@ -11,11 +11,12 @@ import axios from 'axios'
 import { parseSubstackUrl } from '../../common/substack-utils.ts'
 import { renderFarcasterMapTemplate, renderFarcasterPartialTemplate } from './farcaster.ts'
 import { JSDOM } from 'jsdom'
-import { parseSettings } from '../../common/domain-utils.ts'
-import { settingToDomainInfo } from 'src/util.ts.ts'
+import { settingToDomainInfo } from './util.ts'
+
 // const escape = (s: string): string => {
 //   return s.replaceAll('"', '%22')
 // }
+
 const renderOpenGrapPartialTemplate = (data: OpenGraphData): string => {
   return `
     <meta charset="UTF-8">

@@ -1,4 +1,4 @@
-import { Storage } from '@google-cloud/storage/build/esm/src'
+import { Storage } from '@google-cloud/storage'
 import config from '../config.ts'
 
 const storage = new Storage()

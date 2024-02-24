@@ -1,8 +1,8 @@
 import { type AxiosError } from 'axios'
 import { getSld, getSubdomain, parseSettings } from '../../common/domain-utils.ts'
 import ethers from 'ethers'
-import config from 'config.ts.ts'
-import EWSAbi from '../../contract/abi/EWS.json'
+import config from '../config.ts'
+import EWSAbi from '../../contract/abi/EWS.json' assert {type: 'json'}
 import { type EWS } from '../../contract/typechain-types'
 import { type DomainInfo } from './types.ts'
 

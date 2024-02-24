@@ -9,7 +9,6 @@ import {
   renderMintSuccess
 } from '../src/farcaster.ts'
 import { LRUCache } from 'lru-cache'
-import { v4 as uuidv4 } from 'uuid'
 import { parsePageSetting } from '../src/util.ts'
 import { uploadFile, fileExist, getMapUrl } from '../src/gcp.ts'
 import ethers from 'ethers'
@@ -81,6 +80,7 @@ router.post('/callback', authMessage, getPageSetting, async (req, res): Promise<
     return res.send(renderMintFailed(restartTarget)).end()
   }
   // TODO: mint stuff
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { owner } = await lookupFid(fid)
 
   // res.send(renderMintFailed(`${req.protocol}://${host}/${config.farcast.postUrlPath}/redirect`)).end()
@@ -147,6 +147,7 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
 
 if (config.debug) {
   router.get('/map/callback', getPageSetting, async (req, res) => {
+    const host = req.hostname
     const location = req.query.location as string
     const token = ethers.utils.id(`${location}${req.domainInfo?.farcastMap}`)
     const exist = await fileExist(`${token}.png`)
@@ -155,6 +156,7 @@ if (config.debug) {
       const { data } = await base.get(mapUrl, { responseType: 'arraybuffer' })
       await uploadFile(Buffer.from(data), `${token}.png`)
     }
+    const image = `https://storage.googleapis.com/${config.google.storage.bucket}/${token}.png`
     const html = renderImageResponse(image, `You just earned $MAP! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
     res.send(html).end()
   })
