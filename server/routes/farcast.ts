@@ -204,6 +204,7 @@ router.post('/text/callback', authMessage, getPageSetting, async (req, res) => {
   }
   const text = new TextDecoder().decode(input)
   const image = `${req.protocol}://${host}/${config.farcast.apiBase}/text/image?t=${encodeURIComponent(text)}`
+  // console.log('image', image)
   // TODO: actually mint the token for lottery
   const html = renderImageResponse(image, `You earned $COUNTRY! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
   res.send(html).end()

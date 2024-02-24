@@ -198,9 +198,9 @@ export const renderFarcasterTextTemplate = (domainInfo: DomainInfo, image?: stri
         <meta property="fc:frame:button:1:action" content="link" />
         <meta property="fc:frame:button:1:target" content="https://1.country"/>
         
-        <meta property="fc:frame:button:2" content="Enter lottery & earn $COUNTRY" />
+        <meta property="fc:frame:button:2" content="Join raffle, get $COUNTRY" />
         <meta property="fc:frame:button:2:action" content="post" />
         <meta property="fc:frame:button:2:target" content="${postUrl}"/>
-        <meta property="fc:frame:input:text" content="Your message to show (if you win)"/>
+        <meta property="fc:frame:input:text" content="Message to inscribe"/>
     `
 }

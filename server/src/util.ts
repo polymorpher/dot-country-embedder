@@ -38,7 +38,8 @@ export function settingToDomainInfo (sld: string, subdomain: string, landingPage
     farcastEnabled,
     farcastMintCustomToken,
     farcastDefaultTokenName,
-    farcastMap
+    farcastMap,
+    farcastText
   } = parseSettings(landingPageSetting)
   return {
     sld,
@@ -48,6 +49,7 @@ export function settingToDomainInfo (sld: string, subdomain: string, landingPage
     farcastEnabled,
     farcastMintCustomToken,
     farcastDefaultTokenName,
-    farcastMap
+    farcastMap,
+    farcastText
   }
 }
