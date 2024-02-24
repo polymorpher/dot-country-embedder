@@ -145,7 +145,7 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
     await uploadFile(Buffer.from(data), `${token}.png`)
   }
   const image = `https://storage.googleapis.com/${config.google.storage.bucket}/${token}.png`
-  const html = renderImageResponse(image, `You earned $MAP! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
+  const html = renderImageResponse(image, 'You earned $MAP! Checkout our site', 'link', `${req.protocol}://${host}`)
   res.send(html).end()
 })
 
@@ -162,7 +162,7 @@ if (config.debug) {
       await uploadFile(Buffer.from(data), `${token}.png`)
     }
     const image = `https://storage.googleapis.com/${config.google.storage.bucket}/${token}.png`
-    const html = renderImageResponse(image, `You just earned $MAP! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
+    const html = renderImageResponse(image, 'You earned $MAP! Checkout our site', 'link', `${req.protocol}://${host}`)
     res.send(html).end()
   })
 }
