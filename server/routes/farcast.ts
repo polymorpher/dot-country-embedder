@@ -3,10 +3,12 @@ import { getSSLHubRpcClient, Message } from '@farcaster/hub-nodejs'
 import config from '../config.ts'
 import axios, { HttpStatusCode } from 'axios'
 import {
+  mint,
   lookupFid,
   renderImageResponse,
   renderMintFailed,
-  renderMintSuccess, renderTextSvg
+  renderMintSuccess,
+  renderTextSvg
 } from '../src/farcaster.ts'
 import { LRUCache } from 'lru-cache'
 import { parsePageSetting } from '../src/util.ts'
@@ -83,6 +85,8 @@ router.post('/callback', authMessage, getPageSetting, async (req, res): Promise<
   // TODO: mint stuff
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { owner } = await lookupFid(fid)
+  const tx = await mint(fid, 1, '')
+  console.log('Mint tx hash: ', tx.hash)
 
   // res.send(renderMintFailed(`${req.protocol}://${host}/${config.farcast.postUrlPath}/redirect`)).end()
   res.send(renderMintSuccess()).end()
