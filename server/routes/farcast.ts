@@ -85,7 +85,7 @@ router.post('/callback', authMessage, getPageSetting, async (req, res): Promise<
   // TODO: mint stuff
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { owner } = await lookupFid(fid)
-  const tokenData = ethers.utils.hexlify(ethers.utils.toUtf8Bytes(''))
+  const tokenData = ethers.utils.hexlify(ethers.utils.toUtf8Bytes('0'))
   const tx = await mint(fid, 1, tokenData)
   console.log('Mint tx hash: ', tx.hash)
 
