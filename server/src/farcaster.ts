@@ -133,7 +133,7 @@ export const mint = async (
   amount: number,
   data: string
 ): Promise<ContractTransaction> => {
-  return await dcReward.mint(config.mintingAccount, id, amount, data)
+  return await dcReward.mint(config.mintAccount, id, amount, data)
 }
 
 export interface RenderTextOptions {

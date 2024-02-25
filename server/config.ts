@@ -10,7 +10,7 @@ const config = {
   provider: process.env.DEFAULT_RPC ?? 'https://api.harmony.one',
   ewsContract: process.env.EMBEDDER_CONTRACT ?? '',
   dcRewardContract: process.env.DC_REWARD_CONTRACT ?? '',
-  mintingAccount: process.env.MINTING_ACCOUNT ?? '0x9BDC77B22a9A108164B30CeB75b31b6E91DAF9B4',
+  mintAccount: process.env.MINT_ACCOUNT ?? '0x9BDC77B22a9A108164B30CeB75b31b6E91DAF9B4',
   verbose: process.env.VERBOSE === 'true' || process.env.VERBOSE === '1',
   https: {
     only: process.env.HTTPS_ONLY === 'true' || process.env.HTTPS_ONLY === '1',
