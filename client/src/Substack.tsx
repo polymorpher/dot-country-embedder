@@ -8,7 +8,6 @@ import { LinkWrarpper } from './components/Controls'
 import { FlexColumn } from './components/Layout'
 import { replaceSubscribeWidget, replaceSubstackLink } from './LinkReplacer'
 import './substack.scss'
-import config from '../config'
 import { segment } from '../../common/domain-utils'
 
 const Substack: React.FC = () => {
@@ -30,26 +29,38 @@ const Substack: React.FC = () => {
       const html = document.createElement('html')
       const initialStyles = Array.from(document.querySelectorAll('style'))
       html.style.visibility = 'hidden'
-      html.style.overflow = 'hidden'
       html.innerHTML = replaceSubstackLink(page, { substackHost: pageId, subdomain, sld })
       // console.log(html.innerHTML)
       document.replaceChild(html, document.documentElement)
       const scripts = Array.from(document.querySelectorAll('script'))
       let loaded = 0
       const targetNumLoaded = scripts.filter(e => e.src?.includes('substack')).length
-      // const targetNumLoaded = scripts.length
+
       for (const script of scripts) {
         const newScript = document.createElement('script')
+
         if (script.src) {
           newScript.src = script.src
         }
+
         if (script.type) {
           newScript.type = script.type
         }
+
         if (script.innerHTML) {
           newScript.innerHTML = script.innerHTML
         }
+
+        if (script.noModule) {
+          newScript.noModule = true
+        }
+
+        if (script.defer) {
+          newScript.defer = true
+        }
+
         const parent = script.parentNode
+
         script.remove()
         parent?.appendChild(newScript)
         newScript.addEventListener('load', () => {
@@ -72,14 +83,6 @@ const Substack: React.FC = () => {
         })
       }
 
-      const icons = Array.from(document.querySelectorAll("link[rel$='icon']"))
-
-      for (const icon of icons) {
-        const newIcon = icon.cloneNode()
-        icon.remove()
-        document.head.appendChild(newIcon)
-      }
-
       const styles = Array.from(document.querySelectorAll("link[href$='.css']"))
       let loadedStyleCount = 0
 
@@ -90,7 +93,6 @@ const Substack: React.FC = () => {
           loadedStyleCount += 1
           if (loadedStyleCount === styles.length) {
             html.style.visibility = 'visible'
-            html.style.overflow = 'auto'
           }
         }
         document.head.appendChild(newStyle)

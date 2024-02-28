@@ -125,13 +125,13 @@ router.get('/substack',
   async (req, res) => {
     try {
       const { substackDomain, substackUrl } = res.locals
-      const url = substackUrl || `https://${substackDomain}/${req.query.url}`
+      const url = `https://${substackUrl}` || `https://${substackDomain}/${req.query.url}`
       let headers, data
       if (SubstackCache[url]?.cacheTime !== undefined && SubstackCache[url].cacheTime + CacheLife > Date.now()) {
         headers = SubstackCache[url].headers
         data = SubstackCache[url].data
       } else {
-        const response = await AxiosBase.get(url)
+        const response = await AxiosBase.get(url, { headers: { cookie: `intro_popup_last_hidden_at=${new Date().toISOString()};` } })
         headers = response.headers
         data = response.data
         SubstackCache[url] = { cacheTime: Date.now(), headers, data }
