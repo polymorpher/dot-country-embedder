@@ -14,11 +14,11 @@ const substack = async (req: Request, res: Response, next: NextFunction): Promis
     return
   }
   if (!pageUrl) {
-  	const subdomain = getSubdomain(host)
-  	const sld = getSld(host)
-  	const landing = await client.getLandingPage(sld, subdomain)
-  	const settings = parseSettings(landing)
-	pageUrl = settings.landingPage
+    const subdomain = getSubdomain(host)
+    const sld = getSld(host)
+    const landing = await client.getLandingPage(sld, subdomain)
+    const settings = parseSettings(landing)
+    pageUrl = settings.landingPage
   }
   const url = parseSubstackUrl(pageUrl)
   // console.log(landing, url)
