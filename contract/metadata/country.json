@@ -1,0 +1,17 @@
+{
+  "name": "$COUNTRY",
+  "description": ".country",
+  "image": "",
+  "attributes": [
+    {
+      "trait_type": "Registration Date",
+      "display_type": "date",
+      "value": 1677585815000
+    },
+    {
+      "trait_type": "Expiration Date",
+      "display_type": "date",
+      "value": 1709142767000
+    }
+  ]
+}
