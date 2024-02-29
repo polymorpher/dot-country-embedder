@@ -1,12 +1,6 @@
 import { type DomainInfo } from './types.ts'
 import config from '../config.ts'
 import axios from 'axios'
-import ethers, {ContractTransaction} from 'ethers'
-import EWSAbi from '../../contract/abi/EWS.json'
-import type { DCReward } from '../../contract/typechain-types'
-
-const provider = new ethers.providers.StaticJsonRpcProvider(config.provider)
-const dcReward = new ethers.Contract(config.dcRewardContract, EWSAbi, provider) as unknown as DCReward
 
 const getPostUrl = (sld: string, subdomain?: string): string => {
   if (!config.farcast.postUrlSubdomainPrefix) {
@@ -126,14 +120,6 @@ export const lookupFid = async (fid: number): Promise<FarcastUserInfo> => {
   const { data } = await axios.get(`https://fnames.farcaster.xyz/transfers/current?fid=${fid}`)
   const { owner, username, timestamp }: { owner: string, username: string, timestamp: number } = data
   return { fid, owner, username, timestamp: timestamp * 1000 }
-}
-
-export const mint = async (
-  id: number,
-  amount: number,
-  data: string
-): Promise<ContractTransaction> => {
-  return await dcReward.mint(config.mintAccount, id, amount, data)
 }
 
 export interface RenderTextOptions {

@@ -1,19 +1,14 @@
-import express, { type Request, type Response, type NextFunction } from 'express'
+import express, { type NextFunction, type Request, type Response } from 'express'
 import { getSSLHubRpcClient, Message } from '@farcaster/hub-nodejs'
 import config from '../config.ts'
 import axios, { HttpStatusCode } from 'axios'
-import {
-  mint,
-  lookupFid,
-  renderImageResponse,
-  renderMintFailed,
-  renderMintSuccess,
-  renderTextSvg
-} from '../src/farcaster.ts'
+import { lookupFid, renderImageResponse, renderMintFailed, renderMintSuccess, renderTextSvg } from '../src/farcaster.ts'
 import { LRUCache } from 'lru-cache'
 import { parsePageSetting } from '../src/util.ts'
-import { uploadFile, fileExist, getMapUrl } from '../src/gcp.ts'
-import ethers from 'ethers'
+import { fileExist, getMapUrl, uploadFile } from '../src/gcp.ts'
+import ethers, { type ContractTransaction } from 'ethers'
+import { DCRewardTokenId, mint, queue } from '../src/dc-reward.ts'
+
 const client = config.farcast.hubUrl ? getSSLHubRpcClient(config.farcast.hubUrl) : undefined
 
 const router = express.Router()
@@ -82,12 +77,9 @@ router.post('/callback', authMessage, getPageSetting, async (req, res): Promise<
     console.error('[/farcast/callback] No fid found in validatedMessage')
     return res.send(renderMintFailed(restartTarget)).end()
   }
-  // TODO: mint stuff
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { owner } = await lookupFid(fid)
-  const tokenData = ethers.utils.hexlify(ethers.utils.toUtf8Bytes('0'))
-  const tx = await mint(fid, 1, tokenData)
-  console.log('Mint tx hash: ', tx.hash)
+  // TODO: implement minting custom token - need a registration process first
 
   // res.send(renderMintFailed(`${req.protocol}://${host}/${config.farcast.postUrlPath}/redirect`)).end()
   res.send(renderMintSuccess()).end()
@@ -139,7 +131,18 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
   }
   const location = new TextDecoder().decode(input)
 
-  // TODO: actually mint the token
+  const fid = req.validatedMessage.data?.fid
+  if (!fid) {
+    console.error('[/farcast/map/callback] No fid found in validatedMessage')
+    return res.send(renderMintFailed(restartTarget)).end()
+  }
+  const { owner } = await lookupFid(fid)
+  queue.add(async () => await mint(owner, DCRewardTokenId.COUNTRY)).then((tx) => {
+    console.log('[/farcast/map/callback] mint $MAP: ', (tx as ContractTransaction).hash)
+  }).catch(ex => {
+    console.error('[/farcast/map/callback] error', ex)
+  })
+  // TODO: return a status-checking frame instead, let user click a refresh button to see if mint is successful
 
   const token = ethers.utils.id(`${location}${req.domainInfo?.farcastMap}`)
   const exist = await fileExist(`${token}.png`)
@@ -211,7 +214,19 @@ router.post('/text/callback', authMessage, getPageSetting, async (req, res) => {
   const text = new TextDecoder().decode(input)
   const image = `${req.protocol}://${host}/${config.farcast.apiBase}/text/image?t=${encodeURIComponent(text)}`
   // console.log('image', image)
-  // TODO: actually mint the token for lottery
+  const fid = req.validatedMessage.data?.fid
+  if (!fid) {
+    console.error('[/farcast/text/callback] No fid found in validatedMessage')
+    return res.send(renderMintFailed(restartTarget)).end()
+  }
+  const { owner } = await lookupFid(fid)
+  queue.add(async () => await mint(owner, DCRewardTokenId.COUNTRY)).then((tx) => {
+    console.log('[/farcast/text/callback] mint $COUNTRY: ', (tx as ContractTransaction).hash)
+  }).catch(ex => {
+    console.error('[/farcast/text/callback] error', ex)
+  })
+  // TODO: return a status-checking frame instead, let user click a refresh button to see if mint is successful
+
   const html = renderImageResponse(image, `You earned $COUNTRY! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
   res.send(html).end()
 })
