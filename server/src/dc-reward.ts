@@ -1,7 +1,7 @@
 import ethers, { type ContractTransaction } from 'ethers'
 import type { DCReward } from '../../contract/typechain-types'
 import config from '../config.ts'
-import DCRewardAbi from '../../contract/abi/DCReward.json'
+import DCRewardAbi from '../../contract/abi/DCReward.json' assert {type: 'json'}
 import PQueue from 'p-queue'
 const provider = new ethers.providers.StaticJsonRpcProvider(config.provider)
 const dcReward = new ethers.Contract(config.dcRewardContract, DCRewardAbi, provider) as unknown as DCReward
