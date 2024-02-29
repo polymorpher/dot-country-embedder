@@ -81,7 +81,7 @@ const config: HardhatUserConfig = {
     flat: true,
     spacing: 2,
     format: 'json',
-    only: ['EWS', 'IDC']
+    only: ['EWS', 'IDC', 'DCReward']
   },
   spdxLicenseIdentifier: {
     overwrite: true,
