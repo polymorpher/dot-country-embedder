@@ -1,7 +1,7 @@
 import { type DomainInfo } from '../types.js'
 import config from '../../config.js'
 import { getPostUrl } from './utils.js'
-import { redisClient } from 'src/redis.ts.ts'
+import { redisClient } from '../redis.js'
 
 export const renderFarcasterMapBasicPartialTemplate = (domainInfo: DomainInfo, image?: string): string => {
   const postUrlHost = getPostUrl(domainInfo.sld, domainInfo.subdomain)
