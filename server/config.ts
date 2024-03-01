@@ -35,6 +35,10 @@ const config = {
           defaultLocationSuffix: process.env.GOOGLE_MAP_LOCATION_SUFFIX ?? ', San Francisco, CA'
         }
   },
-  unrestrictedProxy: ['true', '1'].includes(process.env.UNRESTRICTED_PROXY ?? '')
+  unrestrictedProxy: ['true', '1'].includes(process.env.UNRESTRICTED_PROXY ?? ''),
+  redis: {
+    url: process.env.REDIS_URL, // redis[s]://[[username][:password]@][host][:port][/db-number]
+    prefix: process.env.REDIS_PREFIX ?? 'dc-reward'
+  }
 }
 export default config

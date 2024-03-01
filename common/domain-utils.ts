@@ -66,6 +66,10 @@ export const parseSettings = (setting: string): PageSetting => {
     const farcastText = extensions.includes('farcast-text')
     const farcastDefaultTokenName = extensions.find(e => e.startsWith('farcast-default-token-name='))?.substring('farcast-default-token-name='.length)
     const farcastMintCustomToken = extensions.find(e => e.startsWith('farcast-custom-mint='))?.substring('farcast-custom-mint='.length)
+    let farcastBasicMap = extensions.find(e => e.startsWith('farcast-basic-map='))?.substring('farcast-basic-map='.length)
+    if (farcastBasicMap){
+        farcastBasicMap = decodeURIComponent(farcastBasicMap)
+    }
     let farcastMap = extensions.find(e => e.startsWith('farcast-map='))?.substring('farcast-map='.length)
     if (farcastMap){
         farcastMap = decodeURIComponent(farcastMap)
@@ -78,7 +82,8 @@ export const parseSettings = (setting: string): PageSetting => {
         farcastDefaultTokenName: farcastDefaultTokenName? decodeURIComponent(farcastDefaultTokenName) : undefined,
         extensions,
         farcastMap,
-        farcastText
+        farcastText,
+        farcastBasicMap
     }
 }
 
@@ -94,5 +99,6 @@ export interface PageSetting {
     farcastDefaultTokenName?: string
     farcastMintCustomToken?: string
     farcastMap?: string
+    farcastBasicMap?: string
     extensions: string[]
 }

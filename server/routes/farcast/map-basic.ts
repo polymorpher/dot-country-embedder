@@ -9,33 +9,33 @@ import { authMessage, getPageSetting } from './middlewares.js'
 import config from '../../config.js'
 import { lookupFid, renderMintFailed, renderImageResponse } from '../../src/farcaster.js'
 
-router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
+router.post('/map-basic/callback', authMessage, getPageSetting, async (req, res) => {
   // console.log('ip', req.headers['x-forwarded-for'] ?? req.socket.remoteAddress)
   const host = req.get('host')
   const restartTarget = `${req.protocol}://${host}/${config.farcast.apiBase}/callback/redirect`
   if (!req.validatedMessage) {
     return res.send(renderMintFailed(restartTarget)).end()
   }
-  console.log('[/map/callback] validatedMessage', JSON.stringify(Message.toJSON(req.validatedMessage)))
+  console.log('[/farcast/map-basic/callback] validatedMessage', JSON.stringify(Message.toJSON(req.validatedMessage)))
   const input = req.validatedMessage.data?.frameActionBody?.inputText
   // console.log('input', input)
   // console.log('req.validatedMessage.data', req.validatedMessage.data)
   if (!input) {
-    console.error('[/map/callback] Validated data has no user input')
+    console.error('[/farcast/map-basic/callback] Validated data has no user input')
     return res.send(renderMintFailed(restartTarget)).end()
   }
   const location = new TextDecoder().decode(input)
 
   const fid = req.validatedMessage.data?.fid
   if (!fid) {
-    console.error('[/farcast/map/callback] No fid found in validatedMessage')
+    console.error('[/farcast/map-basic/callback] No fid found in validatedMessage')
     return res.send(renderMintFailed(restartTarget)).end()
   }
   const { owner } = await lookupFid(fid)
   queue.add(async () => await mint(owner, DCRewardTokenId.COUNTRY)).then((tx) => {
-    console.log('[/farcast/map/callback] mint $MAP: ', (tx as ContractTransaction).hash)
+    console.log('[/farcast/map-basic/callback] mint $MAP: ', (tx as ContractTransaction).hash)
   }).catch(ex => {
-    console.error('[/farcast/map/callback] error', ex)
+    console.error('[/farcast/map-basic/callback] error', ex)
   })
   // TODO: return a status-checking frame instead, let user click a refresh button to see if mint is successful
 
@@ -54,7 +54,7 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
 })
 
 if (config.debug) {
-  router.get('/map/callback', getPageSetting, async (req, res) => {
+  router.get('/map-basic/callback', getPageSetting, async (req, res) => {
     const host = req.hostname
     const location = req.query.location as string
     const token = ethers.utils.id(`${location}${req.domainInfo?.farcastMap}`)
@@ -72,7 +72,7 @@ if (config.debug) {
 }
 
 // alternative way of generating image - makes frame response faster, generate and cache image later when image is requested
-router.get('/map/image', async (req, res) => {
+router.get('/map-basic/image', async (req, res) => {
   const token = req.query.token?.toString()
   if (!token) {
     return res.status(HttpStatusCode.BadRequest).send('No token').end()

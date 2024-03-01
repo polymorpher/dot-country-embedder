@@ -21,4 +21,9 @@ export const mint = async (
   return await dcReward.mint(user, tokenId, amount, data)
 }
 
+export const getBalance = async (user: string, tokenId: DCRewardTokenId): Promise<number> => {
+  const b = await dcReward.balanceOf(user, tokenId)
+  return b.toNumber()
+}
+
 export const queue = new PQueue({ concurrency: 1 })
