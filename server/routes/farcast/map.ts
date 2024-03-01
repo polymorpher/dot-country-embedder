@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Message } from '@farcaster/hub-nodejs'
-import { DCRewardTokenId, mint, queue, getBalance } from '../../src/dc-reward.js'
+import { DCRewardTokenId, mint, queue, safeGetBalance } from '../../src/dc-reward.js'
 import ethers, { type ContractTransaction } from 'ethers'
 import { fileExist, getMapUrl, uploadFile } from '../../src/gcp.js'
 import { base, tokenCache } from './utils.js'
@@ -83,8 +83,8 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
   }
   const image = `https://storage.googleapis.com/${config.google.storage.bucket}/${token}.png`
 
-  const balance = await getBalance(owner, DCRewardTokenId.MAP)
-  const text = `${username}: ${balance} $MAP`
+  const balance = await safeGetBalance(owner, DCRewardTokenId.MAP)
+  const text = `${username}: ${balance >= 0 ? balance : 'N/A'} $MAP`
 
   const html = renderImageResponse(image, text, 'link', `${req.protocol}://${host}`)
   res.send(html).end()
