@@ -19,7 +19,8 @@ export interface DomainInfo {
   subdomain?: string
   unrestrictedMode?: boolean
   landingPage?: string
-  farcastEnabled?: boolean
+  farcastPartial?: boolean
+  farcastSwap?: boolean
   farcastMintCustomToken?: string
   farcastDefaultTokenName?: string
   farcastMap?: string

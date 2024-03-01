@@ -62,7 +62,8 @@ export const parseSettings = (setting: string): PageSetting => {
     const [landingPageEncoded, mode, ...extensions] = segment(setting)
     const landingPage = decodeURIComponent(landingPageEncoded)
     const unrestrictedMode = mode !== 'strict'
-    const farcastEnabled = extensions.includes('farcast')
+    const farcastPartial = extensions.includes('farcast-partial')
+    const farcastSwap = extensions.includes('farcast-swap')
     const farcastText = extensions.includes('farcast-text')
     const farcastDefaultTokenName = extensions.find(e => e.startsWith('farcast-default-token-name='))?.substring('farcast-default-token-name='.length)
     const farcastMintCustomToken = extensions.find(e => e.startsWith('farcast-custom-mint='))?.substring('farcast-custom-mint='.length)
@@ -73,7 +74,8 @@ export const parseSettings = (setting: string): PageSetting => {
     return {
         landingPage,
         unrestrictedMode,
-        farcastEnabled,
+        farcastPartial,
+        farcastSwap,
         farcastMintCustomToken: farcastMintCustomToken ? decodeURIComponent(farcastMintCustomToken) : undefined,
         farcastDefaultTokenName: farcastDefaultTokenName? decodeURIComponent(farcastDefaultTokenName) : undefined,
         extensions,
@@ -89,7 +91,8 @@ export const serializeSettings = (setting: PageSetting) =>{
 export interface PageSetting {
     landingPage: string
     unrestrictedMode: boolean
-    farcastEnabled: boolean
+    farcastPartial: boolean
+    farcastSwap: boolean
     farcastText: boolean
     farcastDefaultTokenName?: string
     farcastMintCustomToken?: string

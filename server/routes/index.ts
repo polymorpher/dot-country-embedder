@@ -221,5 +221,4 @@ router.get(['/*'], limiter(), cached(), async (req, res) => {
   }
 })
 
-
 export default router

@@ -12,6 +12,7 @@ import { parseSubstackUrl } from '../../common/substack-utils.ts'
 import { renderFarcasterMapTemplate, renderFarcasterPartialTemplate, renderFarcasterTextTemplate } from './farcaster.ts'
 import { JSDOM } from 'jsdom'
 import { settingToDomainInfo } from './util.ts'
+import { renderFarcasterSwapTemplate } from './farcaster/swap.ts'
 
 // const escape = (s: string): string => {
 //   return s.replaceAll('"', '%22')
@@ -39,15 +40,17 @@ const renderOpenGraphTemplate = (data: OpenGraphData, domain: DomainInfo): strin
   // console.log('[renderOpenGraphTemplate] domain', domain)
   const partial = renderOpenGrapPartialTemplate(data)
   let fcPartial = ''
-  if (domain?.farcastEnabled) {
-    if (domain.farcastMap) {
-      fcPartial = renderFarcasterMapTemplate(domain, data.image)
-    } else if (domain.farcastText) {
-      fcPartial = renderFarcasterTextTemplate(domain, data.image)
-    } else {
-      fcPartial = renderFarcasterPartialTemplate(domain, data.image)
-    }
+
+  if (domain.farcastMap) {
+    fcPartial = renderFarcasterMapTemplate(domain, data.image)
+  } else if (domain.farcastText) {
+    fcPartial = renderFarcasterTextTemplate(domain, data.image)
+  } else if (domain.farcastPartial) {
+    fcPartial = renderFarcasterPartialTemplate(domain, data.image)
+  } else if (domain.farcastSwap) {
+    fcPartial = renderFarcasterSwapTemplate(domain, data.image)
   }
+
   return `
     <html>
       <head>
@@ -90,24 +93,27 @@ const getOGPageSubstack = async (subdomain: string, sld: string, landingPageSett
   }
 
   const { data } = await substackAxiosBase.get(`https://${url.host}/${path}`)
-  if (domainInfo.farcastEnabled) {
-    const jsdom = new JSDOM(data)
-    const image = jsdom.window.document.querySelector('meta[name="og:image"]')?.getAttribute('content') ?? undefined
-    let farcasterPartial: string | undefined
-    if (domainInfo.farcastMap) {
-      farcasterPartial = renderFarcasterMapTemplate(domainInfo, image)
-    } else if (domainInfo.farcastText) {
-      farcasterPartial = renderFarcasterTextTemplate(domainInfo, image)
-    } else {
-      farcasterPartial = renderFarcasterPartialTemplate(domainInfo, image)
-    }
-    const partialDom = JSDOM.fragment(farcasterPartial)
-    jsdom.window.document.head.append(partialDom)
-    return jsdom.serialize()
+  const jsdom = new JSDOM(data)
+  const image = jsdom.window.document.querySelector('meta[name="og:image"]')?.getAttribute('content') ?? undefined
+  let farcasterPartial: string
+
+  if (domainInfo.farcastMap) {
+    farcasterPartial = renderFarcasterMapTemplate(domainInfo, image)
+  } else if (domainInfo.farcastText) {
+    farcasterPartial = renderFarcasterTextTemplate(domainInfo, image)
+  } else if (domainInfo.farcastPartial) {
+    farcasterPartial = renderFarcasterPartialTemplate(domainInfo, image)
+  } else if (domainInfo.farcastSwap) {
+    farcasterPartial = renderFarcasterSwapTemplate(domainInfo, image)
+  } else {
+    return data
   }
 
-  return data
+  const partialDom = JSDOM.fragment(farcasterPartial)
+  jsdom.window.document.head.append(partialDom)
+  return jsdom.serialize()
 }
+
 export const getOGPage = async (sld: string, subdomain: string, path?: string, ua?: string): Promise<string> => {
   console.log('[-getOGPage]', { sld, subdomain, path })
   const c = new ethers.Contract(config.ewsContract, EWSAbi, provider) as unknown as EWS
