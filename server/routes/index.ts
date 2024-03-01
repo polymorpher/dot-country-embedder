@@ -214,12 +214,12 @@ router.get(['/*'], limiter(), cached(), async (req, res) => {
     const subdomain = getSubdomain(parts)
     const sld = getSld(parts)
     const page = await getOGPage(sld, subdomain, path, req.get('user-agent'))
+    res.header('Cache-Control', 'max-age=5')
     res.header('content-type', 'text/html; charset=utf-8').send(page)
   } catch (ex: any) {
     printError(ex)
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ })
   }
 })
-
 
 export default router
