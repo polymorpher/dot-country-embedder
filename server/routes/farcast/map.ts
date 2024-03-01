@@ -50,7 +50,7 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
     queue.add(async () => await mint(owner, DCRewardTokenId.MAP)).then(async (tx) => {
       console.log('[/farcast/map/callback] mint $MAP: ', (tx as ContractTransaction).hash)
       await redisClient.incr(`${config.redis.prefix}:farcast-map:supply`)
-      await redisClient.zAdd(`${config.redis.prefix}:farcast-map:mints`, [{ score: Date.now(), value: fid.toString() }])
+      await redisClient.zAdd(`${config.redis.prefix}:farcast-map:mints`, [{ score: Date.now(), value: `${fid.toString()}-${Date.now()}` }])
     }).catch(ex => {
       console.error('[/farcast/map/callback] error', ex)
     })
