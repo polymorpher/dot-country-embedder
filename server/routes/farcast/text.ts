@@ -54,7 +54,7 @@ router.get('/text/image', async (req, res) => {
   if (!text) {
     return res.status(HttpStatusCode.BadRequest).send('No text provided').end()
   }
-  // console.log(text)
+
   // text = text.replaceAll('\n', '<br/>')
   let fontSize = 60
   if (text.length > 64) {
@@ -64,12 +64,13 @@ router.get('/text/image', async (req, res) => {
   } else if (text.length > 16) {
     fontSize = 48
   }
-  if (text.includes('\n')) {
-    const parts = text.split('\n')
+  if (text.includes('\n') || text.includes('\\n')) {
+    const parts = text.split(/\n|\\n/)
     text = parts.map((p, i) => `<tspan x="50%" dy="${i === 0 ? -fontSize * parts.length / 2 : fontSize}px">${p}</tspan>`).join()
   }
-  console.log(text)
+
   const data = renderTextSvg(text, { fontSize })
   res.type('svg')
+  res.header('Cache-Control', 'max-age=5')
   res.send(data).end()
 })
