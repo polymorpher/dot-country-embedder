@@ -55,6 +55,13 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
       console.error('[/farcast/map/callback] error', ex)
     })
   }
+  if (config.farcast.mockMinting) {
+    redisClient.incr(`${config.redis.prefix}:farcast-map:supply`).catch(console.error)
+    redisClient.zAdd(`${config.redis.prefix}:farcast-map:mints`, [{
+      score: Date.now(),
+      value: fid.toString()
+    }]).catch(console.error)
+  }
 
   // TODO: return a status-checking frame instead, let user click a refresh button to see if mint is successful
 
