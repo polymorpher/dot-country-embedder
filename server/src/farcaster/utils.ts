@@ -28,8 +28,9 @@ export const getDefaultTokenName = (domainInfo: DomainInfo): string => {
 }
 
 export const lookupFid = async (fid: number): Promise<FarcastUserInfo> => {
-  const { data } = await axios.get(`https://fnames.farcaster.xyz/transfers/current?fid=${fid}`)
-  const { owner, username, timestamp }: { owner: string, username: string, timestamp: number } = data
+  const { data: { transfer } } = await axios.get(`https://fnames.farcaster.xyz/transfers/current?fid=${fid}`)
+  const { owner, username, timestamp }: { owner: string, username: string, timestamp: number } = transfer
+  // console.log({ fid, owner, username, timestamp: timestamp * 1000 })
   return { fid, owner, username, timestamp: timestamp * 1000 }
 }
 
