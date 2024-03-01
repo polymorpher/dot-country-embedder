@@ -3,8 +3,12 @@ import type { DCReward } from '../../contract/typechain-types'
 import config from '../config.ts'
 import DCRewardAbi from '../../contract/abi/DCReward.json' assert {type: 'json'}
 import PQueue from 'p-queue'
-const provider = new ethers.providers.StaticJsonRpcProvider(config.provider)
-const dcReward = new ethers.Contract(config.dcRewardContract, DCRewardAbi, provider) as DCReward
+import assert from 'node:assert'
+const provider = new ethers.providers.StaticJsonRpcProvider({ url: config.provider, timeout: 3500 })
+assert(config.farcast.minterKey, 'minter key is empty')
+const signer = new ethers.Wallet(config.farcast.minterKey, provider)
+const dcReward = (new ethers.Contract(config.dcRewardContract, DCRewardAbi, provider) as DCReward).connect(signer)
+
 export enum DCRewardTokenId {
   UNKNOWN = '0',
   MAP = '1',
@@ -25,6 +29,15 @@ export const getBalance = async (user: string, tokenId: DCRewardTokenId): Promis
   // console.log({ dcReward: dcReward.address, user })
   const b = await dcReward.balanceOf(user, tokenId)
   return b.toNumber()
+}
+
+export const safeGetBalance = async (user: string, tokenId: DCRewardTokenId): Promise<number> => {
+  try {
+    return await getBalance(user, tokenId)
+  } catch (ex) {
+    console.error('[safeGetBalance]', ex)
+    return -1
+  }
 }
 
 export const queue = new PQueue({ concurrency: 1 })
