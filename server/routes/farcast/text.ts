@@ -53,6 +53,7 @@ if (config.debug) {
 
 router.get('/text/image', async (req, res) => {
   let text = (req.query.t ?? '') as string
+  const style = JSON.parse((req.query.s ?? '{}') as string)
   if (!text) {
     return res.status(HttpStatusCode.BadRequest).send('No text provided').end()
   }
@@ -67,8 +68,21 @@ router.get('/text/image', async (req, res) => {
     fontSize = 48
   }
   if (text.includes('\n') || text.includes('\\n')) {
+    const lineHeightMultiplier = style.lineHeightMultiplier ?? 1
     const parts = text.split(/\n|\\n/)
-    text = parts.map((p, i) => `<tspan x="50%" dy="${i === 0 ? -fontSize * parts.length / 2 : fontSize}px">${p}</tspan>`).join()
+    text = parts.map((p, i) => {
+      let c: Record<string, any> = { text: p }
+      if (p.startsWith('{')) {
+        try {
+          c = JSON.parse(p)
+        } catch (ex) {
+
+        }
+      }
+      const localFontSize = c.fontSize ?? fontSize
+      const localLineHeightMultiplier = c.lineHeightMultiplier ?? lineHeightMultiplier
+      return `<tspan style="font-size: ${localFontSize};" x="50%" dy="${i === 0 ? -localFontSize * localLineHeightMultiplier * parts.length / 2 : localFontSize * localLineHeightMultiplier}px">${c.text}</tspan>`
+    }).join('\n')
   }
 
   const data = renderTextSvg(text, { fontSize })
