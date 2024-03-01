@@ -12,8 +12,11 @@ import https from 'https'
 import http from 'http'
 import fs from 'fs'
 import compression from 'compression'
+import { initRedis } from './src/redis.js'
 
 dotenv.config()
+
+initRedis().catch(console.error)
 
 const app = express()
 const env = process.env.NODE_ENV ?? 'development'
