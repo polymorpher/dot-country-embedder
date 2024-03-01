@@ -85,6 +85,7 @@ const getOGPageNotion = async (subdomain: string, sld: string, landingPageSettin
 const EMPTY_PAGE = '<html></html>'
 
 const substackAxiosBase = axios.create({ timeout: 15000 })
+
 const getOGPageSubstack = async (subdomain: string, sld: string, landingPageSetting: string, path?: string): Promise<string> => {
   const domainInfo = settingToDomainInfo(sld, subdomain, landingPageSetting)
   const url = parseSubstackUrl(decodeURIComponent(domainInfo.landingPage ?? ''))
@@ -104,6 +105,8 @@ const getOGPageSubstack = async (subdomain: string, sld: string, landingPageSett
   } else if (domainInfo.farcastPartial) {
     farcasterPartial = renderFarcasterPartialTemplate(domainInfo, image)
   } else if (domainInfo.farcastSwap) {
+    const vwap = 0 // TODO: get $b price here
+    const image = `${url.protocol}://${url.host}/${config.farcast.apiBase}/text/image?t=${encodeURIComponent(`$B price (vwap): ${vwap}`)}`
     farcasterPartial = renderFarcasterSwapTemplate(domainInfo, image)
   } else {
     return data
