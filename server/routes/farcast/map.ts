@@ -46,13 +46,15 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
     return res.send(renderMintFailed(restartTarget)).end()
   }
   const { owner, username } = await lookupFid(fid)
-  queue.add(async () => await mint(owner, DCRewardTokenId.MAP)).then(async (tx) => {
-    console.log('[/farcast/map/callback] mint $MAP: ', (tx as ContractTransaction).hash)
-    await redisClient.incr(`${config.redis.prefix}:farcast-map:supply`)
-    await redisClient.zAdd(`${config.redis.prefix}:farcast-map:mints`, [{ score: Date.now(), value: fid.toString() }])
-  }).catch(ex => {
-    console.error('[/farcast/map/callback] error', ex)
-  })
+  if (!config.farcast.mockMinting) {
+    queue.add(async () => await mint(owner, DCRewardTokenId.MAP)).then(async (tx) => {
+      console.log('[/farcast/map/callback] mint $MAP: ', (tx as ContractTransaction).hash)
+      await redisClient.incr(`${config.redis.prefix}:farcast-map:supply`)
+      await redisClient.zAdd(`${config.redis.prefix}:farcast-map:mints`, [{ score: Date.now(), value: fid.toString() }])
+    }).catch(ex => {
+      console.error('[/farcast/map/callback] error', ex)
+    })
+  }
 
   // TODO: return a status-checking frame instead, let user click a refresh button to see if mint is successful
 

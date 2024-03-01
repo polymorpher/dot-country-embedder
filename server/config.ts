@@ -24,7 +24,8 @@ const config = {
     apiBase: process.env.FC_API_BASE ?? 'farcast',
     postProtocol: process.env.FC_POST_PROTOCOL ?? 'https',
     hubUrl: process.env.FC_HUB_URL ?? 'hub-grpc.pinata.cloud',
-    defaultImageUrl: process.env.FC_DEFAULT_IMAGE_URL ?? 'https://storage.googleapis.com/dotcountry-farcaster/fc-default.png'
+    defaultImageUrl: process.env.FC_DEFAULT_IMAGE_URL ?? 'https://storage.googleapis.com/dotcountry-farcaster/fc-default.png',
+    mockMinting: process.env.MOCK_MINTING === '1' ?? false
   },
   google: {
     storage: { bucket: process.env.GOOGLE_STORAGE_BUCKET ?? 'farcaster-cache' },

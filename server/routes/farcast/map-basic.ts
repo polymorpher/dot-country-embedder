@@ -32,11 +32,13 @@ router.post('/map-basic/callback', authMessage, getPageSetting, async (req, res)
     return res.send(renderMintFailed(restartTarget)).end()
   }
   const { owner } = await lookupFid(fid)
-  queue.add(async () => await mint(owner, DCRewardTokenId.COUNTRY)).then((tx) => {
-    console.log('[/farcast/map-basic/callback] mint $MAP: ', (tx as ContractTransaction).hash)
-  }).catch(ex => {
-    console.error('[/farcast/map-basic/callback] error', ex)
-  })
+  if (!config.farcast.mockMinting) {
+    queue.add(async () => await mint(owner, DCRewardTokenId.COUNTRY)).then((tx) => {
+      console.log('[/farcast/map-basic/callback] mint $MAP: ', (tx as ContractTransaction).hash)
+    }).catch(ex => {
+      console.error('[/farcast/map-basic/callback] error', ex)
+    })
+  }
   // TODO: return a status-checking frame instead, let user click a refresh button to see if mint is successful
 
   const token = ethers.utils.id(`${location}${req.domainInfo?.farcastMap}`)

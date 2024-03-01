@@ -26,12 +26,14 @@ router.post('/text/callback', authMessage, getPageSetting, async (req, res) => {
     console.error('[/farcast/text/callback] No fid found in validatedMessage')
     return res.send(renderMintFailed(restartTarget)).end()
   }
-  const { owner } = await lookupFid(fid)
-  queue.add(async () => await mint(owner, DCRewardTokenId.COUNTRY)).then((tx) => {
-    console.log('[/farcast/text/callback] mint $COUNTRY: ', (tx as ContractTransaction).hash)
-  }).catch(ex => {
-    console.error('[/farcast/text/callback] error', ex)
-  })
+  if (!config.farcast.mockMinting) {
+    const { owner } = await lookupFid(fid)
+    queue.add(async () => await mint(owner, DCRewardTokenId.COUNTRY)).then((tx) => {
+      console.log('[/farcast/text/callback] mint $COUNTRY: ', (tx as ContractTransaction).hash)
+    }).catch(ex => {
+      console.error('[/farcast/text/callback] error', ex)
+    })
+  }
   // TODO: return a status-checking frame instead, let user click a refresh button to see if mint is successful
 
   const html = renderImageResponse(image, `You earned $COUNTRY! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
