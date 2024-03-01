@@ -65,7 +65,7 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
 
   const token = ethers.utils.id(`${location}${req.domainInfo?.farcastMap}`)
   const exist = await fileExist(`${token}.png`)
-  console.log(`Generated token ${token} for location=${location}, suffix=${req.domainInfo?.farcastMap}`)
+  console.log(`Generated token ${token} for combinedLocation=${combinedLocation} | suffix=${req.domainInfo?.farcastMap}`)
   tokenCache.set(token, combinedLocation)
   if (!exist) {
     const mapUrl = getMapUrl(location, combinedLocation === location ? '' : req.domainInfo?.farcastMap)
@@ -144,7 +144,7 @@ router.post('/map/review', authMessage, getPageSetting, async (req, res) => {
 
   const token = ethers.utils.id(`${location}${req.domainInfo?.farcastMap}`)
   const exist = await fileExist(`${token}.png`)
-  console.log(`Generated token ${token} for location=${location}, suffix=${req.domainInfo?.farcastMap}`)
+  console.log(`Generated token ${token} for combinedLocation=${combinedLocation} | suffix=${req.domainInfo?.farcastMap}`)
   tokenCache.set(token, combinedLocation)
   if (!exist) {
     const mapUrl = getMapUrl(location, combinedLocation === location ? '' : req.domainInfo?.farcastMap)
@@ -153,6 +153,6 @@ router.post('/map/review', authMessage, getPageSetting, async (req, res) => {
   }
   const image = `https://storage.googleapis.com/${config.google.storage.bucket}/${token}.png`
   const nextTarget = `${req.protocol}://${host}/${config.farcast.apiBase}/map/callback?token=${token}`
-  const html = renderImageResponse(image, 'Submit review, earn $MAP', 'post', nextTarget)
+  const html = renderImageResponse(image, 'Submit review, earn $MAP', 'post', nextTarget, 'Your review of this place')
   res.send(html).end()
 })

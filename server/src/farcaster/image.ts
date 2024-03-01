@@ -1,4 +1,4 @@
-export const renderImageResponse = (image: string, text?: string, nextAction?: string, nextTarget?: string): string => {
+export const renderImageResponse = (image: string, text?: string, nextAction?: string, nextTarget?: string, inputBoxText?: string): string => {
   return `
     <html>
       <head>
@@ -12,6 +12,11 @@ export const renderImageResponse = (image: string, text?: string, nextAction?: s
         <meta property="fc:frame:button:1:target" content="${nextTarget}"/>
         `
         : ''}
+        ${inputBoxText
+? `
+        <meta property="fc:frame:input:text" content="${inputBoxText}"/>
+      `
+: ''}
       </head>
       <body>Hello, bot!</body>
     </html>
