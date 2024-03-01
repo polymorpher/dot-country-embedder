@@ -46,7 +46,7 @@ export const renderFarcasterMapFullTemplate = async (domainInfo: DomainInfo): Pr
         <meta property="fc:frame:button:2" content="Check-in for $MAP" />
         <meta property="fc:frame:button:2:action" content="post" />
         <meta property="fc:frame:button:2:target" content="${postUrl}"/>
-        <meta property="fc:frame:input:text" content="Check-in or leave review, earn $MAP"/>
+        <meta property="fc:frame:input:text" content="Review or check-in, earn $MAP"/>
       </head>
       <body>Hello, bot!</body>
     </html>
