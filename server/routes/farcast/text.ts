@@ -4,7 +4,7 @@ import { HttpStatusCode } from 'axios'
 import router from './index.js'
 import { authMessage, getPageSetting } from './middlewares.js'
 import config from '../../config.js'
-import { lookupFid, renderMintFailed, renderImageResponse, parseTextToSvg } from '../../src/farcaster.js'
+import { lookupFid, renderMintFailed, renderImageResponse, parseTextToSvg, svgToPng } from '../../src/farcaster.js'
 
 router.post('/text/callback', authMessage, getPageSetting, async (req, res) => {
   const host = req.get('host')
@@ -58,6 +58,12 @@ router.get('/text/image', async (req, res) => {
     return res.status(HttpStatusCode.BadRequest).send('No text provided').end()
   }
   const data = parseTextToSvg(text, style)
+  if (req.query.png) {
+    res.type('png')
+    const png = await svgToPng(data)
+    res.send(png).end()
+    return
+  }
   res.type('svg')
   // res.header('Cache-Control', 'public, max-age=0, must-revalidate')
   res.send(data).end()
