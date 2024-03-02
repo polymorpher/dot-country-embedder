@@ -12,7 +12,7 @@ import {
   lookupFid,
   renderMintFailed,
   renderImageResponse,
-  computeButtonDisplayedLocation
+  computeButtonDisplayedLocation, inscribeLocationAndReview
 } from '../../src/farcaster.js'
 import { redisClient } from '../../src/redis.js'
 
@@ -32,13 +32,23 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
     return res.send(renderMintFailed(restartTarget)).end()
   }
   let location: string | undefined = ''
+  let review: string | undefined = ''
   if (req.query.token) {
     location = tokenCache.get(req.query.token as string)
     if (!location) {
       return res.status(HttpStatusCode.BadRequest).send(`Bad token ${req.query.token as string}`).end()
     }
+    review = new TextDecoder().decode(input)
   } else {
     location = new TextDecoder().decode(input)
+  }
+  let combinedLocation = req.query.token ? location : `${location}${req.domainInfo?.farcastMap}`
+  if (!req.query.token && req.domainInfo?.farcastMap?.startsWith('??')) {
+    if (location.includes(',')) {
+      combinedLocation = location
+    } else {
+      combinedLocation = `${location}${req.domainInfo?.farcastMap?.substring(2)}`
+    }
   }
 
   const fid = req.validatedMessage.data?.fid
@@ -48,8 +58,15 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
   }
   const { owner, username } = await lookupFid(fid)
   if (!config.farcast.mockMinting) {
-    queue.add(async () => await mint(owner, DCRewardTokenId.MAP)).then(async (tx) => {
+    queue.add(async () => await mint(owner, DCRewardTokenId.MAP, 1, inscribeLocationAndReview(combinedLocation, review))).then(async (tx) => {
       console.log('[/farcast/map/callback] mint $MAP: ', (tx as ContractTransaction).hash)
+      if (req.query.token) {
+        await redisClient.hSet(`${config.redis.prefix}:farcast-map:review-by`, `${fid.toString()}-${Date.now()}`, combinedLocation)
+        await redisClient.hSet(`${config.redis.prefix}:farcast-map:review`, `${fid.toString()}-${Date.now()}`, review ?? '')
+      } else {
+        await redisClient.hSet(`${config.redis.prefix}:farcast-map:check-in`, `${fid.toString()}-${Date.now()}`, combinedLocation)
+      }
+
       await redisClient.incr(`${config.redis.prefix}:farcast-map:supply`)
       await redisClient.zAdd(`${config.redis.prefix}:farcast-map:mints`, [{ score: Date.now(), value: `${fid.toString()}-${Date.now()}` }])
     }).catch(ex => {
@@ -65,15 +82,6 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
   }
 
   // TODO: return a status-checking frame instead, let user click a refresh button to see if mint is successful
-
-  let combinedLocation = req.query.token ? location : `${location}${req.domainInfo?.farcastMap}`
-  if (!req.query.token && req.domainInfo?.farcastMap?.startsWith('??')) {
-    if (location.includes(',')) {
-      combinedLocation = location
-    } else {
-      combinedLocation = `${location}${req.domainInfo?.farcastMap?.substring(2)}`
-    }
-  }
 
   const token = ethers.utils.id(`${location}${req.domainInfo?.farcastMap}`)
   const exist = await fileExist(`${token}.png`)

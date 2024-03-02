@@ -1,4 +1,4 @@
-import ethers, { type ContractTransaction, type Contract } from 'ethers'
+import ethers, { type ContractTransaction } from 'ethers'
 import type { DCReward } from '../../contract/typechain-types'
 import config from '../config.ts'
 import DCRewardAbi from '../../contract/abi/DCReward.json' assert {type: 'json'}

@@ -2,6 +2,7 @@ import config from '../../config.js'
 import { type DomainInfo } from '../types.js'
 import { type FarcastUserInfo } from './types.ts'
 import axios from 'axios'
+import ethers from 'ethers'
 
 export const getPostUrl = (sld: string, subdomain?: string): string => {
   if (!config.farcast.postUrlSubdomainPrefix) {
@@ -43,6 +44,13 @@ export const computeButtonDisplayedLocation = (location: string, farcastMapSuffi
     return location.substring(0, location.length - farcastMapSuffix.length)
   }
   return location
+}
+
+export const inscribeLocationAndReview = (location: string, review?: string): string => {
+  if (!review) {
+    return ethers.utils.hexlify(ethers.utils.toUtf8Bytes(`${location}`))
+  }
+  return ethers.utils.hexlify(ethers.utils.toUtf8Bytes(`${location}:::${review}`))
 }
 
 // export const getHost = (domainInfo: DomainInfo): string => {
