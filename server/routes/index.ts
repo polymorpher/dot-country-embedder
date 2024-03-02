@@ -215,6 +215,7 @@ router.get(['/*'], limiter(), cached(), async (req, res) => {
     const sld = getSld(parts)
     const page = await getOGPage(sld, subdomain, path, req.get('user-agent'))
     res.header('Cache-Control', 'public, max-age=0, must-revalidate')
+    res.header('Age', '0')
     res.header('content-type', 'text/html; charset=utf-8').send(page)
   } catch (ex: any) {
     printError(ex)
