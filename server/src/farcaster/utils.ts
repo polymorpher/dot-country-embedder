@@ -34,6 +34,17 @@ export const lookupFid = async (fid: number): Promise<FarcastUserInfo> => {
   return { fid, owner, username, timestamp: timestamp * 1000 }
 }
 
+export const computeButtonDisplayedLocation = (location: string, farcastMapSuffix?: string): string => {
+  farcastMapSuffix = farcastMapSuffix ?? config.google.map.defaultLocationSuffix
+  if (farcastMapSuffix?.startsWith('??')) {
+    farcastMapSuffix = farcastMapSuffix.substring(2)
+  }
+  if (location.endsWith(farcastMapSuffix)) {
+    return location.substring(0, location.length - farcastMapSuffix.length)
+  }
+  return location
+}
+
 // export const getHost = (domainInfo: DomainInfo): string => {
 //   if (domainInfo.subdomain) {
 //     return `${domainInfo.subdomain}.${domainInfo.sld}.${config.TLD}`

@@ -11,7 +11,8 @@ import config from '../../config.js'
 import {
   lookupFid,
   renderMintFailed,
-  renderImageResponse
+  renderImageResponse,
+  computeButtonDisplayedLocation
 } from '../../src/farcaster.js'
 import { redisClient } from '../../src/redis.js'
 
@@ -69,6 +70,8 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
   if (!req.query.token && req.domainInfo?.farcastMap?.startsWith('??')) {
     if (location.includes(',')) {
       combinedLocation = location
+    } else {
+      combinedLocation = `${location}${req.domainInfo?.farcastMap?.substring(2)}`
     }
   }
 
@@ -84,7 +87,10 @@ router.post('/map/callback', authMessage, getPageSetting, async (req, res) => {
   const image = `https://storage.googleapis.com/${config.google.storage.bucket}/${token}.png`
 
   const balance = await safeGetBalance(owner, DCRewardTokenId.MAP)
-  const text = `${username}: ${balance >= 0 ? balance : 'N/A'} $MAP`
+
+  const buttonDisplayedLocation = computeButtonDisplayedLocation(location, req.domainInfo?.farcastMap)
+
+  const text = `${username}: ${balance >= 0 ? balance + 1 : 'N/A'} $MAP @ ${buttonDisplayedLocation}`
 
   const html = renderImageResponse(image, text, 'link', `${req.protocol}://${host}`)
   res.send(html).end()
@@ -148,6 +154,8 @@ router.post('/map/review', authMessage, getPageSetting, async (req, res) => {
   if (req.domainInfo?.farcastMap?.startsWith('??')) {
     if (location.includes(',')) {
       combinedLocation = location
+    } else {
+      combinedLocation = `${location}${req.domainInfo?.farcastMap?.substring(2)}`
     }
   }
 

@@ -22,6 +22,7 @@ export const mint = async (
   amount: number = 1,
   data: string = '0x'
 ): Promise<ContractTransaction> => {
+  console.log(`[mint] Minting to ${user} for tokenId ${tokenId}, amount=${amount}, data=${data}`)
   return await dcReward.mint(user, tokenId, amount, data)
 }
 
