@@ -87,6 +87,6 @@ router.get('/text/image', async (req, res) => {
 
   const data = renderTextSvg(text, { fontSize })
   res.type('svg')
-  res.header('Cache-Control', 'max-age=5')
+  // res.header('Cache-Control', 'public, max-age=0, must-revalidate')
   res.send(data).end()
 })
