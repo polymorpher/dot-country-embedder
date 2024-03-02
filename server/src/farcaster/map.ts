@@ -27,7 +27,7 @@ export const renderFarcasterMapFullTemplate = async (domainInfo: DomainInfo): Pr
   const postUrl = `${config.farcast.postProtocol}://${postUrlHost}/${config.farcast.apiBase}/map/callback`
   const reviewUrl = `${config.farcast.postProtocol}://${postUrlHost}/${config.farcast.apiBase}/map/review`
 
-  const image = `${config.farcast.postProtocol}://${postUrlHost}/${config.farcast.apiBase}/map/stats/image`
+  const image = `${config.farcast.postProtocol}://${postUrlHost}/${config.farcast.apiBase}/map/stats/image?png=1`
 
   return `
     <html>

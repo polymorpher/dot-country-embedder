@@ -3,7 +3,7 @@ import { type DomainInfo } from '../types.js'
 import { type FarcastUserInfo } from './types.ts'
 import axios from 'axios'
 import ethers from 'ethers'
-
+import sharp from 'sharp'
 export const getPostUrl = (sld: string, subdomain?: string): string => {
   if (!config.farcast.postUrlSubdomainPrefix) {
     return subdomain ? `${subdomain}.${sld}.${config.TLD}` : `${sld}.${config.TLD}`
@@ -53,9 +53,12 @@ export const inscribeLocationAndReview = (location: string, review?: string): st
   return ethers.utils.hexlify(ethers.utils.toUtf8Bytes(`${location}:::${review}`))
 }
 
-// export const getHost = (domainInfo: DomainInfo): string => {
-//   if (domainInfo.subdomain) {
-//     return `${domainInfo.subdomain}.${domainInfo.sld}.${config.TLD}`
-//   }
-//   return `${domainInfo.sld}.${config.TLD}`
-// }
+export const svgToPng = async (svg: string): Promise<Buffer> => {
+  return await sharp(Buffer.from(svg)).png().toBuffer()
+}
+export const getHost = (domainInfo: DomainInfo): string => {
+  if (domainInfo.subdomain) {
+    return `${domainInfo.subdomain}.${domainInfo.sld}.${config.TLD}`
+  }
+  return `${domainInfo.sld}.${config.TLD}`
+}

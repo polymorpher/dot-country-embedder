@@ -14,7 +14,8 @@ import {
   renderMintFailed,
   renderImageResponse,
   computeButtonDisplayedLocation, inscribeLocationAndReview,
-  parseTextToSvg
+  parseTextToSvg,
+  svgToPng
 } from '../../src/farcaster.js'
 import { redisClient } from '../../src/redis.js'
 
@@ -190,9 +191,16 @@ router.get('/map/stats/image', async (req, res) => {
   const minted24h = await redisClient.zCount(`${config.redis.prefix}:farcast-map:mints`, Date.now() - 24 * 3600 * 1000, Date.now())
   const line1 = { text: `${totalMinted.toLocaleString()} $MAP minted total`, fontSize: 36 }
   const line2 = { text: `${minted24h.toLocaleString()} in the last 24 hours`, lineHeightMultiplier: 2, fontSize: 48 }
-  const t = `${JSON.stringify(line1)}\n${JSON.stringify(line2)}`
-  res.type('svg')
   res.header('Cache-Control', 'public, max-age=0, must-revalidate')
   res.header('Age', '0')
-  res.send(parseTextToSvg(t)).end()
+  const t = `${JSON.stringify(line1)}\n${JSON.stringify(line2)}`
+  const svg = parseTextToSvg(t)
+  if (req.query.png) {
+    res.type('png')
+    const png = await svgToPng(svg)
+    res.send(png).end()
+    return
+  }
+  res.type('svg')
+  res.send(svg).end()
 })
