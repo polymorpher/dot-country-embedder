@@ -27,13 +27,7 @@ export const renderFarcasterMapFullTemplate = async (domainInfo: DomainInfo): Pr
   const postUrl = `${config.farcast.postProtocol}://${postUrlHost}/${config.farcast.apiBase}/map/callback`
   const reviewUrl = `${config.farcast.postProtocol}://${postUrlHost}/${config.farcast.apiBase}/map/review`
 
-  const totalMintedStr = await redisClient.get(`${config.redis.prefix}:farcast-map:supply`)
-  const totalMinted = Number(totalMintedStr)
-  const minted24h = await redisClient.zCount(`${config.redis.prefix}:farcast-map:mints`, Date.now() - 24 * 3600 * 1000, Date.now())
-  const line1 = { text: `${totalMinted.toLocaleString()} $MAP minted total`, fontSize: 36 }
-  const line2 = { text: `${minted24h.toLocaleString()} in the last 24 hours`, lineHeightMultiplier: 2, fontSize: 48 }
-  const t = encodeURIComponent(`${JSON.stringify(line1)}\n${JSON.stringify(line2)}`)
-  const image = `${config.farcast.postProtocol}://${postUrlHost}/${config.farcast.apiBase}/text/image?t=${t}`
+  const image = `${config.farcast.postProtocol}://${postUrlHost}/${config.farcast.apiBase}/map/stats/image`
 
   return `
     <html>

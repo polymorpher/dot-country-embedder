@@ -8,11 +8,13 @@ import { HttpStatusCode } from 'axios'
 import router from './index.js'
 import { authMessage, getPageSetting } from './middlewares.js'
 import config from '../../config.js'
+
 import {
   lookupFid,
   renderMintFailed,
   renderImageResponse,
-  computeButtonDisplayedLocation, inscribeLocationAndReview
+  computeButtonDisplayedLocation, inscribeLocationAndReview,
+  parseTextToSvg
 } from '../../src/farcaster.js'
 import { redisClient } from '../../src/redis.js'
 
@@ -180,4 +182,17 @@ router.post('/map/review', authMessage, getPageSetting, async (req, res) => {
   const nextTarget = `${req.protocol}://${host}/${config.farcast.apiBase}/map/callback?token=${token}`
   const html = renderImageResponse(image, 'Submit review, earn $MAP', 'post', nextTarget, 'Your review of this place')
   res.send(html).end()
+})
+
+router.get('/map/stats/image', async (req, res) => {
+  const totalMintedStr = await redisClient.get(`${config.redis.prefix}:farcast-map:supply`)
+  const totalMinted = Number(totalMintedStr)
+  const minted24h = await redisClient.zCount(`${config.redis.prefix}:farcast-map:mints`, Date.now() - 24 * 3600 * 1000, Date.now())
+  const line1 = { text: `${totalMinted.toLocaleString()} $MAP minted total`, fontSize: 36 }
+  const line2 = { text: `${minted24h.toLocaleString()} in the last 24 hours`, lineHeightMultiplier: 2, fontSize: 48 }
+  const t = `${JSON.stringify(line1)}\n${JSON.stringify(line2)}`
+  res.type('svg')
+  res.header('Cache-Control', 'public, max-age=0, must-revalidate')
+  res.header('Age', '0')
+  res.send(parseTextToSvg(t)).end()
 })
