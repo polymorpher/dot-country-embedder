@@ -4,7 +4,7 @@ import { HttpStatusCode } from 'axios'
 import router from './index.js'
 import { authMessage, getPageSetting } from './middlewares.js'
 import config from '../../config.js'
-import { lookupFid, renderMintFailed, renderImageResponse, renderTextSvg } from '../../src/farcaster.js'
+import { lookupFid, renderMintFailed, renderImageResponse, parseTextToSvg, svgToPng } from '../../src/farcaster.js'
 
 router.post('/text/callback', authMessage, getPageSetting, async (req, res) => {
   const host = req.get('host')
@@ -26,12 +26,14 @@ router.post('/text/callback', authMessage, getPageSetting, async (req, res) => {
     console.error('[/farcast/text/callback] No fid found in validatedMessage')
     return res.send(renderMintFailed(restartTarget)).end()
   }
-  const { owner } = await lookupFid(fid)
-  queue.add(async () => await mint(owner, DCRewardTokenId.COUNTRY)).then((tx) => {
-    console.log('[/farcast/text/callback] mint $COUNTRY: ', (tx as ContractTransaction).hash)
-  }).catch(ex => {
-    console.error('[/farcast/text/callback] error', ex)
-  })
+  if (!config.farcast.mockMinting) {
+    const { owner } = await lookupFid(fid)
+    queue.add(async () => await mint(owner, DCRewardTokenId.COUNTRY)).then((tx) => {
+      console.log('[/farcast/text/callback] mint $COUNTRY: ', (tx as ContractTransaction).hash)
+    }).catch(ex => {
+      console.error('[/farcast/text/callback] error', ex)
+    })
+  }
   // TODO: return a status-checking frame instead, let user click a refresh button to see if mint is successful
 
   const html = renderImageResponse(image, `You earned $COUNTRY! Checkout ${host}`, 'link', `${req.protocol}://${host}`)
@@ -51,19 +53,18 @@ if (config.debug) {
 
 router.get('/text/image', async (req, res) => {
   const text = (req.query.t ?? '') as string
+  const style = JSON.parse((req.query.s ?? '{}') as string)
   if (!text) {
     return res.status(HttpStatusCode.BadRequest).send('No text provided').end()
   }
-  let fontSize = 60
-  if (text.length > 64) {
-    fontSize = 24
-  } else if (text.length > 32) {
-    fontSize = 32
-  } else if (text.length > 16) {
-    fontSize = 48
+  const data = parseTextToSvg(text, style)
+  if (req.query.png) {
+    res.type('png')
+    const png = await svgToPng(data)
+    res.send(png).end()
+    return
   }
-
-  const data = renderTextSvg(text, { fontSize })
   res.type('svg')
+  // res.header('Cache-Control', 'public, max-age=0, must-revalidate')
   res.send(data).end()
 })

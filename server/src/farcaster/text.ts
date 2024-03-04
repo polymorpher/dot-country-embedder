@@ -3,6 +3,35 @@ import { type DomainInfo } from '../types.ts'
 import config from '../../config.js'
 import { getPostUrl } from './utils.js'
 
+export const parseTextToSvg = (text: string, style: Record<string, any> = {}): string => {
+  let fontSize = 60
+  if (text.length > 64) {
+    fontSize = 24
+  } else if (text.length > 32) {
+    fontSize = 32
+  } else if (text.length > 16) {
+    fontSize = 48
+  }
+  if (text.includes('\n') || text.includes('\\n')) {
+    const lineHeightMultiplier = style.lineHeightMultiplier ?? 1
+    const parts = text.split(/\n|\\n/)
+    text = parts.map((p, i) => {
+      let c: Record<string, any> = { text: p }
+      if (p.startsWith('{')) {
+        try {
+          c = JSON.parse(p)
+        } catch (ex) {
+
+        }
+      }
+      const localFontSize = c.fontSize ?? fontSize
+      const localLineHeightMultiplier = c.lineHeightMultiplier ?? lineHeightMultiplier
+      return `<tspan style="font-size: ${localFontSize};" x="50%" dy="${i === 0 ? -localFontSize * localLineHeightMultiplier * parts.length / 2 : localFontSize * localLineHeightMultiplier}px">${c.text}</tspan>`
+    }).join('\n')
+  }
+  return renderTextSvg(text, { fontSize })
+}
+
 export const renderTextSvg = (text: string, options?: RenderTextOptions): string => {
   const fontFamily = options?.fontFamily ?? 'Arial, sans-serif'
   const fontSize = `${(options?.fontSize ?? 60)}px`

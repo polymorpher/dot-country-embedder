@@ -9,7 +9,7 @@ import { type ExtendedRecordMap } from 'notion-types'
 import { isValidNotionPageId, parsePath } from '../../common/notion-utils.ts'
 import axios from 'axios'
 import { parseSubstackUrl } from '../../common/substack-utils.ts'
-import { renderFarcasterMapTemplate, renderFarcasterPartialTemplate, renderFarcasterTextTemplate } from './farcaster.ts'
+import { renderFarcasterMapBasicPartialTemplate, renderFarcasterPartialTemplate, renderFarcasterTextTemplate, renderFarcasterMapFullTemplate } from './farcaster.ts'
 import { JSDOM } from 'jsdom'
 import { settingToDomainInfo } from './util.ts'
 import { renderFarcasterSwapTemplate } from './farcaster/swap.ts'
@@ -36,13 +36,18 @@ const renderOpenGrapPartialTemplate = (data: OpenGraphData): string => {
    `
 }
 
-const renderOpenGraphTemplate = (data: OpenGraphData, domain: DomainInfo): string => {
+const renderOpenGraphTemplate = async (data: OpenGraphData, domain: DomainInfo): Promise<string> => {
   // console.log('[renderOpenGraphTemplate] domain', domain)
   const partial = renderOpenGrapPartialTemplate(data)
   let fcPartial = ''
 
-  if (domain.farcastMap) {
-    fcPartial = renderFarcasterMapTemplate(domain, data.image)
+  if (domain.farcastBasicMap) {
+    fcPartial = renderFarcasterMapBasicPartialTemplate(domain, data.image)
+  } else if (domain.farcastMap) {
+    const fcFull = await renderFarcasterMapFullTemplate(domain)
+    if (fcFull) {
+      return fcFull
+    }
   } else if (domain.farcastText) {
     fcPartial = renderFarcasterTextTemplate(domain, data.image)
   } else if (domain.farcastPartial) {
@@ -79,7 +84,7 @@ const getOGPageNotion = async (subdomain: string, sld: string, landingPageSettin
   }
   const ogData = getOGDataFromPage(page, ua)
   const url = `https://${subdomain}${subdomain ? '.' : ''}${sld}.${config.TLD}`
-  return renderOpenGraphTemplate({ url, ...ogData }, domainInfo)
+  return await renderOpenGraphTemplate({ url, ...ogData }, domainInfo)
 }
 
 const EMPTY_PAGE = '<html></html>'
@@ -98,8 +103,14 @@ const getOGPageSubstack = async (subdomain: string, sld: string, landingPageSett
   const image = jsdom.window.document.querySelector('meta[name="og:image"]')?.getAttribute('content') ?? undefined
   let farcasterPartial: string
 
-  if (domainInfo.farcastMap) {
-    farcasterPartial = renderFarcasterMapTemplate(domainInfo, image)
+  if (domainInfo.farcastBasicMap) {
+    farcasterPartial = renderFarcasterMapBasicPartialTemplate(domainInfo, image)
+  } else if (domainInfo.farcastMap) {
+    const farcasterFull = await renderFarcasterMapFullTemplate(domainInfo)
+    farcasterPartial = ''
+    if (farcasterFull) {
+      return farcasterFull
+    }
   } else if (domainInfo.farcastText) {
     farcasterPartial = renderFarcasterTextTemplate(domainInfo, image)
   } else if (domainInfo.farcastPartial) {
