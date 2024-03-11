@@ -44,3 +44,5 @@ yarn debug
 https://[custom domain].s.localhost:3100/
 # i.e
 https://xn--qv9h.s.localhost:3100/
+
+ngrok http --hostname=hiddenstate-0306.ngrok.io http://localhost:3002 --host-header=rewrite
