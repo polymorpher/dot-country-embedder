@@ -51,3 +51,4 @@ ngrok http --hostname=hiddenstate-0306.ngrok.io http://localhost:3002 --host-hea
 or
 
 http://hiddenstate-0306.ngrok.localhost:3002/b6751db82bc74b5f9de1d9a392df71dc
+http://hiddenstate-0306.ngrok.io/b6751db82bc74b5f9de1d9a392df71dc
