@@ -36,7 +36,7 @@ router.post('/swap/buy/callback', authMessage, getPageSetting, async (req, res) 
   }
   const { owner } = await lookupFid(fid)
 
-  const text = `${balanceInSat} $B sats @ $${price} BTC.\\n${owner}`
+  const text = `${balanceInSat} $B sats @ $${price} BTC.\n${owner}`
   const html = generateImageResponse(text, req)
 
   res.send(html).end()
@@ -62,7 +62,7 @@ router.post('/swap/sell/callback', authMessage, getPageSetting, async (req, res)
   }
   const { owner } = await lookupFid(fid)
 
-  const text = `${balanceInSat} $B sats @ $${price} BTC.\\n${owner}`
+  const text = `${balanceInSat} $B sats @ $${price} BTC.\n${owner}`
   const html = generateImageResponse(text, req)
 
   res.send(html).end()
