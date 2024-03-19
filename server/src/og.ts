@@ -53,7 +53,7 @@ const renderOpenGraphTemplate = async (data: OpenGraphData, domain: DomainInfo):
   } else if (domain.farcastPartial) {
     fcPartial = renderFarcasterPartialTemplate(domain, data.image)
   } else if (domain.farcastSwap) {
-    fcPartial = renderFarcasterSwapTemplate(domain, data.image)
+    fcPartial = renderFarcasterSwapTemplate(domain)
   }
 
   return `
@@ -99,33 +99,30 @@ const getOGPageSubstack = async (subdomain: string, sld: string, landingPageSett
   }
 
   const { data } = await substackAxiosBase.get(`https://${url.host}/${path}`)
-  const jsdom = new JSDOM(data)
-  const image = jsdom.window.document.querySelector('meta[name="og:image"]')?.getAttribute('content') ?? undefined
-  let farcasterPartial: string
 
-  if (domainInfo.farcastBasicMap) {
-    farcasterPartial = renderFarcasterMapBasicPartialTemplate(domainInfo, image)
-  } else if (domainInfo.farcastMap) {
-    const farcasterFull = await renderFarcasterMapFullTemplate(domainInfo)
-    farcasterPartial = ''
-    if (farcasterFull) {
-      return farcasterFull
-    }
-  } else if (domainInfo.farcastText) {
-    farcasterPartial = renderFarcasterTextTemplate(domainInfo, image)
-  } else if (domainInfo.farcastPartial) {
-    farcasterPartial = renderFarcasterPartialTemplate(domainInfo, image)
-  } else if (domainInfo.farcastSwap) {
-    const vwap = 0 // TODO: get $b price here
-    const image = `${url.protocol}://${url.host}/${config.farcast.apiBase}/text/image?t=${encodeURIComponent(`$B price (vwap): ${vwap}`)}`
-    farcasterPartial = renderFarcasterSwapTemplate(domainInfo, image)
-  } else {
+  if (domainInfo.farcastMap) {
+    return await renderFarcasterMapFullTemplate(domainInfo)
+  } else if (!domainInfo.farcastBasicMap && !domainInfo.farcastText && !domainInfo.farcastPartial && !domainInfo.farcastSwap) {
     return data
-  }
+  } else {
+    const jsdom = new JSDOM(data)
+    const image = jsdom.window.document.querySelector('meta[name="og:image"]')?.getAttribute('content') ?? undefined
+    let farcasterPartial = ''
 
-  const partialDom = JSDOM.fragment(farcasterPartial)
-  jsdom.window.document.head.append(partialDom)
-  return jsdom.serialize()
+    if (domainInfo.farcastBasicMap) {
+      farcasterPartial = renderFarcasterMapBasicPartialTemplate(domainInfo, image)
+    } else if (domainInfo.farcastText) {
+      farcasterPartial = renderFarcasterTextTemplate(domainInfo, image)
+    } else if (domainInfo.farcastPartial) {
+      farcasterPartial = renderFarcasterPartialTemplate(domainInfo, image)
+    } else if (domainInfo.farcastSwap) {
+      farcasterPartial = renderFarcasterSwapTemplate(domainInfo)
+    }
+
+    const partialDom = JSDOM.fragment(farcasterPartial)
+    jsdom.window.document.head.append(partialDom)
+    return jsdom.serialize()
+  }
 }
 
 export const getOGPage = async (sld: string, subdomain: string, path?: string, ua?: string): Promise<string> => {

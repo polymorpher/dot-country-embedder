@@ -30,7 +30,7 @@ router.post('/swap/buy/callback', authMessage, getPageSetting, async (req, res) 
   const fid = req.validatedMessage.data?.fid
 
   if (!fid) {
-    console.error('[/farcast/buy/callback] No fid found in validatedMessage')
+    console.error('[/farcast/swap/buy/callback] No fid found in validatedMessage')
     const html = generateImageResponse('Failed to get fid. Please try again later.', req, true)
     return res.send(html).end()
   }
@@ -56,7 +56,7 @@ router.post('/swap/sell/callback', authMessage, getPageSetting, async (req, res)
   const fid = req.validatedMessage.data?.fid
 
   if (!fid) {
-    console.error('[/farcast/sell/callback] No fid found in validatedMessage')
+    console.error('[/farcast/swap/sell/callback] No fid found in validatedMessage')
     const html = generateImageResponse('Failed to get fid. Please try again later.', req, true)
     return res.send(html).end()
   }

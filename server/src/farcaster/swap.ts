@@ -2,11 +2,13 @@ import { type DomainInfo } from '../types.js'
 import config from '../../config.js'
 import { getPostUrl } from './utils.js'
 
-export const renderFarcasterSwapTemplate = (domainInfo: DomainInfo, image?: string): string => {
+export const renderFarcasterSwapTemplate = (domainInfo: DomainInfo): string => {
   const postUrlHost = getPostUrl(domainInfo.sld, domainInfo.subdomain)
   const baseUrl = `${config.farcast.postProtocol}://${postUrlHost}/${config.farcast.apiBase}/swap`
   const postBuyUrl = `${baseUrl}/buy/callback`
   const postSellUrl = `${baseUrl}/sell/callback`
+  const vwap = 0 // TODO: get $b price here
+  const image = `${config.farcast.postProtocol}://${postUrlHost}/${config.farcast.apiBase}/text/image?t=${encodeURIComponent(`$B price (vwap): ${vwap}`)}`
 
   return `
     <meta property="fc:frame" content="vNext" />
