@@ -41,6 +41,8 @@ router.post('/swap/buy/callback', authMessage, getPageSetting, async (req, res) 
     const text = `${balanceInSat} $B sats @ $${price} BTC.\n${owner}`
     const html = generateImageResponse(text, req)
 
+    res.header('Cache-Control', 'public, max-age=0, must-revalidate')
+    res.header('Age', '0')
     res.send(html).end()
   } catch {
     const html = generateImageResponse('Failed to get owner from fid. Please try again later.', req, true)
@@ -73,6 +75,8 @@ router.post('/swap/sell/callback', authMessage, getPageSetting, async (req, res)
     const text = `${balanceInSat} $B sats @ $${price} BTC.\n${owner}`
     const html = generateImageResponse(text, req)
 
+    res.header('Cache-Control', 'public, max-age=0, must-revalidate')
+    res.header('Age', '0')
     res.send(html).end()
   } catch {
     const html = generateImageResponse('Failed to get owner from fid. Please try again later.', req, true)
