@@ -104,25 +104,26 @@ const getOGPageSubstack = async (subdomain: string, sld: string, landingPageSett
     return await renderFarcasterMapFullTemplate(domainInfo)
   } else if (!domainInfo.farcastBasicMap && !domainInfo.farcastText && !domainInfo.farcastPartial && !domainInfo.farcastSwap) {
     return data
-  } else {
-    const jsdom = new JSDOM(data)
-    const image = jsdom.window.document.querySelector('meta[name="og:image"]')?.getAttribute('content') ?? undefined
-    let farcasterPartial = ''
-
-    if (domainInfo.farcastBasicMap) {
-      farcasterPartial = renderFarcasterMapBasicPartialTemplate(domainInfo, image)
-    } else if (domainInfo.farcastText) {
-      farcasterPartial = renderFarcasterTextTemplate(domainInfo, image)
-    } else if (domainInfo.farcastPartial) {
-      farcasterPartial = renderFarcasterPartialTemplate(domainInfo, image)
-    } else if (domainInfo.farcastSwap) {
-      farcasterPartial = renderFarcasterSwapTemplate(domainInfo)
-    }
-
-    const partialDom = JSDOM.fragment(farcasterPartial)
-    jsdom.window.document.head.append(partialDom)
-    return jsdom.serialize()
   }
+
+  const jsdom = new JSDOM(data)
+  const image = jsdom.window.document.querySelector('meta[name="og:image"]')?.getAttribute('content') ?? undefined
+  let farcasterPartial = ''
+
+  if (domainInfo.farcastBasicMap) {
+    farcasterPartial = renderFarcasterMapBasicPartialTemplate(domainInfo, image)
+  } else if (domainInfo.farcastText) {
+    farcasterPartial = renderFarcasterTextTemplate(domainInfo, image)
+  } else if (domainInfo.farcastPartial) {
+    farcasterPartial = renderFarcasterPartialTemplate(domainInfo, image)
+  } else if (domainInfo.farcastSwap) {
+    farcasterPartial = renderFarcasterSwapTemplate(domainInfo)
+  }
+
+  const partialDom = JSDOM.fragment(farcasterPartial)
+  jsdom.window.document.head.append(partialDom)
+
+  return jsdom.serialize()
 }
 
 export const getOGPage = async (sld: string, subdomain: string, path?: string, ua?: string): Promise<string> => {
