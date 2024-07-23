@@ -179,7 +179,7 @@ const ManageNotion = ({ footer = <></> }): JSX.Element => {
   const save = async (): Promise<void> => {
     const [parsedId] = segment(debouncedEditingPageId)
     if (!isValidNotionPageId(parsedId) && pageId !== '') {
-      toast.error(`Invalid landing page id: ${pageId}`)
+      toast.error(`Invalid landing page id: ${pageId} (parsed: ${parsedId})`)
       return
     }
     for (const id of allowedPageIds) {
@@ -278,7 +278,7 @@ const ManageNotion = ({ footer = <></> }): JSX.Element => {
             <LabelText>Main page id</LabelText>
             <InputBox $width={'100%'} value={pageId} placeholder={'ae42787a7d...'} onChange={({ target: { value } }) => { setPageId(value); setEditingPageId(value); setEditingPagePosition(0) }}/>
           </Row>
-          {(editingPageIdPosition === 0) && <SuggestedPageId id={suggestedPageId} applyId={setPageId}/>}
+          {(editingPageIdPosition === 0) && <SuggestedPageId id={suggestedPageId} applyId={(value) => { setPageId(value); setEditingPageId(value); setEditingPagePosition(0) }}/>}
           <SmallTextGrey>This is the landing page when people visit {subdomain}{subdomain ? '.' : ''}{sld}.{config.tld} </SmallTextGrey>
           <LabelText style={{ marginTop: 32 }}>Additional pages</LabelText>
           <SmallTextGrey>You allow the following subpages on web.{sld}.{config.tld}. Links to these pages will be rewritten under web.{sld}.{config.tld}, instead of to external sites (e.g. https://notion.so/....)</SmallTextGrey>
