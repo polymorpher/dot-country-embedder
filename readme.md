@@ -44,3 +44,11 @@ yarn debug
 https://[custom domain].s.localhost:3100/
 # i.e
 https://xn--qv9h.s.localhost:3100/
+
+# farcast test
+ngrok http --hostname=hiddenstate-0306.ngrok.io http://localhost:3002 --host-header=rewrite
+
+or
+
+http://hiddenstate-0306.ngrok.localhost:3002/b6751db82bc74b5f9de1d9a392df71dc
+http://hiddenstate-0306.ngrok.io/b6751db82bc74b5f9de1d9a392df71dc
