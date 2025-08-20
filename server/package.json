@@ -5,8 +5,8 @@
   "type": "module",
   "main": "app.ts",
   "scripts": {
-    "start": "NODE_OPTIONS=\"--loader ts-node/esm\" node ./bin/run.ts",
-    "debug": "DEBUG=true NODE_OPTIONS=\"--loader ts-node/esm\" node ./bin/run.ts"
+    "start": "tsx ./bin/run.ts",
+    "debug": "DEBUG=true tsx ./bin/run.ts"
   },
   "dependencies": {
     "@farcaster/hub-nodejs": "^0.11.1",
@@ -32,11 +32,12 @@
     "lru-cache": "^9.1.1",
     "moment": "^2.29.1",
     "morgan": "^1.10.0",
-    "notion-client": "^6.16.0",
+    "notion-client": "^7.4.3",
     "p-queue": "^8.0.1",
     "promise-limit": "^2.7.0",
     "redis": "^4.6.13",
     "sharp": "^0.32.6",
+    "tsx": "^4.20.4",
     "uuid": "^9.0.1"
   },
   "resolutions": {
@@ -52,7 +53,7 @@
     "eslint-plugin-import": "^2.25.2",
     "eslint-plugin-n": "^15.0.0",
     "eslint-plugin-promise": "^6.0.0",
-    "notion-types": "^6.16.0",
+    "notion-types": "7.4.3",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4"
   }

@@ -12,7 +12,26 @@ import {
   extractEmoji,
   extractPageImagePreview
 } from '../../common/notion-utils.ts'
-const notion = new NotionAPI()
+const notion = new NotionAPI({
+  kyOptions: {
+    hooks: {
+      beforeRequest: [
+        (request, options) => {
+          const url = request.url.toString();
+
+          if (url.includes('/api/v3/syncRecordValues')) {
+            return new Request(
+              url.replace('/api/v3/syncRecordValues', '/api/v3/syncRecordValuesMain'),
+              options,
+            );
+          }
+
+          return request;
+        },
+      ],
+    },
+  },
+})
 
 const axiosBase = axios.create({ timeout: 15000 })
 
@@ -35,6 +54,7 @@ export async function getNotionPageId (url: string): Promise<string> {
   const validatedUrl = new URL(url)
   url = validatedUrl.href
   const { data } = await axiosBase.get(url)
+
   const dom = new JSDOM(data)
   const notionDataRaw = dom.window.document.querySelector('#__NEXT_DATA__')
   if (!notionDataRaw) {

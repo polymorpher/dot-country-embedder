@@ -1,5 +1,5 @@
 import ethers from 'ethers'
-import EWSAbi from '../../contract/abi/EWS.json' assert {type: 'json'}
+import EWSAbi from '../../contract/abi/EWS.json' with { type: 'json' }
 import config from '../config.ts'
 import { type DomainInfo, EWSTypes, type OpenGraphData } from './types.ts'
 import { type EWS } from '../../contract/typechain-types'

@@ -1,5 +1,5 @@
 #!/usr/bin/env ts-node-esm
-import { httpsServer, httpServer } from '../app.js'
+import { httpsServer, httpServer } from '../app.ts'
 import { type AddressInfo } from 'net'
 
 console.log('Starting web server...')

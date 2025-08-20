@@ -1,7 +1,7 @@
 import ethers, { type ContractTransaction } from 'ethers'
 import type { DCReward } from '../../contract/typechain-types'
 import config from '../config.ts'
-import DCRewardAbi from '../../contract/abi/DCReward.json' assert {type: 'json'}
+import DCRewardAbi from '../../contract/abi/DCReward.json' with { type: 'json' }
 import PQueue from 'p-queue'
 import assert from 'node:assert'
 const provider = new ethers.providers.StaticJsonRpcProvider({ url: config.provider, timeout: 3500 })
