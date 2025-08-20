@@ -1,6 +1,6 @@
 {
   "type": "module",
   "dependencies": {
-    "notion-types": "^6.16.0"
+    "notion-types": "7.4.3"
   }
 }

@@ -7,7 +7,7 @@ Environment=PORT=80 HTTPS_PORT=443
 Type=simple
 User=worker
 WorkingDirectory=/opt/dot-country-embedder/server
-ExecStart=/opt/dot-country-embedder/server/node_modules/.bin/ts-node-esm /opt/dot-country-embedder/server/bin/run.ts
+ExecStart=npx tsx /opt/dot-country-embedder/server/bin/run.ts
 Restart=on-failure
 
 [Install]
