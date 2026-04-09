@@ -17,8 +17,7 @@ dotenv.config()
 export default {
   devServer: {
     port: 3100,
-    https: process.env.HTTP === undefined,
-    http2: process.env.HTTP === undefined,
+    server: process.env.HTTP === undefined ? 'https' : undefined,
     historyApiFallback: true,
     hot: false,
     client: {

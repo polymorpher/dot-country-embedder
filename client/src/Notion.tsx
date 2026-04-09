@@ -19,7 +19,8 @@ import {
   extractEmoji,
   isValidNotionPageId,
   parsePath,
-  urlNormalize
+  urlNormalize,
+  normalizeRecordMap
 } from '../../common/notion-utils'
 import { type ExtendedRecordMap } from 'notion-types'
 import { getPath, getSld, getSubdomain, titleEmbeddedMapPageUrl } from './utils'
@@ -67,7 +68,7 @@ const Notion: React.FC = () => {
     void tryCatch(async function f () {
       let records: ExtendedRecordMap
       try {
-        records = await apis.getNotionPage(renderedPageId)
+        records = normalizeRecordMap(await apis.getNotionPage(renderedPageId))
       } catch (ex: any) {
         console.error(ex)
         toast.error('Cannot retrieve notion page. Please make sure it is published')

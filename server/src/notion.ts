@@ -10,7 +10,8 @@ import {
   extractPageEmoji,
   makeEmojiDataUrl,
   extractEmoji,
-  extractPageImagePreview
+  extractPageImagePreview,
+  normalizeRecordMap
 } from '../../common/notion-utils.ts'
 const notion = new NotionAPI({
   kyOptions: {
@@ -114,7 +115,7 @@ export async function getAllPageIds (id: string, depth: number = 0): Promise<str
   let ret: string[] = []
   let root: ExtendedRecordMap
   try {
-    root = await getPage(id)
+    root = normalizeRecordMap(await getPage(id))
   } catch (ex) {
     console.error(`Error retrieving for page id ${id}`, ex)
     return ret
@@ -157,6 +158,7 @@ const defaultIcon = `data:image/svg+xml,${encodeURIComponent('<svg id="Layer_1" 
 const defaultPngIconPath = 'https://storage.googleapis.com/ews-client-prod/favicon.png'
 
 export function getOGDataFromPage (page: ExtendedRecordMap, ua?: string): OpenGraphData {
+  page = normalizeRecordMap(page)
   const blocks = Object.values(page.block)
   const title = extractTitle(blocks)
   const desc = extractDescription(page)

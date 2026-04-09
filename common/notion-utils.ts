@@ -4,6 +4,21 @@ interface BlockEntry{
     role: string
     value: Block
 }
+
+// Notion API v3 wraps block entries as { value: { value: Block, role }, spaceId? }
+// instead of the expected { value: Block, role }. Normalize back to the standard format.
+export const normalizeRecordMap = (records: ExtendedRecordMap): ExtendedRecordMap => {
+    const block: any = {}
+    for (const [id, entry] of Object.entries(records.block)) {
+        const e = entry as any
+        if (e?.value?.value?.id) {
+            block[id] = { role: e.value.role, value: e.value.value }
+        } else {
+            block[id] = entry
+        }
+    }
+    return { ...records, block }
+}
 export const extractTitle = (blocks: BlockEntry[]): string => {
     // return blocks[0].value.properties?.title?.flat().join(' ')
     return blocks[0].value.properties?.title?.map(e=>e[0]).join('')
@@ -77,7 +92,7 @@ export const makeEmojiDataUrl = (emoji: string): string => {
 }
 
 export const extractEmoji = (text: string): string => {
-    const m = text.match(/(\p{EPres}|\p{ExtPict})(\u200d(\p{EPres}|\p{ExtPict}))*/gu)
+    const m = text?.match(/(\p{EPres}|\p{ExtPict})(\u200d(\p{EPres}|\p{ExtPict}))*/gu)
     if (m) {
         return m[0]
     }
