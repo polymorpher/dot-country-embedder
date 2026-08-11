@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-notion-types@^6.16.0:
-  version "6.16.0"
-  resolved "https://registry.yarnpkg.com/notion-types/-/notion-types-6.16.0.tgz#1c676b180095d14209a6760dd8586db55a115e91"
-  integrity sha512-Cv83GaAczx57q1qsnuG8DHOuOb63c83u9LX2IainG5aqBEB0GUuLZ4DUQfB6MaXt+FMY9fO+KTgPeZWwX9hbrQ==
+notion-types@7.4.3:
+  version "7.4.3"
+  resolved "https://registry.yarnpkg.com/notion-types/-/notion-types-7.4.3.tgz#eaea518055fc7bbcfb78958199063d430a737716"
+  integrity sha512-rIztAJLqzLLlpsL9SNr9SpmTiwXpADzpUIgKmc2phbD42DQl0Z8lB+rr2+NbkZxaP0zbvAek8wtPRrOU+ynU2A==
