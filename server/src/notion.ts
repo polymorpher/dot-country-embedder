@@ -15,23 +15,25 @@ import {
 } from '../../common/notion-utils.ts'
 const notion = new NotionAPI({
   kyOptions: {
+    // Notion (Cloudflare) rejects UA-less requests from Node with 403; notion-client v7 (ky) sends no User-Agent by default
+    headers: { 'User-Agent': 'curl/8.5.0' },
     hooks: {
       beforeRequest: [
         (request, options) => {
-          const url = request.url.toString();
+          const url = request.url.toString()
 
           if (url.includes('/api/v3/syncRecordValues')) {
             return new Request(
               url.replace('/api/v3/syncRecordValues', '/api/v3/syncRecordValuesMain'),
-              options,
-            );
+              options
+            )
           }
 
-          return request;
-        },
-      ],
-    },
-  },
+          return request
+        }
+      ]
+    }
+  }
 })
 
 const axiosBase = axios.create({ timeout: 15000 })
