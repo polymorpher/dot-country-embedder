@@ -1,14 +1,17 @@
-import {type Block, BlockMap, type ExtendedRecordMap} from 'notion-types'
-
 interface BlockEntry{
     role: string
-    value: Block
+    value: any
+}
+
+interface RecordMap {
+    block: Record<string, BlockEntry>
+    signed_urls: Record<string, string>
 }
 
 // Notion API v3 wraps block entries as { value: { value: Block, role }, spaceId? }
 // instead of the expected { value: Block, role }. Normalize back to the standard format.
-export const normalizeRecordMap = (records: ExtendedRecordMap): ExtendedRecordMap => {
-    const block: any = {}
+export const normalizeRecordMap = <T extends { block: Record<string, unknown> }>(records: T): T => {
+    const block: Record<string, unknown> = {}
     for (const [id, entry] of Object.entries(records.block)) {
         const e = entry as any
         if (e?.value?.value?.id) {
@@ -17,7 +20,7 @@ export const normalizeRecordMap = (records: ExtendedRecordMap): ExtendedRecordMa
             block[id] = entry
         }
     }
-    return { ...records, block }
+    return { ...records, block } as T
 }
 export const extractTitle = (blocks: BlockEntry[]): string => {
     // return blocks[0].value.properties?.title?.flat().join(' ')
@@ -39,7 +42,7 @@ export const extractPageCover = (blocks: BlockEntry[]): string | undefined => {
     return cover
 }
 
-export const extractPageImagePreview = (page: ExtendedRecordMap): string | undefined => {
+export const extractPageImagePreview = (page: RecordMap): string | undefined => {
     const blocks = Object.values(page.block)
     console.log(blocks[0].value.id, page.signed_urls[blocks[0].value.id], page.signed_urls)
     return page.signed_urls[blocks[0].value.id] || extractPageCover(blocks)
@@ -55,7 +58,7 @@ export const extractTextFromBlock = (block: BlockEntry): string => {
     }
     return ''
 }
-export const extractDescription = (page: ExtendedRecordMap): string => {
+export const extractDescription = (page: RecordMap): string => {
     const blocks = Object.values(page.block)
     let currentBlock = blocks[0]
     if (!currentBlock) {
