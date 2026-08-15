@@ -12,6 +12,7 @@ import { parseSubstackUrl } from '../../common/substack-utils.ts'
 import { renderFarcasterMapBasicPartialTemplate, renderFarcasterPartialTemplate, renderFarcasterTextTemplate, renderFarcasterMapFullTemplate } from './farcaster.ts'
 import { JSDOM } from 'jsdom'
 import { settingToDomainInfo } from './util.ts'
+import { getEwsReadOverride } from '../../common/ews-overrides.ts'
 
 // const escape = (s: string): string => {
 //   return s.replaceAll('"', '%22')
@@ -123,14 +124,27 @@ const getOGPageSubstack = async (subdomain: string, sld: string, landingPageSett
 }
 export const getOGPage = async (sld: string, subdomain: string, path?: string, ua?: string): Promise<string> => {
   console.log('[-getOGPage]', { sld, subdomain, path })
-  const c = new ethers.Contract(config.ewsContract, EWSAbi, provider) as unknown as EWS
-  const node = ethers.utils.id(sld)
-  const label = ethers.utils.id(subdomain)
-  const [landingPageSetting, allowedPages, ewsType] = await Promise.all([
-    c.getLandingPage(node, label),
-    c.getAllowedPages(node, label),
-    c.getEwsType(node, label)
-  ])
+  const override = getEwsReadOverride(sld, subdomain)
+  let landingPageSetting: string
+  let allowedPages: string[]
+  let ewsType: number
+  if (override) {
+    landingPageSetting = override.landingPageSetting
+    allowedPages = [...override.allowedPages]
+    ewsType = override.ewsType
+  } else {
+    const c = new ethers.Contract(config.ewsContract, EWSAbi, provider) as unknown as EWS
+    const node = ethers.utils.id(sld)
+    const label = ethers.utils.id(subdomain)
+    const onChainSettings = await Promise.all([
+      c.getLandingPage(node, label),
+      c.getAllowedPages(node, label),
+      c.getEwsType(node, label)
+    ])
+    landingPageSetting = onChainSettings[0]
+    allowedPages = onChainSettings[1]
+    ewsType = onChainSettings[2]
+  }
   if (ewsType === EWSTypes.EWS_NOTION || ewsType === EWSTypes.EWS_NOTION) {
     return await getOGPageNotion(subdomain, sld, landingPageSetting, allowedPages, path, ua)
   }

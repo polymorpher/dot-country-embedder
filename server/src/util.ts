@@ -5,6 +5,7 @@ import config from '../config.ts'
 import EWSAbi from '../../contract/abi/EWS.json' with { type: 'json' }
 import { type EWS } from '../../contract/typechain-types'
 import { type DomainInfo } from './types.ts'
+import { getEwsReadOverride } from '../../common/ews-overrides.ts'
 
 export function printError (ex: any): void {
   if (ex?.response) {
@@ -24,10 +25,16 @@ export async function parsePageSetting (hostname: string): Promise<DomainInfo> {
   const parts = hostname.split('.')
   const subdomain = getSubdomain(parts)
   const sld = getSld(parts)
-  const c = new ethers.Contract(config.ewsContract, EWSAbi, provider) as unknown as EWS
-  const node = ethers.utils.id(sld)
-  const label = ethers.utils.id(subdomain)
-  const landingPageSetting = await c.getLandingPage(node, label)
+  const override = getEwsReadOverride(sld, subdomain)
+  let landingPageSetting: string
+  if (override) {
+    landingPageSetting = override.landingPageSetting
+  } else {
+    const c = new ethers.Contract(config.ewsContract, EWSAbi, provider) as unknown as EWS
+    const node = ethers.utils.id(sld)
+    const label = ethers.utils.id(subdomain)
+    landingPageSetting = await c.getLandingPage(node, label)
+  }
   return settingToDomainInfo(sld, subdomain, landingPageSetting)
 }
 

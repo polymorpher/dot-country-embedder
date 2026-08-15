@@ -2,6 +2,7 @@ import config from '../config.ts'
 import EWSAbi from '../../contract/abi/EWS.json' with { type: 'json' }
 import { ethers } from 'ethers'
 import { type EWS } from '../../contract/typechain-types'
+import { getEwsReadOverride } from '../../common/ews-overrides.ts'
 
 export interface Client {
   getLandingPage: (sld: string, subdomain: string) => Promise<string>
@@ -13,6 +14,10 @@ export const buildClient = (provider?): Client => {
 
   return {
     getLandingPage: async (sld: string, subdomain: string): Promise<string> => {
+      const override = getEwsReadOverride(sld, subdomain)
+      if (override) {
+        return override.landingPageSetting
+      }
       return await ews.getLandingPage(ethers.utils.id(sld), ethers.utils.id(subdomain))
     }
   }

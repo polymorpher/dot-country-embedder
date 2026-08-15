@@ -6,6 +6,8 @@ import axios from 'axios'
 import { type ExtendedRecordMap } from 'notion-types'
 import { type EWS, type IDC } from '../../contract/typechain-types'
 import { isValidNotionPageId } from '../../common/notion-utils'
+import { getSld, getSubdomain } from '../../common/domain-utils'
+import { getEwsReadOverride } from '../../common/ews-overrides'
 const base = axios.create({ baseURL: config.server, timeout: 10000 })
 const substackBase = axios.create({ baseURL: config.substackServer, timeout: 10000 })
 
@@ -78,6 +80,10 @@ export interface Client {
 export const buildClient = (provider?, signer?, failover = false): Client => {
   const etherProvider = provider ?? new ethers.providers.StaticJsonRpcProvider(config.defaultRpc)
   let ews = new ethers.Contract(config.embedderContract, EWSAbi, etherProvider) as EWS
+  const hostname = typeof window === 'undefined' ? '' : window.location.hostname
+  const currentOverride = hostname
+    ? getEwsReadOverride(getSld(hostname), getSubdomain(hostname))
+    : undefined
   let _dc: IDC
   const dc = async (): Promise<IDC> => {
     if (_dc) {
@@ -90,7 +96,9 @@ export const buildClient = (provider?, signer?, failover = false): Client => {
     }
     return _dc
   }
-  dc().catch(e => { console.error(e) })
+  if (!currentOverride) {
+    dc().catch(e => { console.error(e) })
+  }
   if (signer) {
     ews = ews.connect(signer)
   }
@@ -116,6 +124,10 @@ export const buildClient = (provider?, signer?, failover = false): Client => {
       return await ews.perSubdomainFee()
     },
     getLandingPage: async (sld: string, subdomain: string): Promise<string> => {
+      const override = getEwsReadOverride(sld, subdomain)
+      if (override) {
+        return override.landingPageSetting
+      }
       const l = await ews.getLandingPage(ethers.utils.id(sld), ethers.utils.id(subdomain))
       if (!l && failover) {
         const upgradedFrom = await ews.upgradedFrom()
@@ -128,9 +140,17 @@ export const buildClient = (provider?, signer?, failover = false): Client => {
       return l
     },
     getEwsType: async (sld: string, subdomain: string): Promise<number> => {
+      const override = getEwsReadOverride(sld, subdomain)
+      if (override) {
+        return override.ewsType
+      }
       return await ews.getEwsType(ethers.utils.id(sld), ethers.utils.id(subdomain))
     },
     getAllowedPages: async (sld: string, subdomain: string): Promise<string[]> => {
+      const override = getEwsReadOverride(sld, subdomain)
+      if (override) {
+        return [...override.allowedPages]
+      }
       const pages = await ews.getAllowedPages(ethers.utils.id(sld), ethers.utils.id(subdomain))
       if (pages.length === 0 && failover) {
         const upgradedFrom = await ews.upgradedFrom()
